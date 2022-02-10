@@ -1,0 +1,84 @@
+{
+    "common": {
+        "name": "wiegand-tcpip",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "wiegand tcp/ip Controller (e.g. UHPPTOE)",
+        "titleLang": {
+            "en": "wiegand tcp/ip Controller (e.g. UHPPTOE)",
+            "de": "wiegand TCP/IP Controller (z.B. UHPPTOE)",
+            "ru": "Контроллер Wiegand TCP/IP (например, UHPPTOE)",
+            "pt": "Controlador wiegand tcp/ip (por exemplo, UHPPTOE)",
+            "nl": "wiegand tcp/ip-controller (bijv. UHPPTOE)",
+            "fr": "Contrôleur wiegand tcp/ip (par exemple UHPPTOE)",
+            "it": "Wiegand tcp/ip Controller (ad es. UHPPTOE)",
+            "es": "Controlador wiegand tcp/ip (por ejemplo, UHPPTOE)",
+            "pl": "wiegand tcp/ip kontroler (np. UHPPTOE)",
+            "zh-cn": "wiegand tcp/ip 控制器（例如 UHPPTOE）"
+        },
+        "desc": {
+            "en": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "de": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "ru": "Wiegand Контроллер доступа к дверям Shenzhen Weigeng Industrial",
+            "pt": "Controlador de acesso de porta wiegand Shenzhen Weigeng Industrial",
+            "nl": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "fr": "Contrôleur d'accès de porte wiegand Shenzhen Weigeng Industrial",
+            "it": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "es": "Controlador de acceso de puerta wiegand Shenzhen Weigeng Industrial",
+            "pl": "Wiegand Kontroler dostępu do drzwi Shenzhen Weigeng Industrial",
+            "zh-cn": "wiegand 门禁控制器 深圳伟庚实业"
+        },
+        "authors": [
+            "kbrausew <kurt.brausewetter@t-online.de>"
+        ],
+        "keywords": [
+            "UHPPOTE",
+            "Wiegand to TCP/IP",
+            "VBESTLIFE",
+            "Dioche",
+            "Tangxi",
+            "i-keys SC300xNT SC90xNT",
+            "Secukey C1 - C4",
+            "S4A ACB",
+            "Door Access Controller Shenzhen Weigeng Industrial"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "wiegand-tcpip.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/kbrausew/ioBroker.wiegand-tcpip/main/admin/wiegand-tcpip.png",
+        "readme": "https://github.com/kbrausew/ioBroker.wiegand-tcpip/blob/main/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "hardware",
+        "compact": true,
+        "connectionType": "local",
+        "dataSource": "assumption",
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=2.0.0"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": []
+}

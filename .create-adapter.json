@@ -1,0 +1,53 @@
+{
+    "cli": true,
+    "target": "directory",
+    "adapterName": "wiegand-tcpip",
+    "title": "wiegand tcp/ip Controller (e.g. UHPPTOE)",
+    "description": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
+    "keywords": [
+        "UHPPOTE",
+        "Wiegand to TCP/IP",
+        "VBESTLIFE",
+        "Dioche",
+        "Tangxi",
+        "i-keys SC300xNT SC90xNT",
+        "Secukey C1 - C4",
+        "S4A ACB",
+        "Door Access Controller Shenzhen Weigeng Industrial"
+    ],
+    "contributors": [
+        "uhppoted",
+        "twystd"
+    ],
+    "expert": "no",
+    "features": [
+        "adapter"
+    ],
+    "adminFeatures": [],
+    "type": "hardware",
+    "startMode": "daemon",
+    "connectionType": "local",
+    "dataSource": "assumption",
+    "connectionIndicator": "no",
+    "language": "JavaScript",
+    "adminReact": "no",
+    "tools": [
+        "ESLint",
+        "type checking"
+    ],
+    "releaseScript": "yes",
+    "devServer": "yes",
+    "devServerPort": 9999,
+    "indentation": "Space (4)",
+    "quotes": "double",
+    "es6class": "yes",
+    "authorName": "kbrausew",
+    "authorGithub": "kbrausew",
+    "authorEmail": "kurt.brausewetter@t-online.de",
+    "gitRemoteProtocol": "HTTPS",
+    "gitCommit": "no",
+    "defaultBranch": "main",
+    "license": "MIT License",
+    "dependabot": "no",
+    "creatorVersion": "2.0.2"
+}
