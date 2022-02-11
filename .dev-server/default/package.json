@@ -1,0 +1,13 @@
+{
+  "name": "dev-server.wiegand-tcpip",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "iobroker.admin": "latest",
+    "iobroker.js-controller": "latest",
+    "iobroker.wiegand-tcpip": "file:../../iobroker.wiegand-tcpip-0.0.1.tgz"
+  },
+  "dev-server": {
+    "adminPort": 9999
+  }
+}

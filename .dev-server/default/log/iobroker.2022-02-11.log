@@ -1,0 +1,73 @@
+2022-02-11 22:41:59.992  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 iobroker.js-controller version 4.0.8 js-controller starting
+2022-02-11 22:41:59.994  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 Copyright (c) 2014-2022 bluefox, 2014 hobbyquaker
+2022-02-11 22:41:59.995  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 hostname: dev-wiegand-tcpip-BE1GV046, node: v14.18.3
+2022-02-11 22:41:59.996  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 ip addresses: fe80::bd6c:5e3e:abe2:5c1 fe80::cc40:b95c:8fde:3f11 10.183.27.68 fe80::a1e6:b0d5:76b7:f94c 172.18.16.1 fe80::c9cb:329f:d865:ad92 192.168.178.33
+2022-02-11 22:42:00.003  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046-Server Data File: C:\DEV\adapter\ioBroker.wiegand-tcpip\.dev-server\default\iobroker-data\objects.json
+2022-02-11 22:42:00.018  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046-Server  Redis inMem-objects listening on port 9001
+2022-02-11 22:42:00.019  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Redis Objects: Use Redis connection: 127.0.0.1:28344
+2022-02-11 22:42:00.028  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Objects client ready ... initialize now
+2022-02-11 22:42:00.029  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Objects create System PubSub Client
+2022-02-11 22:42:00.035  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Objects client initialize lua scripts
+2022-02-11 22:42:00.041  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Objects connected to redis: 127.0.0.1:28344
+2022-02-11 22:42:00.046  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046-Server Data File: C:\DEV\adapter\ioBroker.wiegand-tcpip\.dev-server\default\iobroker-data\states.json
+2022-02-11 22:42:00.051  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046-Server  Redis inMem-states listening on port 9000
+2022-02-11 22:42:00.052  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Redis States: Use Redis connection: 127.0.0.1:26344
+2022-02-11 22:42:00.054  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 States create System PubSub Client
+2022-02-11 22:42:00.058  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 States connected to redis: 127.0.0.1:26344
+2022-02-11 22:42:00.079  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 connected to Objects and States
+2022-02-11 22:42:00.088  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 Node.js version has changed from unknown to 14.18.3
+2022-02-11 22:42:00.090  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 added notifications configuration of host
+2022-02-11 22:42:00.116  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Plugin sentry Initialize Plugin (enabled=true)
+2022-02-11 22:42:00.118  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 Plugin sentry Sentry Plugin disabled for this process because sending of statistic data is disabled for the system
+2022-02-11 22:42:00.131  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 2 instances found
+2022-02-11 22:42:00.132  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 check instance "system.adapter.admin.0" for host "dev-wiegand-tcpip-BE1GV046"
+2022-02-11 22:42:00.135  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 check instance "system.adapter.wiegand-tcpip.0" for host "dev-wiegand-tcpip-BE1GV046"
+2022-02-11 22:42:00.136  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 starting 1 instance
+2022-02-11 22:42:00.165  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 added notifications configuration of system.adapter.admin.0
+2022-02-11 22:42:00.165  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 startInstance admin.0 loglevel=info, compact=false
+2022-02-11 22:42:00.179  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 instance system.adapter.admin.0 started with pid 4372
+2022-02-11 22:42:00.929  - [32minfo[39m: admin.0 (4372) Plugin sentry Sentry Plugin disabled for this process because sending of statistic data is disabled for the system
+2022-02-11 22:42:00.964  - [32minfo[39m: admin.0 (4372) starting. Version 5.3.0 in C:/DEV/adapter/ioBroker.wiegand-tcpip/.dev-server/default/node_modules/iobroker.admin, node: v14.18.3, js-controller: 4.0.8
+2022-02-11 22:42:00.974  - [32minfo[39m: admin.0 (4372) requesting all states
+2022-02-11 22:42:00.974  - [32minfo[39m: admin.0 (4372) requesting all objects
+2022-02-11 22:42:01.003  - [32minfo[39m: admin.0 (4372) received all objects
+2022-02-11 22:42:01.029  - [32minfo[39m: admin.0 (4372) http server listening on port 22344
+2022-02-11 22:42:01.030  - [32minfo[39m: admin.0 (4372) Use link "http://localhost:22344" to configure.
+2022-02-11 22:42:01.052  - [33mwarn[39m: admin.0 (4372) Cannot update news: getaddrinfo EAI_AGAIN iobroker.live
+2022-02-11 22:42:01.053  - [33mwarn[39m: admin.0 (4372) Cannot update rating: getaddrinfo EAI_AGAIN rating.iobroker.net
+2022-02-11 22:42:01.059  - [33mwarn[39m: admin.0 (4372) Repository cannot be read. Active repo: beta
+2022-02-11 22:42:37.711  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getRepository
+2022-02-11 22:42:37.713  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 Updating repository "beta" under "http://download.iobroker.net/sources-dist-latest.json"
+2022-02-11 22:42:52.726  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getInstalled
+2022-02-11 22:42:52.885  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getNotifications
+2022-02-11 22:42:52.917  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getHostInfo
+2022-02-11 22:42:53.841  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogs
+2022-02-11 22:42:57.778  - [31merror[39m: host.dev-wiegand-tcpip-BE1GV046 Error by updating repository "beta" under "http://download.iobroker.net/sources-dist-latest.json": Cannot download repository file from "http://download.iobroker.net/sources-dist-latest.json": timeout of 10000ms exceeded
+2022-02-11 22:43:17.960  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message clearNotifications
+2022-02-11 22:43:18.303  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getNotifications
+2022-02-11 22:43:55.619  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogFiles
+2022-02-11 22:43:55.636  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogs
+2022-02-11 22:46:03.189  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message readBaseSettings
+2022-02-11 22:46:05.341  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogFiles
+2022-02-11 22:46:05.355  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogs
+2022-02-11 22:47:28.227  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message readBaseSettings
+2022-02-11 23:02:52.851  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getRepository
+2022-02-11 23:02:52.853  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 Updating repository "beta" under "http://download.iobroker.net/sources-dist-latest.json"
+2022-02-11 23:03:12.861  - [31merror[39m: host.dev-wiegand-tcpip-BE1GV046 Error by updating repository "beta" under "http://download.iobroker.net/sources-dist-latest.json": Cannot download repository file from "http://download.iobroker.net/sources-dist-latest.json": timeout of 10000ms exceeded
+2022-02-11 23:03:12.882  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getInstalled
+2022-02-11 23:03:13.018  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getNotifications
+2022-02-11 23:03:13.055  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getHostInfo
+2022-02-11 23:03:13.975  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Incoming Host message getLogs
+2022-02-11 23:03:45.082  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 received SIGINT
+2022-02-11 23:03:45.083  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 stop isStopping=0 isDaemon=false allInstancesStopped=false
+2022-02-11 23:03:45.085  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 stopInstance system.adapter.admin.0 (force=false, process=true)
+2022-02-11 23:03:45.086  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 stopInstance system.adapter.wiegand-tcpip.0 (force=false, process=false)
+2022-02-11 23:03:45.088  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 stopInstance system.adapter.admin.0 send kill signal
+2022-02-11 23:03:45.088  - [32minfo[39m: admin.0 (4372) Got terminate signal TERMINATE_YOURSELF
+2022-02-11 23:03:45.088  - [32minfo[39m: admin.0 (4372) terminating http server on port 22344
+2022-02-11 23:03:45.089  - [32minfo[39m: admin.0 (4372) terminating
+2022-02-11 23:03:45.089  - [32minfo[39m: admin.0 (4372) Terminated (ADAPTER_REQUESTED_TERMINATION): Without reason
+2022-02-11 23:03:45.624  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 instance system.adapter.admin.0 terminated with code 11 (ADAPTER_REQUESTED_TERMINATION)
+2022-02-11 23:03:45.624  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 All instances are stopped.
+2022-02-11 23:03:45.718  - [34mdebug[39m: host.dev-wiegand-tcpip-BE1GV046 Plugin sentry destroyed
+2022-02-11 23:03:45.753  - [32minfo[39m: host.dev-wiegand-tcpip-BE1GV046 terminated
