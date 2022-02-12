@@ -12,6 +12,7 @@
     <script type="text/javascript" src="../../js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+    <script type="text/javascript" src="../../js/tableEditor.js"></script>
 
     <!-- Load our own files -->
     <link rel="stylesheet" type="text/css" href="style.css" />
@@ -22,6 +23,12 @@
         function load(settings, onChange) {
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
+
+
+            fillSelectIPs('#bind', settings.bind, false, true, function () {
+                $('#bind').select();
+            });
+
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
@@ -66,28 +73,43 @@
 <body>
 
     <div class="m adapter-container">
-
         <div class="row">
-            <div class="col s12 m4 l2">
-                <img src="wiegand-tcpip.png" class="logo">
+            <div class="col s12">
+                <ul class="tabs">
+                    <li class="tab col s2"><a href="#tab-main" class="translate active">Main settings</a></li>
+                    <li class="tab col s2"><a href="#tab-ctrl" class="translate">Controller</a></li>
+                </ul>
+            </div>
+            <div id="tab-main" class="col s12 page">
+                <div class="row">
+                    <div class="col s6 m4 l2">
+                        <img src="wiegand-tcpip.png" class="logo">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m8 l5">
+                        <select class="value" id="bind"></select>
+                        <label class="translate" for="bind">Network Interface:</label>
+                    </div>
+                    <div class="input-field col s12 m4 l3">
+                        <input class="value" id="port" size="5" maxlength="5" type="number" />
+                        <label class="translate" for="port">Port:</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m8 l5">
+                        <input class="value" id="listener" type="text" />
+                        <label class="translate" for="listener">Listener IP:</label>
+                    </div>
+                    <div class="input-field col s12 m4 l3">
+                        <input class="value" id="lport" size="5" maxlength="5" type="number" />
+                        <label class="translate" for="lport">Listener Port:</label>
+                    </div>
+                </div>
+            </div>
+            <div id="tab-ctrl" class="col s12 page">
             </div>
         </div>
-
-        <!-- Put your content here -->
-
-        <!-- For example columns with settings: -->
-        <div class="row">
-            <div class="col s6 input-field">
-                <input type="checkbox" class="value" id="option1" />
-                <label for="option1" class="translate">option1</label>
-            </div>
-
-            <div class="col s6 input-field">
-                <input type="text" class="value" id="option2" />
-                <label for="option2" class="translate">option2</label>
-            </div>
-        </div>
-
     </div>
 
 </body>
