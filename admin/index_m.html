@@ -12,7 +12,7 @@
     <script type="text/javascript" src="../../js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
-    <script type="text/javascript" src="../../js/tableEditor.js"></script>
+    <!-- script type="text/javascript" src="../../js/tableEditor.js"></script /-->
 
     <!-- Load our own files -->
     <link rel="stylesheet" type="text/css" href="style.css" />
@@ -20,10 +20,12 @@
 
     <script type="text/javascript">
         // This will be called by the admin adapter when the settings page loads
+
+        var controllers = [];
+
         function load(settings, onChange) {
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
-
 
             fillSelectIPs('#bind', settings.bind, false, true, function () {
                 $('#bind').select();
@@ -45,6 +47,9 @@
                         ;
                 }
             });
+
+            controllers = settings.controllers || [];
+            values2table('controllers', controllers, onChange);
             onChange(false);
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
@@ -64,51 +69,154 @@
                     obj[$this.attr('id')] = $this.val();
                 }
             });
+
+            obj.controllers = table2values('controllers');
+
             callback(obj);
         }
     </script>
 
+    <style>
+        /* Title of each section */
+        .title {
+            font-weight: bold;
+        }
+
+        /* Info text of each section */
+        .info {
+            margin-left: 1em;
+        }
+
+        /* Table header */
+        .table-values th {
+            height: 2em;
+            background-color: #2196F3;
+            font-size: 90%;
+        }
+
+        /* Table: Add button */
+        .table-button-add {
+            margin: 0.3em 0 1em 0;
+        }
+
+        #header-area {
+            margin-top: 5px;
+            margin-bottom: 1px;
+            background-color: #64b5f6;
+        }
+
+        #header-area #header-logo-title .logo {
+            float: left;
+            margin-right: 10px;
+        }
+
+        #header-area #header-logo-title p {
+            line-height: normal !important;
+            margin: 0 !important;
+            padding: 8px 0 0 8px;
+        }
+
+        #header-area #header-logo-title p>span.h-title {
+            font-size: 1.8em !important;
+            color: white;
+        }
+
+        #header-area #header-logo-title p>span.h-sub-title {
+            font-size: 1.0em !important;
+            color: white;
+            font-style: italic;
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="m adapter-container">
+
         <div class="row">
-            <div class="col s12">
-                <ul class="tabs">
-                    <li class="tab col s2"><a href="#tab-main" class="translate active">Main settings</a></li>
-                    <li class="tab col s2"><a href="#tab-ctrl" class="translate">Controller</a></li>
+            <div id="header-area" class="row">
+                <div id="header-logo-title" class="col s6">
+                    <img class="logo" src="wiegand-tcpip.png">
+                    <p>
+                        <span class="h-title translate">wiegand_setup</span><br />
+                        <span class="h-sub-title translate">setup_info</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col s12" id="tab-area">
+                <ul class="tabs blue lighten-3">
+                    <li class="tab col s3"><a href="#tab-main" class="translate active">net_setup</a></li>
+                    <li class="tab col s3"><a href="#tab-ctrl" class="translate">controller_setup</a></li>
                 </ul>
             </div>
+
             <div id="tab-main" class="col s12 page">
                 <div class="row">
-                    <div class="col s6 m4 l2">
-                        <img src="wiegand-tcpip.png" class="logo">
-                    </div>
+                    <!-- dummy-row for header-are do nor overlap /-->
                 </div>
                 <div class="row">
-                    <div class="input-field col s12 m8 l5">
+                    <div class="input-field col s12 m4">
                         <select class="value" id="bind"></select>
-                        <label class="translate" for="bind">Network Interface:</label>
+                        <label class="translate" for="bind">iface</label>
                     </div>
-                    <div class="input-field col s12 m4 l3">
-                        <input class="value" id="port" size="5" maxlength="5" type="number" />
-                        <label class="translate" for="port">Port:</label>
+                    <div class="input-field col s12 m2">
+                        <input class="value validate" id="port" min=1 max=65534 required type="number" />
+                        <label class="translate" for="port">port</label>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="input-field col s12 m8 l5">
-                        <input class="value" id="listener" type="text" />
-                        <label class="translate" for="listener">Listener IP:</label>
+                    <div class="input-field col s12 m4">
+                        <input class="value validate" id="response_ip" required type="text" />
+                        <label class="translate" for="response_ip">ip</label>
                     </div>
-                    <div class="input-field col s12 m4 l3">
-                        <input class="value" id="lport" size="5" maxlength="5" type="number" />
-                        <label class="translate" for="lport">Listener Port:</label>
+                    <div class="input-field col s12 m2">
+                        <input class="value validate" id="r_port" size="5" required maxlength="5" type="number" />
+                        <label class="translate" for="r_port">r_port</label>
+                    </div>
+                    <div class="input-field col s12 m1">
+                        <input class="value" id="broadcast" type="checkbox" />
+                        <label class="translate" for="broadcast">broadcast</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m2">
+                        <input class="value validate" id="timeout" min=1000 required type="number" />
+                        <label class="translate" for="timeout">timeout</label>
                     </div>
                 </div>
             </div>
+
             <div id="tab-ctrl" class="col s12 page">
+                <p class="translate title">controllers_title</p>
+                <p class="translate info">controllers_info</p>
+                <div class="col s12" id="controllers">
+                    <a class="btn-floating waves-effect waves-light blue table-button-add">
+                        <i class="material-icons">add</i></a>
+                    <div class="table-values-div">
+                        <table class="table-values">
+                            <thead>
+                                <tr>
+                                    <!-- th data-name="_index"></th /-->
+                                    <th data-name="enabled" class="header translate" data-type="checkbox"
+                                        style="width: 30px;"><i class="material-icons left">check_box</i></th>
+                                    <th data-name="serial" class="header translate validate" data-type="number"
+                                        style="width: 200px;" required>serial</th>
+                                    <th data-name="deviceIp" class="header translate" style="width: 300px;">deviceIp
+                                    </th>
+                                    <th data-name="exposedIP" class="header translate" style="width: 300px;">exposedIp
+                                    </th>
+                                    <th data-name="forceBroadcast" class="header" data-type="checkbox"
+                                        style="width: 50px;">forceBroadcast</th>
+                                    <th class="header" data-buttons="delete" style="width: 50px;"></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
