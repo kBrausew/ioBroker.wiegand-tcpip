@@ -1,0 +1,19 @@
+{
+    "broadcast": "transmisión",
+    "controller_setup": "Configuración del controlador y del bus Wiegand",
+    "controllers_info": "Ajustes para la dirección del controlador y del destinatario",
+    "controllers_title": "configuración del controlador",
+    "deviceIp": "IP del controlador",
+    "enabled": "activado",
+    "exposedIp": "IP del receptor",
+    "forceBroadcast": "Forzar transmisión",
+    "iface": "interfaz de red",
+    "ip": "Dirección del receptor",
+    "net_setup": "Configuración de red TCP/IP",
+    "port": "puerto emisor",
+    "r_port": "puerto receptor",
+    "serial": "número de serie",
+    "setup_info": "Ajustes para control de acceso de puertas, TCP/IP y bus Wiegand",
+    "timeout": "se acabó el tiempo",
+    "wiegand_setup": "interfaz de red"
+}

@@ -1,0 +1,19 @@
+{
+    "broadcast": "播送",
+    "controller_setup": "控制器/韦根总线设置",
+    "controllers_info": "控制器和收件人地址的设置",
+    "controllers_title": "控制器设置",
+    "deviceIp": "控制器 IP",
+    "enabled": "活性",
+    "exposedIp": "接收器 IP",
+    "forceBroadcast": "强制广播",
+    "iface": "网络接口",
+    "ip": "收件人 IP",
+    "net_setup": "TCP/IP 网络设置",
+    "port": "发件人端口",
+    "r_port": "接收端口",
+    "serial": "序列号",
+    "setup_info": "控制器、TCP/IP 和 Wiegand 总线的设置",
+    "timeout": "暂停",
+    "wiegand_setup": "门禁控制器设置"
+}

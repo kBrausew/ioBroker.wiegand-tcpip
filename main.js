@@ -10,6 +10,10 @@ const utils = require("@iobroker/adapter-core");
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
+const uapi  = require("uhppoted");
+
+let listener;
+let ctrls = new Array();
 
 class WiegandTcpip extends utils.Adapter {
 
@@ -91,12 +95,10 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            // Here you must clear all timeouts or intervals that may still be active
-            // clearTimeout(timeout1);
-            // clearTimeout(timeout2);
-            // ...
-            // clearInterval(interval1);
-
+            if(listener) {
+                listener.close();
+                this.log.debug("Listener Close");
+            }
             callback();
         } catch (e) {
             callback();

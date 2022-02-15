@@ -1,4 +1,19 @@
 {
-  "setup_info": "Door Accesss Controller",
-  "wiegand_setup": "Setup"
+    "broadcast": "Broadcast",
+    "controller_setup": "Controllers/Wiegand Bus Settings",
+    "controllers_info": "Settings for Controllers and Recipient Address",
+    "controllers_title": "Controllers Settings",
+    "deviceIp": "Controllers IP",
+    "enabled": "Activated",
+    "exposedIp": "Receiver IP",
+    "forceBroadcast": "Force Broadcast",
+    "iface": "Network Interface",
+    "ip": "Recipient IP",
+    "net_setup": "TCP/IP Network Settings",
+    "port": "Sender-Port",
+    "r_port": "Receiver-Port",
+    "serial": "Serial Number",
+    "setup_info": "Settings for Controllers, TCP/IP and Wiegand bus",
+    "timeout": "Timeout",
+    "wiegand_setup": "Door Access Controllers Settings"
 }

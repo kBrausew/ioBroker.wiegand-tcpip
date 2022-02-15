@@ -1,0 +1,19 @@
+{
+    "broadcast": "Rundfunk",
+    "controller_setup": "Controller/Wiegand-Bus-Einstellungen",
+    "controllers_info": "Einstellungen für Verantwortliche und Empfängeradresse",
+    "controllers_title": "Controller-Einstellungen",
+    "deviceIp": "Controller-IP",
+    "enabled": "Aktiviert",
+    "exposedIp": "Empfänger-IP",
+    "forceBroadcast": "Übertragung erzwingen",
+    "iface": "Netzwerkschnittstelle",
+    "ip": "Empfänger-IP",
+    "net_setup": "TCP/IP-Netzwerkeinstellungen",
+    "port": "Sender-Port",
+    "r_port": "Empfänger-Port",
+    "serial": "Seriennummer",
+    "setup_info": "Einstellungen für Controller, TCP/IP und Wiegand-Bus",
+    "timeout": "Auszeit",
+    "wiegand_setup": "Einstellungen der Türzugangs-Controller"
+}
