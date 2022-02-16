@@ -35,10 +35,12 @@ class WiegandTcpip extends utils.Adapter {
      * @param {string} ip
      */
     getBroadcastAddresses(ip) {
+        if(ip == "0.0.0.0") return ip;
         const interfaces = os.networkInterfaces();
         for (const iface in interfaces) {
             for (const i in interfaces[iface]) {
                 const f = interfaces[iface][i];
+                //this.log.info(JSON.stringify(f));
                 if (f.family === "IPv4" && f.address == ip) {
                     return ipaddr.IPv4.broadcastAddressFromCIDR(f.cidr).toString();
                 }
@@ -74,6 +76,20 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     /**
+     * @param {any} event
+     */
+    onUapiEvent(event) {
+        this.log.info(JSON.stringify(event));
+    }
+
+    /**
+     * @param {{ message: any; }} err
+     */
+    onUapiError(err) {
+        this.log.error(`\n   *** ERROR ${err.message}\n`);
+    }
+
+    /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
@@ -83,20 +99,45 @@ class WiegandTcpip extends utils.Adapter {
             native: {},
         });
 
-        const lBind         = this.config.iface     || "0.0.0.0";
+        const lBind         = this.config.bind      || "0.0.0.0";
         const lPort         = this.config.port      || 60000;
         const rPort         = this.config.r_port    || 60099;
         const lTimeout      = this.config.timeout   || 2500;
-        const lListen       = lBind + ":" + lPort.toString();
-        const lBroadcast    = this.getBroadcastAddresses(lBind) || lBind;
-        const lBroadcastP   = lBroadcast + ":" + rPort.toString();
+        const lListen       = lBind + ":" + rPort.toString();
+        const lBroadcast    = this.getBroadcastAddresses(lBind) || "0.0.0.0";
+        const lBroadcastP   = `${lBroadcast}:${lPort.toString()}`;
 
+        const id  = 405419896;// 423142932;
+        const id2 = 303986753;
+        const dev = [{
+            deviceId: id,
+            address: "",// "127.0.0.100",
+            forceBroadcast: true },
+        {   deviceID: id2,
+            address: "127.0.0.101",
+            forceBroadcast: false}];
+        //await this.createWiegand(12345);
 
-        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false)};
+        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, dev, false)};
         this.log.info(JSON.stringify(this.ctx));
-        //this.ulistener = uapi.listen();
+        //this.ulistener = uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
-        await this.createWiegand(12345);
+        uapi.getDevice(this.ctx, 405419896)
+            .then(response => {
+                this.log.info("get-device: (405419896) JSON: " + JSON.stringify(response));
+            })
+            .catch(err => {
+                this.log.error(`405419896: ${err.message}`);
+            });
+
+        uapi.getDevice(this.ctx, 303986753)
+            .then(response => {
+                this.log.info("get-device: (303986753) JSON: " + JSON.stringify(response));
+            })
+            .catch(err => {
+                this.log.error(`303986753: ${err.message}`);
+            });
+        
     }
 
     /**
@@ -109,7 +150,7 @@ class WiegandTcpip extends utils.Adapter {
                 this.ulistener.close();
                 this.ulistener = null;
                 this.log.debug("Listener Close");
-            }
+            } else this.log.debug("Listener is not runing");
             callback();
         } catch (e) {
             callback();
