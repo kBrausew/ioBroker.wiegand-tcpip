@@ -6,14 +6,10 @@
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
-const utils = require("@iobroker/adapter-core");
-
-// Load your modules here, e.g.:
-// const fs = require("fs");
-const uapi  = require("uhppoted");
-
-let listener;
-let ctrls = new Array();
+const utils     = require("@iobroker/adapter-core");
+const os        = require("os");
+const ipaddr    = require("ipaddr.js");
+const uapi      = require("uhppoted");
 
 class WiegandTcpip extends utils.Adapter {
 
@@ -30,63 +26,77 @@ class WiegandTcpip extends utils.Adapter {
         // this.on("objectChange", this.onObjectChange.bind(this));
         // this.on("message", this.onMessage.bind(this));
         this.on("unload", this.onUnload.bind(this));
+
+        this.ulistener = null;
+        this.ctrls     = new Array();
+    }
+
+    /**
+     * @param {string} ip
+     */
+    getBroadcastAddresses(ip) {
+        const interfaces = os.networkInterfaces();
+        for (const iface in interfaces) {
+            for (const i in interfaces[iface]) {
+                const f = interfaces[iface][i];
+                if (f.family === "IPv4" && f.address == ip) {
+                    return ipaddr.IPv4.broadcastAddressFromCIDR(f.cidr).toString();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param {string | number} serialNr
+     */
+    async createWiegand(serialNr){
+        const lSerialNr = serialNr.toString();
+        const lId       = "controllers." + lSerialNr;
+        await this.setObjectNotExistsAsync( lId, {
+            type: "device",
+            common: { name: lSerialNr, },
+            native: {},
+        });
+
+        await this.setObjectNotExistsAsync( lId + ".button", {
+            type: "channel",
+            common: { name: "button", },
+            native: {},
+        });
+
+        await this.setObjectNotExistsAsync( lId + ".button.doorOpen1", {
+            type: "state",
+            common: { name: "doorOpen1", type: "boolean", role: "switch", read: true, write: false },
+            native: {},
+        });
+
     }
 
     /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
-        // Initialize your adapter here
-
-        // The adapters config (in the instance object everything under the attribute "native") is accessible via
-        // this.config:
-        this.log.info("config option1: " + this.config.option1);
-        this.log.info("config option2: " + this.config.option2);
-
-        /*
-        For every state in the system there has to be also an object of type state
-        Here a simple template for a boolean variable named "testVariable"
-        Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-        */
-        await this.setObjectNotExistsAsync("testVariable", {
-            type: "state",
-            common: {
-                name: "testVariable",
-                type: "boolean",
-                role: "indicator",
-                read: true,
-                write: true,
-            },
+        await this.setObjectNotExistsAsync("controllers", {
+            type: "folder",
+            common: { name: "controllers", type: "folder" },
             native: {},
         });
 
-        // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-        this.subscribeStates("testVariable");
-        // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
-        // this.subscribeStates("lights.*");
-        // Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
-        // this.subscribeStates("*");
+        const lBind         = this.config.iface     || "0.0.0.0";
+        const lPort         = this.config.port      || 60000;
+        const rPort         = this.config.r_port    || 60099;
+        const lTimeout      = this.config.timeout   || 2500;
+        const lListen       = lBind + ":" + lPort.toString();
+        const lBroadcast    = this.getBroadcastAddresses(lBind) || lBind;
+        const lBroadcastP   = lBroadcast + ":" + rPort.toString();
 
-        /*
-            setState examples
-            you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-        */
-        // the variable testVariable is set to true as command (ack=false)
-        await this.setStateAsync("testVariable", true);
 
-        // same thing, but the value is flagged "ack"
-        // ack should be always set to true if the value is received from or acknowledged from the target system
-        await this.setStateAsync("testVariable", { val: true, ack: true });
+        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false)};
+        this.log.info(JSON.stringify(this.ctx));
+        //this.ulistener = uapi.listen();
 
-        // same thing, but the state is deleted after 30s (getState will return null afterwards)
-        await this.setStateAsync("testVariable", { val: true, ack: true, expire: 30 });
-
-        // examples for the checkPassword/checkGroup functions
-        let result = await this.checkPasswordAsync("admin", "iobroker");
-        this.log.info("check user admin pw iobroker: " + result);
-
-        result = await this.checkGroupAsync("admin", "admin");
-        this.log.info("check group user admin group admin: " + result);
+        await this.createWiegand(12345);
     }
 
     /**
@@ -95,8 +105,9 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            if(listener) {
-                listener.close();
+            if(this.ulistener) {
+                this.ulistener.close();
+                this.ulistener = null;
                 this.log.debug("Listener Close");
             }
             callback();

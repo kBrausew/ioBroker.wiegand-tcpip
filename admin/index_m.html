@@ -161,24 +161,24 @@
                         <label class="translate" for="bind">iface</label>
                     </div>
                     <div class="input-field col s12 m2">
-                        <input class="value validate" id="port" min=1 max=65534 required type="number" />
+                        <input class="value validate" id="port"   min=1 max=65534 maxlength="5"  required type="number" />
                         <label class="translate" for="port">port</label>
                     </div>
+                    <div class="input-field col s12 m2">
+                        <input class="value validate" id="r_port" min=1 max=65534 maxlength="5"  required type="number" />
+                        <label class="translate" for="r_port">r_port</label>
+                    </div>
                 </div>
-                <div class="row">
+                <!-- div class="row">
                     <div class="input-field col s12 m4">
                         <input class="value validate" id="response_ip" required type="text" />
                         <label class="translate" for="response_ip">ip</label>
-                    </div>
-                    <div class="input-field col s12 m2">
-                        <input class="value validate" id="r_port" size="5" required maxlength="5" type="number" />
-                        <label class="translate" for="r_port">r_port</label>
                     </div>
                     <div class="input-field col s12 m1">
                         <input class="value" id="broadcast" type="checkbox" />
                         <label class="translate" for="broadcast">broadcast</label>
                     </div>
-                </div>
+                </div /-->
                 <div class="row">
                     <div class="input-field col s12 m2">
                         <input class="value validate" id="timeout" min=1000 required type="number" />

@@ -76,8 +76,11 @@
         ]
     },
     "native": {
-        "option1": true,
-        "option2": "42"
+        "iface":        "127.0.0.1",
+        "port":         60000,
+        "r_port":       60099,
+        "timeout":      2500,
+        "controllers":  []
     },
     "objects": [],
     "instanceObjects": []
