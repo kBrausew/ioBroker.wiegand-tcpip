@@ -31,7 +31,7 @@
     "S4A ACB",
     "Door Access Controller Shenzhen Weigeng Industrial"
   ],
-  "repository": {
+  "repository": { 
     "type": "git",
     "url": "git+https://github.com/kBrausew/ioBroker.wiegand-tcpip.git"
   },
