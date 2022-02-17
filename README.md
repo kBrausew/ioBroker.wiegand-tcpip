@@ -106,3 +106,6 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
 
 ## License
 GPL-3.0
+
+## Copyright
+Copyright (c) 2022 kbrausew <kbrausew@magenta.de>
