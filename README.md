@@ -103,3 +103,6 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
 
 ### **WORK IN PROGRESS**
 * (kbrausew) initial release
+
+## License
+GPL-3.0
