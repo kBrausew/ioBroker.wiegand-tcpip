@@ -19,7 +19,7 @@
     }
   ],
   "homepage": "https://github.com/kbrausew/ioBroker.wiegand-tcpip",
-  "license": "GPL-3.0-or-later",
+  "license": "MIT",
   "keywords": [
     "UHPPOTE",
     "Wiegand to TCP/IP",
