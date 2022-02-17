@@ -19,7 +19,7 @@
     }
   ],
   "homepage": "https://github.com/kbrausew/ioBroker.wiegand-tcpip",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "keywords": [
     "UHPPOTE",
     "Wiegand to TCP/IP",
@@ -38,6 +38,7 @@
   "dependencies": {
     "@iobroker/adapter-core": "^2.5.1",
     "ipaddr.js": "^2.0.1",
+    "os": "^0.1.2",
     "uhppoted": "^0.7.2"
   },
   "devDependencies": {
