@@ -1,7 +1,7 @@
 {
     "broadcast": "Broadcast",
-    "controller_setup": "Controllers/Wiegand Bus Settings",
-    "controllers_info": "Settings for Controllers and Recipient Address",
+    "controller_setup": "Controllers / Wiegand Bus Settings",
+    "controllers_info": "Settings for Controllers (Network and Interface)",
     "controllers_title": "Controllers Settings",
     "deviceIp": "Controllers IP",
     "enabled": "Activated",

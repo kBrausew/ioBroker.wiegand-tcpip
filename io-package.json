@@ -76,11 +76,15 @@
         ]
     },
     "native": {
-        "bind":        "127.0.0.1",
-        "port":         60000,
-        "r_port":       60099,
-        "timeout":      2500,
-        "controllers":  []
+        "bind": "127.0.0.1",
+        "port": 60000,
+        "r_port": 60099,
+        "timeout": 2500,
+        "controllers": [{   "enabled":      true,
+                            "serial":       "405419896",
+                            "deviceIp":     "127.0.0.100",
+                            "exposedIP":    "",
+                            "exposedPort":  ""  }]
     },
     "objects": [],
     "instanceObjects": []

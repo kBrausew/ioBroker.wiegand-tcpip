@@ -6,6 +6,7 @@
     "deviceIp": "IP del controllore",
     "enabled": "attivato",
     "exposedIp": "IP ricevitore",
+    "exposedPort": "Porta host esposta",
     "forceBroadcast": "Trasmissione forzata",
     "iface": "interfaccia di rete",
     "ip": "indirizzo del destinatario",

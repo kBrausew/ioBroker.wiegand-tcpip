@@ -6,6 +6,7 @@
     "deviceIp": "IP-controller",
     "enabled": "geactiveerd",
     "exposedIp": "Ontvanger IP",
+    "exposedPort": "Blootgestelde hostpoort",
     "forceBroadcast": "Uitzending forceren",
     "iface": "netwerkinterface",
     "ip": "adres van de ontvanger",

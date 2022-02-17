@@ -6,6 +6,7 @@
     "deviceIp": "控制器 IP",
     "enabled": "活性",
     "exposedIp": "接收器 IP",
+    "exposedPort": "暴露的主机端口",
     "forceBroadcast": "强制广播",
     "iface": "网络接口",
     "ip": "收件人 IP",
