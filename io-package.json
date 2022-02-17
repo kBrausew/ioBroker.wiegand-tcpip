@@ -55,7 +55,7 @@
             "S4A ACB",
             "Door Access Controller Shenzhen Weigeng Industrial"
         ],
-        "license": "MIT",
+        "license": "GPL-3.0-or-later",
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "wiegand-tcpip.png",
