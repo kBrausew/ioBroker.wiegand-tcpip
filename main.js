@@ -52,7 +52,7 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {string | number} serialNr
      */
-    async createWiegand(serialNr){
+    async treeStructure(serialNr){
         const lSerialNr = serialNr.toString();
         const lId       = "controllers." + lSerialNr;
         await this.setObjectNotExistsAsync( lId, {
@@ -93,6 +93,7 @@ class WiegandTcpip extends utils.Adapter {
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
+        let myDev;
         await this.setObjectNotExistsAsync("controllers", {
             type: "folder",
             common: { name: "controllers", type: "folder" },
@@ -107,37 +108,33 @@ class WiegandTcpip extends utils.Adapter {
         const lBroadcast    = this.getBroadcastAddresses(lBind) || "0.0.0.0";
         const lBroadcastP   = `${lBroadcast}:${lPort.toString()}`;
 
-        const id  = 405419896;// 423142932;
-        const id2 = 303986753;
-        const dev = [{
-            deviceId: id,
-            address: "",// "127.0.0.100",
-            forceBroadcast: true },
-        {   deviceID: id2,
-            address: "127.0.0.101",
-            forceBroadcast: false}];
-        //await this.createWiegand(12345);
-
-        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, dev, false)};
+        myDev = {};
+        this.devs = [];
+        for (const dev of this.config.controllers){
+            if(!myDev[dev.serial]){
+                myDev[dev.serial] = dev.serial;
+                await this.treeStructure(dev.serial);
+                this.devs.push({"deviceId": dev.serial,
+                    "address":  dev.deviceIp,
+                    "forceBroadcast": true});
+            }
+        }
+        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false)};
         this.log.info(JSON.stringify(this.ctx));
-        //this.ulistener = uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
+        this.log.info(JSON.stringify(this.devs));
+        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
-        uapi.getDevice(this.ctx, 405419896)
-            .then(response => {
-                this.log.info("get-device: (405419896) JSON: " + JSON.stringify(response));
-            })
-            .catch(err => {
-                this.log.error(`405419896: ${err.message}`);
-            });
-
-        uapi.getDevice(this.ctx, 303986753)
-            .then(response => {
-                this.log.info("get-device: (303986753) JSON: " + JSON.stringify(response));
-            })
-            .catch(err => {
-                this.log.error(`303986753: ${err.message}`);
-            });
-        
+        myDev = {};
+        for (const dev of this.config.controllers){
+            if(!myDev[dev.serial]){
+                myDev[dev.serial] = dev.serial;
+                try{
+                    await uapi.setListener(this.ctx, dev.serial, lBroadcast, rPort);
+                } catch(err){
+                    this.log.error(err.message);
+                }
+            }
+        }
     }
 
     /**
