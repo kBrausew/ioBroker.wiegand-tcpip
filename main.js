@@ -27,8 +27,10 @@ class WiegandTcpip extends utils.Adapter {
         // this.on("message", this.onMessage.bind(this));
         this.on("unload", this.onUnload.bind(this));
 
-        this.ulistener = null;
-        this.ctrls     = new Array();
+        this.ulistener  = null;     // socket listener
+        this.ctrls      = [];       // controller of this.config validated
+        this.serials    = {};       // valide serials
+        this.devs       = [];       // uAPI devices (config)
     }
 
     /**
@@ -52,49 +54,53 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {string | number} serialNr
      */
-    async treeStructure(serialNr){
+    treeStructure(serialNr){
         const lSerialNr = serialNr.toString();
         const lId       = "controllers." + lSerialNr;
-        await this.setObjectNotExistsAsync( lId, {
+        this.setObjectNotExists(lId, {
             type: "device",
             common: { name: lSerialNr, },
             native: {},
         });
 
-        await this.setObjectNotExistsAsync( lId + ".button", {
-            type: "channel",
-            common: { name: "button", },
-            native: {},
-        });
+        for( let i=1; i <= 4; i++){
+            const cId = lId + "." + i.toString();
+            this.setObjectNotExists(cId, {
+                type: "channel",
+                common: { name: i.toString(), },
+                native: {},
+            });
 
-        await this.setObjectNotExistsAsync( lId + ".button.doorOpen1", {
-            type: "state",
-            common: { name: "doorOpen1", type: "boolean", role: "switch", read: true, write: false },
-            native: {},
-        });
-
+            const ulState = cId + ".unlock";
+            this.setObjectNotExists(ulState, {
+                type: "state",
+                common: { name: "unlock", type: "boolean", role: "switch", read: true, write: false },
+                native: {},
+            },(err, obj) => {
+                if(obj) this.setState(ulState, {val: false, ack: true});
+            });
+        }
     }
 
     /**
      * @param {any} event
      */
     onUapiEvent(event) {
-        this.log.info(JSON.stringify(event));
+        this.log.info("Event: " + JSON.stringify(event));
     }
 
     /**
      * @param {{ message: any; }} err
      */
     onUapiError(err) {
-        this.log.error(`\n   *** ERROR ${err.message}\n`);
+        this.log.error("Event receive error: " + err.message);
     }
 
     /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
-        let myDev;
-        await this.setObjectNotExistsAsync("controllers", {
+        this.setObjectNotExists("controllers", {
             type: "folder",
             common: { name: "controllers", type: "folder" },
             native: {},
@@ -108,33 +114,47 @@ class WiegandTcpip extends utils.Adapter {
         const lBroadcast    = this.getBroadcastAddresses(lBind) || "0.0.0.0";
         const lBroadcastP   = `${lBroadcast}:${lPort.toString()}`;
 
-        myDev = {};
-        this.devs = [];
         for (const dev of this.config.controllers){
-            if(!myDev[dev.serial]){
-                myDev[dev.serial] = dev.serial;
-                await this.treeStructure(dev.serial);
+            if(!this.serials[dev.serial]){
+                this.serials[dev.serial] = true;
+                this.treeStructure(dev.serial);
                 this.devs.push({"deviceId": dev.serial,
                     "address":  dev.deviceIp,
                     "forceBroadcast": true});
+                this.ctrls.push(dev);
             }
         }
-        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false)};
+        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false)};
         this.log.info(JSON.stringify(this.ctx));
         this.log.info(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
-        myDev = {};
-        for (const dev of this.config.controllers){
-            if(!myDev[dev.serial]){
-                myDev[dev.serial] = dev.serial;
-                try{
-                    await uapi.setListener(this.ctx, dev.serial, lBroadcast, rPort);
-                } catch(err){
-                    this.log.error(err.message);
-                }
+        for (const dev of this.ctrls){
+            try{
+                await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
+                await uapi.setListener(this.ctx, dev.serial, "127.0.0.1", rPort);
+                //await uapi.openDoor(this.ctx, dev.serial, 2);
+            } catch(err){
+                this.log.error(dev.serial + ": " + err.message);
             }
         }
+
+        this.getDevices(( err, res) =>{
+            if(!err && res){
+                res.forEach((obj) => {
+                    const spl = obj._id.split(".");
+                    if(spl.length == 4 && spl[2]=="controllers"){
+                        if(!this.serials[spl[3]]){
+                            this.delObject(obj._id, {recursive: true}, (err) => {
+                                this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
+                            });
+                            this.log.info(obj._id + " deleted");
+                        } else this.log.info(obj._id + " ok");
+                    }
+                });
+            }
+        });
+
     }
 
     /**

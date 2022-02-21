@@ -83,14 +83,14 @@
         "controllers": [
             {
                 "enabled": true,
-                "serial": "405419896",
+                "serial": 405419896,
                 "deviceIp": "127.0.0.100",
                 "exposedIP": "",
                 "exposedPort": ""
             },
             {
                 "enabled": true,
-                "serial": "303986753",
+                "serial": 303986753,
                 "deviceIp": "127.0.0.101",
                 "exposedIP": "",
                 "exposedPort": ""
