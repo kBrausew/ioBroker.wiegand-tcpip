@@ -162,11 +162,12 @@
                         <label class="translate" for="bind">iface</label>
                     </div>
                     <div class="input-field col s12 m2">
-                        <input class="value validate" id="port"   min=1 max=65534 maxlength="5"  required type="number" />
+                        <input class="value validate" id="port" min=1 max=65534 maxlength="5" required type="number" />
                         <label class="translate" for="port">port</label>
                     </div>
                     <div class="input-field col s12 m2">
-                        <input class="value validate" id="r_port" min=1 max=65534 maxlength="5"  required type="number" />
+                        <input class="value validate" id="r_port" min=1 max=65534 maxlength="5" required
+                            type="number" />
                         <label class="translate" for="r_port">r_port</label>
                     </div>
                 </div>
@@ -193,26 +194,50 @@
                 <p class="translate title">controllers_title</p>
                 <p class="translate info">controllers_info</p>
                 <div class="col s12" id="controllers">
-                    <a class="btn-floating waves-effect waves-light blue table-button-add">
-                        <i class="material-icons">add</i></a>
+                    <table>
+                        <tr>
+                            <td style="align-content: center; text-align: center; vertical-align: middle;">
+                                <a class="btn-floating waves-effect waves-light btn table-button-add">
+                                    <i class="material-icons left">add</i></a>
+                            </td>
+                            <td style="align-content: center; text-align: center; vertical-align: middle;">
+                                <a class="btn-floating waves-effect waves-light btn" id="search">
+                                    <i class="material-icons left">search</i><span class="translate">Search</span></a>
+                            </td>
+                            <td style="align-content: center; text-align: center; vertical-align: middle;">
+                                <a class="btn-floating waves-effect waves-light btn" id="setip">
+                                    <i class="material-icons left">build</i><span class="translate">SetIp</span></a>
+                            </td>
+                            <td width="100%"></td>
+                            <td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">credit_card</i><span class="translate">Card</span></a>
+                            </td>
+                            <td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">fingerprint</i><span class="translate">Fingerprint</span></a>
+                            </td>
+                            <td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">add_task</i><span class="translate"></span></a>
+                            </td>
+                        </tr>
+                    </table>
                     <div class="table-values-div">
                         <table class="table-values">
                             <thead>
                                 <tr>
                                     <!-- th data-name="_index"></th /-->
-                                    <th data-name="enabled" class="header" data-type="checkbox"
-                                        style="width: 30px;"><i class="material-icons left"
-                                        >check_box</i></th>
+                                    <th data-name="enabled" class="header" data-type="checkbox" style="width: 30px;"><i
+                                            class="material-icons left">check_box</i></th>
                                     <th data-name="serial" class="header translate validate" data-type="number"
-                                        style="width: 200px;" required
-                                        >serial</th>
-                                    <th data-name="deviceIp" class="header translate" style="width: 350px;"
-                                        >deviceIp</th>
-                                    <th data-name="exposedIP" class="header translate" style="width: 350px;"
-                                        >exposedIp</th>
+                                        style="width: 200px;" required>serial</th>
+                                    <th data-name="deviceIp" class="header translate" style="width: 350px;">deviceIp
+                                    </th>
+                                    <th data-name="exposedIP" class="header translate" style="width: 350px;">exposedIp
+                                    </th>
                                     <th data-name="exposedPort" class="header translate" style="width: 200px;"
-                                        data-type="number"
-                                        >exposedPort</th>
+                                        data-type="number">exposedPort</th>
                                     <!-- th data-name="forceBroadcast" class="header translate" data-type="checkbox"
                                         style="width: 50px;">forceBroadcast</th /-->
                                     <th class="header" data-buttons="delete" style="width: 50px;"></th>
