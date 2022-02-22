@@ -2,14 +2,14 @@
 cd /d %~dp0
 
 :BEGIN
-	echo.# ADD
-	git add .
-	if errorlevel 1 goto :ERROR
-	echo.#
-	echo.#
+REM	echo.# ADD
+REM	git add .
+REM	if errorlevel 1 goto :ERROR
+REM	echo.#
+REM	echo.#
 	
 	echo.# COMMIT
-	git commit -m "%COMPUTERNAME% %USERNAME% %DATE% %TIME%"
+	git commit -a -m "%COMPUTERNAME% %USERNAME% %DATE% %TIME%"
 	if errorlevel 1 goto :ERROR
 	echo.#
 	echo.#
