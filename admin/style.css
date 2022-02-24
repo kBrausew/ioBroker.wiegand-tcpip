@@ -30,3 +30,53 @@ label > i[title] {
 }
 
 /* Add your styles here */
+
+        /* Title of each section */
+        .title {
+            font-weight: bold;
+        }
+
+        /* Info text of each section */
+        .info {
+            margin-left: 1em;
+        }
+
+        /* Table header */
+        .table-values th {
+            height: 2em;
+            background-color: #2196F3;
+            font-size: 90%;
+        }
+
+        /* Table: Add button */
+        .table-button-add {
+            margin: 0.3em 0 1em 0;
+        }
+
+        #header-area {
+            margin-top: 5px;
+            margin-bottom: 1px;
+            background-color: #64b5f6;
+        }
+
+        #header-area #header-logo-title .logo {
+            float: left;
+            margin-right: 10px;
+        }
+
+        #header-area #header-logo-title p {
+            line-height: normal !important;
+            margin: 0 !important;
+            padding: 8px 0 0 8px;
+        }
+
+        #header-area #header-logo-title p>span.h-title {
+            font-size: 1.8em !important;
+            color: white;
+        }
+
+        #header-area #header-logo-title p>span.h-sub-title {
+            font-size: 1.0em !important;
+            color: white;
+            font-style: italic;
+        }

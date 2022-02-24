@@ -47,7 +47,32 @@
                         ;
                 }
             });
-
+            //Setup Button
+            getIsAdapterAlive((isAlive) => {
+                if (!isAlive) {
+                    $("#setip").addClass("disabled");
+                }
+            });
+            //Button0
+            $("#setip_box").addClass("hiddendiv");
+            $("#setip").click(function () {
+                $("#setip").addClass("disabled");
+                $("#setip_box").removeClass("hiddendiv");
+                var setip_serial = $("#setip_serial");
+                setip_serial.empty();
+                for (var i = 7; i < 13; i++) {
+                    /*var opt = new Option();
+                    opt.val("Value"+i);
+                    opt.text("Text"+1);*/
+                    setip_serial.append(new Option(i, i.toString(), false, false));
+                }
+                setip_serial.select();
+            });
+            $("#setip_cancel").click(function () {
+                $("#setip_box").addClass("hiddendiv");
+                $("#setip").removeClass("disabled");
+            });
+            //Button end
             controllers = settings.controllers || [];
             values2table('controllers', controllers, onChange);
             onChange(false);
@@ -75,58 +100,6 @@
             callback(obj);
         }
     </script>
-
-    <style>
-        /* Title of each section */
-        .title {
-            font-weight: bold;
-        }
-
-        /* Info text of each section */
-        .info {
-            margin-left: 1em;
-        }
-
-        /* Table header */
-        .table-values th {
-            height: 2em;
-            background-color: #2196F3;
-            font-size: 90%;
-        }
-
-        /* Table: Add button */
-        .table-button-add {
-            margin: 0.3em 0 1em 0;
-        }
-
-        #header-area {
-            margin-top: 5px;
-            margin-bottom: 1px;
-            background-color: #64b5f6;
-        }
-
-        #header-area #header-logo-title .logo {
-            float: left;
-            margin-right: 10px;
-        }
-
-        #header-area #header-logo-title p {
-            line-height: normal !important;
-            margin: 0 !important;
-            padding: 8px 0 0 8px;
-        }
-
-        #header-area #header-logo-title p>span.h-title {
-            font-size: 1.8em !important;
-            color: white;
-        }
-
-        #header-area #header-logo-title p>span.h-sub-title {
-            font-size: 1.0em !important;
-            color: white;
-            font-style: italic;
-        }
-    </style>
 </head>
 
 <body>
@@ -200,6 +173,7 @@
                                 <a class="btn-floating waves-effect waves-light btn table-button-add">
                                     <i class="material-icons left">add</i></a>
                             </td>
+                            <td width="150px">&nbsp;</td>
                             <td style="align-content: center; text-align: center; vertical-align: middle;">
                                 <a class="btn-floating waves-effect waves-light btn" id="search">
                                     <i class="material-icons left">search</i><span class="translate">Search</span></a>
@@ -208,28 +182,57 @@
                                 <a class="btn-floating waves-effect waves-light btn" id="setip">
                                     <i class="material-icons left">build</i><span class="translate">SetIp</span></a>
                             </td>
+                            <td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">credit_card</i><span
+                                        class="translate">Card</span></a>
+                            </td>
+                            <!-- td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">fingerprint</i><span
+                                        class="translate">Fingerprint</span></a>
+                            </td /-->
+                            <td>
+                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
+                                    <i class="material-icons left">access_time</i><span class="translate"></span></a>
+                            </td>
                             <td width="100%"></td>
-                            <td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">credit_card</i><span class="translate">Card</span></a>
-                            </td>
-                            <td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">fingerprint</i><span class="translate">Fingerprint</span></a>
-                            </td>
-                            <td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">add_task</i><span class="translate"></span></a>
-                            </td>
                         </tr>
                     </table>
+                    <div Xclass="row" id="setip_box">
+                        <div class="row">
+
+                        </div>
+                        <div class="row">
+
+                            <div class="input-field col s12 m4">
+                                <select id="setip_serial" data-type="text" type="text"></select>
+                                <label class="translate" for="setip_serial">device</label>
+                            </div>
+                            <div class="input-field col s12 m2">
+                                <input class="validate" id="setip_ip" type="text" />
+                                <label class="translate" for="setip_ip">deviceIp</label>
+                            </div>
+
+                            <div class="input-field col s12">
+                                <div class="row">
+                                    <a class="btn-floating waves-effect waves-light btn" id="setip_ok">
+                                        <i class="material-icons left">check_circle</i><span
+                                            class="translate"></span></a>
+                                    <a class="btn-floating waves-effect waves-light btn" id="setip_cancel">
+                                        <i class="material-icons left">cancel</i><span class="translate"></span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-values-div">
                         <table class="table-values">
                             <thead>
                                 <tr>
                                     <!-- th data-name="_index"></th /-->
-                                    <th data-name="enabled" class="header" data-type="checkbox" style="width: 30px;"><i
-                                            class="material-icons left">check_box</i></th>
+                                    <th data-name="enabled" class="header" data-type="checkbox" style="width: 30px;">
+                                        <i class="material-icons left">check_box</i>
+                                    </th>
                                     <th data-name="serial" class="header translate validate" data-type="number"
                                         style="width: 200px;" required>serial</th>
                                     <th data-name="deviceIp" class="header translate" style="width: 350px;">deviceIp
