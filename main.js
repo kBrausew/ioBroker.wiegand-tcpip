@@ -219,21 +219,20 @@ class WiegandTcpip extends utils.Adapter {
      * @param {ioBroker.Message} obj
      */
     onMessage(obj) {
-        console.log("Test");
-        this.log.info("Message: "+JSON.stringify(obj));
         if (typeof obj === "object" && obj.message) {
-            /*if (obj.command === "send") {
-                // e.g. send email or pushover or whatever
-                this.log.info("send command");
-
-                // Send response in callback if required
-                if (obj.callback) this.sendTo(obj.from, obj.command, "Message received", obj.callback);
-            }*/
+            const lBind = obj.message.bind || "0.0.0.0";
+            const lConf = { config: new uapi.Config("config", lBind, lBind + ":60000", lBind + ":60001", 2500, [], false) };
             switch (obj.command) {
                 case "search":
-                    if(obj.callback) {
-                        let result = ["1", "2", "3"];
-                        if (obj.callback) this.sendTo(obj.from, obj.command, result, obj.callback);
+                    if (obj.callback) {
+                        uapi.getDevices(lConf)
+                            .then(uRet => {
+                                //this.log.info(JSON.stringify(uRet));
+                                this.sendTo(obj.from, obj.command, uRet, obj.callback);
+                            })
+                            .catch(err => {
+                                this.log.error(JSON.stringify(err.message));
+                            });
                     }
                     break;
 
