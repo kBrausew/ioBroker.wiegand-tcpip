@@ -49,7 +49,12 @@ label > i[title] {
         }
 
         /* Table: Add button */
-        .table-button-add {
+        /*.table-button-add {
+            margin: 0.3em 0 1em 0;
+        }*/
+
+        /* Button for Table */
+        .btn {
             margin: 0.3em 0 1em 0;
         }
 

@@ -73,7 +73,8 @@
             {
                 "js-controller": ">=2.0.0"
             }
-        ]
+        ],
+        "messagebox": true
     },
     "native": {
         "bind": "127.0.0.1",

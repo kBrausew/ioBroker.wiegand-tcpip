@@ -6,10 +6,10 @@
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
-const utils     = require("@iobroker/adapter-core");
-const os        = require("os");
-const ipaddr    = require("ipaddr.js");
-const uapi      = require("uhppoted");
+const utils = require("@iobroker/adapter-core");
+const os = require("os");
+const ipaddr = require("ipaddr.js");
+const uapi = require("uhppoted");
 
 class WiegandTcpip extends utils.Adapter {
 
@@ -24,20 +24,20 @@ class WiegandTcpip extends utils.Adapter {
         this.on("ready", this.onReady.bind(this));
         this.on("stateChange", this.onStateChange.bind(this));
         // this.on("objectChange", this.onObjectChange.bind(this));
-        // this.on("message", this.onMessage.bind(this));
+        this.on("message", this.onMessage.bind(this));
         this.on("unload", this.onUnload.bind(this));
 
-        this.ulistener  = null;     // socket listener
-        this.ctrls      = [];       // controller of this.config validated
-        this.serials    = {};       // valide serials
-        this.devs       = [];       // uAPI devices (config)
+        this.ulistener = null;     // socket listener
+        this.ctrls = [];       // controller of this.config validated
+        this.serials = {};       // valide serials
+        this.devs = [];       // uAPI devices (config)
     }
 
     /**
      * @param {string} ip
      */
     getBroadcastAddresses(ip) {
-        if(ip == "0.0.0.0") return ip;
+        if (ip == "0.0.0.0") return ip;
         const interfaces = os.networkInterfaces();
         for (const iface in interfaces) {
             for (const i in interfaces[iface]) {
@@ -54,16 +54,18 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {string | number} serialNr
      */
-    treeStructure(serialNr){
+    treeStructure(serialNr) {
         const lSerialNr = serialNr.toString();
-        const lId       = "controllers." + lSerialNr;
+        const lId = "controllers." + lSerialNr;
+
+        this.log.info("Setup controller: " + lSerialNr);
         this.setObjectNotExists(lId, {
             type: "device",
             common: { name: lSerialNr, },
             native: {},
         });
 
-        for( let i=1; i <= 4; i++){
+        for (let i = 1; i <= 4; i++) {
             const cId = lId + "." + i.toString();
             this.setObjectNotExists(cId, {
                 type: "channel",
@@ -76,8 +78,8 @@ class WiegandTcpip extends utils.Adapter {
                 type: "state",
                 common: { name: "unlock", type: "boolean", role: "switch", read: true, write: false },
                 native: {},
-            },(err, obj) => {
-                if(obj) this.setState(ulState, {val: false, ack: true});
+            }, (err, obj) => {
+                if (obj) this.setState(ulState, { val: false, ack: true });
             });
         }
     }
@@ -106,46 +108,50 @@ class WiegandTcpip extends utils.Adapter {
             native: {},
         });
 
-        const lBind         = this.config.bind      || "0.0.0.0";
-        const lPort         = this.config.port      || 60000;
-        const rPort         = this.config.r_port    || 60099;
-        const lTimeout      = this.config.timeout   || 2500;
-        const lListen       = lBind + ":" + rPort.toString();
-        const lBroadcast    = this.getBroadcastAddresses(lBind) || "0.0.0.0";
-        const lBroadcastP   = `${lBroadcast}:${lPort.toString()}`;
+        const lBind = this.config.bind || "0.0.0.0";
+        const lPort = this.config.port || 60000;
+        const rPort = this.config.r_port || 60099;
+        const lTimeout = this.config.timeout || 2500;
+        const lListen = lBind + ":" + rPort.toString();
+        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
+        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
 
-        for (const dev of this.config.controllers){
-            if(!this.serials[dev.serial]){
+        for (const dev of this.config.controllers) {
+            if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
-                this.treeStructure(dev.serial);
-                this.devs.push({"deviceId": dev.serial,
-                    "address":  dev.deviceIp,
-                    "forceBroadcast": true});
-                this.ctrls.push(dev);
-            }
+                if (dev.serial && !isNaN(dev.serial)) {
+                    this.treeStructure(dev.serial);
+                    this.devs.push({
+                        "deviceId": dev.serial,
+                        "address": dev.deviceIp,
+                        "forceBroadcast": true
+                    });
+                    this.ctrls.push(dev);
+                } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
+            } else this.log.error("Controller configured more than once: " + dev.serial.toString());
         }
-        this.ctx = {config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false)};
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false) };
         this.log.info(JSON.stringify(this.ctx));
         this.log.info(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
-        for (const dev of this.ctrls){
-            try{
+        for (const dev of this.ctrls) {
+            try {
                 await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
                 await uapi.setListener(this.ctx, dev.serial, "127.0.0.1", rPort);
                 //await uapi.openDoor(this.ctx, dev.serial, 2);
-            } catch(err){
+            } catch (err) {
                 this.log.error(dev.serial + ": " + err.message);
             }
         }
 
-        this.getDevices(( err, res) =>{
-            if(!err && res){
+        this.getDevices((err, res) => {
+            if (!err && res) {
                 res.forEach((obj) => {
                     const spl = obj._id.split(".");
-                    if(spl.length == 4 && spl[2]=="controllers"){
-                        if(!this.serials[spl[3]]){
-                            this.delObject(obj._id, {recursive: true}, (err) => {
+                    if (spl.length == 4 && spl[2] == "controllers") {
+                        if (!this.serials[spl[3]]) {
+                            this.delObject(obj._id, { recursive: true }, (err) => {
                                 this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
                             });
                             this.log.info(obj._id + " deleted");
@@ -163,7 +169,7 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            if(this.ulistener) {
+            if (this.ulistener) {
                 this.ulistener.close();
                 this.ulistener = null;
                 this.log.debug("Listener Close");
@@ -207,22 +213,35 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     // If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-    // /**
-    //  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-    //  * Using this method requires "common.messagebox" property to be set to true in io-package.json
-    //  * @param {ioBroker.Message} obj
-    //  */
-    // onMessage(obj) {
-    //     if (typeof obj === "object" && obj.message) {
-    //         if (obj.command === "send") {
-    //             // e.g. send email or pushover or whatever
-    //             this.log.info("send command");
+    /**
+     * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
+     * Using this method requires "common.messagebox" property to be set to true in io-package.json
+     * @param {ioBroker.Message} obj
+     */
+    onMessage(obj) {
+        console.log("Test");
+        this.log.info("Message: "+JSON.stringify(obj));
+        if (typeof obj === "object" && obj.message) {
+            /*if (obj.command === "send") {
+                // e.g. send email or pushover or whatever
+                this.log.info("send command");
 
-    //             // Send response in callback if required
-    //             if (obj.callback) this.sendTo(obj.from, obj.command, "Message received", obj.callback);
-    //         }
-    //     }
-    // }
+                // Send response in callback if required
+                if (obj.callback) this.sendTo(obj.from, obj.command, "Message received", obj.callback);
+            }*/
+            switch (obj.command) {
+                case "search":
+                    if(obj.callback) {
+                        let result = ["1", "2", "3"];
+                        if (obj.callback) this.sendTo(obj.from, obj.command, result, obj.callback);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
 
 }
 

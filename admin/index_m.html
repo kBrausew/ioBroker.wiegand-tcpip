@@ -17,95 +17,12 @@
     <!-- Load our own files -->
     <link rel="stylesheet" type="text/css" href="style.css" />
     <script type="text/javascript" src="words.js"></script>
-
-    <script type="text/javascript">
-        // This will be called by the admin adapter when the settings page loads
-
-        var controllers = [];
-
-        function load(settings, onChange) {
-            // example: select elements with id=key and class=value and insert value
-            if (!settings) return;
-
-            fillSelectIPs('#bind', settings.bind, false, true, function () {
-                $('#bind').select();
-            });
-
-            $('.value').each(function () {
-                var $key = $(this);
-                var id = $key.attr('id');
-                if ($key.attr('type') === 'checkbox') {
-                    // do not call onChange direct, because onChange could expect some arguments
-                    $key.prop('checked', settings[id])
-                        .on('change', () => onChange())
-                        ;
-                } else {
-                    // do not call onChange direct, because onChange could expect some arguments
-                    $key.val(settings[id])
-                        .on('change', () => onChange())
-                        .on('keyup', () => onChange())
-                        ;
-                }
-            });
-            //Setup Button
-            getIsAdapterAlive((isAlive) => {
-                if (!isAlive) {
-                    $("#setip").addClass("disabled");
-                }
-            });
-            //Button0
-            $("#setip_box").addClass("hiddendiv");
-            $("#setip").click(function () {
-                $("#setip").addClass("disabled");
-                $("#setip_box").removeClass("hiddendiv");
-                var setip_serial = $("#setip_serial");
-                setip_serial.empty();
-                for (var i = 7; i < 13; i++) {
-                    /*var opt = new Option();
-                    opt.val("Value"+i);
-                    opt.text("Text"+1);*/
-                    setip_serial.append(new Option(i, i.toString(), false, false));
-                }
-                setip_serial.select();
-            });
-            $("#setip_cancel").click(function () {
-                $("#setip_box").addClass("hiddendiv");
-                $("#setip").removeClass("disabled");
-            });
-            //Button end
-            controllers = settings.controllers || [];
-            values2table('controllers', controllers, onChange);
-            onChange(false);
-            // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
-            if (M) M.updateTextFields();
-        }
-
-        // This will be called by the admin adapter when the user presses the save button
-        function save(callback) {
-            // example: select elements with class=value and build settings object
-            var obj = {};
-            $('.value').each(function () {
-                var $this = $(this);
-                if ($this.attr('type') === 'checkbox') {
-                    obj[$this.attr('id')] = $this.prop('checked');
-                } else if ($this.attr('type') === 'number') {
-                    obj[$this.attr('id')] = parseFloat($this.val());
-                } else {
-                    obj[$this.attr('id')] = $this.val();
-                }
-            });
-
-            obj.controllers = table2values('controllers');
-
-            callback(obj);
-        }
-    </script>
+    <script type="text/javascript" src="index_m.js"></script>
 </head>
 
 <body>
 
     <div class="m adapter-container">
-
         <div class="row">
             <div id="header-area" class="row">
                 <div id="header-logo-title" class="col s6">
@@ -116,35 +33,33 @@
                     </p>
                 </div>
             </div>
+        </div>
 
-            <!--div class="col s12" id="tab-area">
-                <ul class="tabs blue lighten-3">
-                    <li class="tab col s3"><a href="#tab-main" class="translate active">net_setup</a></li>
-                    <li class="tab col s3"><a href="#tab-ctrl" class="translate">controller_setup</a></li>
-                </ul>
-            </div /-->
+        <div class="col s12" id="tab-area">
+            <ul class="tabs blue lighten-3">
+                <li class="tab col s3"><a href="#tab-main" class="translate active">controller_setup</a></li>
+                <li class="tab col s3"><a href="#tab-tool" class="translate">tools</a></li>
+            </ul>
+        </div>
 
-            <!-- div id="tab-main" class="col s12 page" /-->
+        <!-- ########## Main /-->
+        <div id="tab-main" class="row s12 page">
+            <p class="translate title">net_setup</p>
             <div class="row">
-                <div class="row">
-                    <!-- dummy-row for header-are do nor overlap /-->
+                <div class="input-field col s12 m4">
+                    <select class="value" id="bind"></select>
+                    <label class="translate" for="bind">iface</label>
                 </div>
-                <div class="row">
-                    <div class="input-field col s12 m4">
-                        <select class="value" id="bind"></select>
-                        <label class="translate" for="bind">iface</label>
-                    </div>
-                    <div class="input-field col s12 m2">
-                        <input class="value validate" id="port" min=1 max=65534 maxlength="5" required type="number" />
-                        <label class="translate" for="port">port</label>
-                    </div>
-                    <div class="input-field col s12 m2">
-                        <input class="value validate" id="r_port" min=1 max=65534 maxlength="5" required
-                            type="number" />
-                        <label class="translate" for="r_port">r_port</label>
-                    </div>
+                <div class="input-field col s12 m2">
+                    <input class="value validate" id="port" min=1 max=65534 maxlength="5" required type="number" />
+                    <label class="translate" for="port">port</label>
                 </div>
-                <!-- div class="row">
+                <div class="input-field col s12 m2">
+                    <input class="value validate" id="r_port" min=1 max=65534 maxlength="5" required type="number" />
+                    <label class="translate" for="r_port">r_port</label>
+                </div>
+            </div>
+            <!-- div class="row">
                     <div class="input-field col s12 m4">
                         <input class="value validate" id="response_ip" required type="text" />
                         <label class="translate" for="response_ip">ip</label>
@@ -154,77 +69,23 @@
                         <label class="translate" for="broadcast">broadcast</label>
                     </div>
                 </div /-->
-                <div class="row">
-                    <div class="input-field col s12 m2">
-                        <input class="value validate" id="timeout" min=1000 required type="number" />
-                        <label class="translate" for="timeout">timeout</label>
-                    </div>
+            <div class="row">
+                <div class="input-field col s12 m2">
+                    <input class="value validate" id="timeout" min=1000 required type="number" />
+                    <label class="translate" for="timeout">timeout</label>
                 </div>
             </div>
-
-            <!-- div id="tab-ctrl" class="col s12 page" /-->
+            <!-- ########## Main \ Conntroller /-->
+            <p class="translate title">controllers_title</p>
+            <!-- p class="translate info">controllers_info</p /-->
             <div class="row">
-                <p class="translate title">controllers_title</p>
-                <p class="translate info">controllers_info</p>
                 <div class="col s12" id="controllers">
-                    <table>
-                        <tr>
-                            <td style="align-content: center; text-align: center; vertical-align: middle;">
-                                <a class="btn-floating waves-effect waves-light btn table-button-add">
-                                    <i class="material-icons left">add</i></a>
-                            </td>
-                            <td width="150px">&nbsp;</td>
-                            <td style="align-content: center; text-align: center; vertical-align: middle;">
-                                <a class="btn-floating waves-effect waves-light btn" id="search">
-                                    <i class="material-icons left">search</i><span class="translate">Search</span></a>
-                            </td>
-                            <td style="align-content: center; text-align: center; vertical-align: middle;">
-                                <a class="btn-floating waves-effect waves-light btn" id="setip">
-                                    <i class="material-icons left">build</i><span class="translate">SetIp</span></a>
-                            </td>
-                            <td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">credit_card</i><span
-                                        class="translate">Card</span></a>
-                            </td>
-                            <!-- td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">fingerprint</i><span
-                                        class="translate">Fingerprint</span></a>
-                            </td /-->
-                            <td>
-                                <a class="btn-floating waves-effect waves-light btn disabled" id="setip">
-                                    <i class="material-icons left">access_time</i><span class="translate"></span></a>
-                            </td>
-                            <td width="100%"></td>
-                        </tr>
-                    </table>
-                    <div Xclass="row" id="setip_box">
-                        <div class="row">
-
-                        </div>
-                        <div class="row">
-
-                            <div class="input-field col s12 m4">
-                                <select id="setip_serial" data-type="text" type="text"></select>
-                                <label class="translate" for="setip_serial">device</label>
-                            </div>
-                            <div class="input-field col s12 m2">
-                                <input class="validate" id="setip_ip" type="text" />
-                                <label class="translate" for="setip_ip">deviceIp</label>
-                            </div>
-
-                            <div class="input-field col s12">
-                                <div class="row">
-                                    <a class="btn-floating waves-effect waves-light btn" id="setip_ok">
-                                        <i class="material-icons left">check_circle</i><span
-                                            class="translate"></span></a>
-                                    <a class="btn-floating waves-effect waves-light btn" id="setip_cancel">
-                                        <i class="material-icons left">cancel</i><span class="translate"></span></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <a class="btn-floating waves-effect waves-light btn table-button-add">
+                        <i class="material-icons left">add</i>
+                    </a>
+                    <a class="btn-floating waves-effect waves-light btn" id="search">
+                        <i class="material-icons left">search</i><span class="translate">Search</span>
+                    </a>
                     <div class="table-values-div">
                         <table class="table-values">
                             <thead>
@@ -251,10 +112,66 @@
                     </div>
                 </div>
             </div>
-
         </div>
-    </div>
 
+        <!-- ########## Tools /-->
+        <div id="tab-tool" class="row s12 page">
+            <div class="row">
+                <table>
+                    <tr>
+                        <td style="align-content: center; text-align: center; vertical-align: middle;">
+
+                        </td>
+                        <td width="150px">&nbsp;</td>
+                        <td style="align-content: center; text-align: center; vertical-align: middle;">
+
+                        </td>
+                        <td style="align-content: center; text-align: center; vertical-align: middle;">
+                            <a class="btn-floating waves-effect waves-light btn disabled" id="setip_btn">
+                                <i class="material-icons left">build</i><span class="translate">SetIp</span></a>
+                        </td>
+                        <td>
+                            <a class="btn-floating waves-effect waves-light btn disabled" id="card_btn">
+                                <i class="material-icons left">credit_card</i><span class="translate">Card</span></a>
+                        </td>
+                        <td>
+                            <a class="btn-floating waves-effect waves-light btn disabled" id="finger_btn">
+                                <i class="material-icons left">fingerprint</i><span
+                                    class="translate">Fingerprint</span></a>
+                        </td>
+                        <td>
+                            <a class="btn-floating waves-effect waves-light btn disabled" id="profile_btn">
+                                <i class="material-icons left">access_time</i><span class="translate">profile</span></a>
+                        </td>
+                        <td width="100%"></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="row" id="setip_box">
+                <p class="translate title">setip_title</p>
+                <div class="row">
+                    <div class="input-field col s12 m4">
+                        <select id="setip_serial" type="text"></select>
+                        <label class="translate" for="setip_serial">device</label>
+                    </div>
+                    <div class="input-field col s12 m2">
+                        <input class="validate" id="setip_ip" type="text" />
+                        <label class="translate" for="setip_ip">deviceIp</label>
+                    </div>
+
+                    <div class="input-field col s12">
+                        <div class="row">
+                            <a class="btn-floating waves-effect waves-light btn" id="setip_ok">
+                                <i class="material-icons left">check_circle</i><span class="translate"></span></a>
+                            <a class="btn-floating waves-effect waves-light btn" id="setip_cancel">
+                                <i class="material-icons left">cancel</i><span class="translate"></span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- tab-tool /-->
+    </div><!-- m adapter-container /-->
 </body>
 
 </html>
