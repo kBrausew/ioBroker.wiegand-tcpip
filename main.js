@@ -10,6 +10,7 @@ const utils = require("@iobroker/adapter-core");
 const os = require("os");
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
+//const { translateText } = require("./lib/tools");
 
 class WiegandTcpip extends utils.Adapter {
 
@@ -120,19 +121,23 @@ class WiegandTcpip extends utils.Adapter {
             if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
-                    this.treeStructure(dev.serial);
-                    this.devs.push({
-                        "deviceId": dev.serial,
-                        "address": dev.deviceIp,
-                        "forceBroadcast": true
-                    });
-                    this.ctrls.push(dev);
+                    if (dev.enabled) {
+                        this.treeStructure(dev.serial);
+                        this.devs.push({
+                            "deviceId": dev.serial,
+                            "address": dev.deviceIp,
+                            "hostIP": dev.exposedIP,
+                            "port": dev.exposedPort,
+                            "forceBroadcast": true
+                        });
+                        this.ctrls.push(dev);
+                    } else this.log.error("Controller disabled: [" + dev.serial.toString() + "]");
                 } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
             } else this.log.error("Controller configured more than once: " + dev.serial.toString());
         }
         this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false) };
-        this.log.info(JSON.stringify(this.ctx));
-        this.log.info(JSON.stringify(this.devs));
+        this.log.silly(JSON.stringify(this.ctx));
+        this.log.silly(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         for (const dev of this.ctrls) {
@@ -155,7 +160,7 @@ class WiegandTcpip extends utils.Adapter {
                                 this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
                             });
                             this.log.info(obj._id + " deleted");
-                        } else this.log.info(obj._id + " ok");
+                        } else this.log.silly(obj._id + " ok");
                     }
                 });
             }
@@ -232,21 +237,37 @@ class WiegandTcpip extends utils.Adapter {
                             .catch(err => {
                                 const uRetErr = {
                                     "error": true,
-                                    "err": err
+                                    "err": { "message": err.message.toString() }
                                 };
                                 this.log.error("onMessage Error (" + obj.command + "): " + err.message.toString());
                                 this.sendTo(obj.from, obj.command, uRetErr, obj.callback);
                             });
                     }
                     break;
-
+                case "setip":
+                    if (obj.callback) {
+                        this.log.silly(JSON.stringify(obj.message));
+                        uapi.setIP(lConf, obj.message.deviceId, obj.message.address, obj.message.netmask, obj.message.gateway)
+                            .then(uRet => {
+                                this.sendTo(obj.from, obj.command, uRet, obj.callback);
+                            })
+                            .catch(err => {
+                                const uRetErr = {
+                                    "error": true,
+                                    "err": { "message": err.message.toString() }
+                                };
+                                this.log.error("onMessage Error (" + obj.command + "): " + err.message.toString());
+                                this.sendTo(obj.from, obj.command, uRetErr, obj.callback);
+                            });
+                    }
+                    break;
                 default:
                     {
                         const uRetNoCommand = {
                             "error": true,
-                            "err": { "message": _("Not a Command") }
+                            "err": { "message": "\"" + obj.command.toUpperCase() + "\" is not a valide Command" }
                         };
-                        this.log.error("onMessage Error (" + obj.command + "): " + uRetNoCommand.err.message.toString());
+                        this.log.error("onMessage Error: " + uRetNoCommand.err.message.toString());
                         this.sendTo(obj.from, obj.command, uRetNoCommand, obj.callback);
                     }
                     break;

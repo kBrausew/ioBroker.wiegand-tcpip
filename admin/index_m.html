@@ -83,7 +83,7 @@
                     <a class="btn-floating waves-effect waves-light btn table-button-add">
                         <i class="material-icons left">add</i>
                     </a>
-                    <a class="btn-floating waves-effect waves-light btn" id="search">
+                    <a class="btn-floating waves-effect waves-light btn disabled" id="search">
                         <i class="material-icons left">search</i><span class="translate">Search</span>
                     </a>
                     <div class="table-values-div">
@@ -118,7 +118,7 @@
         <div id="tab-tool-ip" class="row s12 page">
             <p class="translate title">setip_title</p>
             <p><a class="btn-floating waves-effect waves-light btn" id="setip_btn">
-                    <i class="material-icons left">build</i><span class="translate">SetIp</span></a></p>
+                    <i class="material-icons left">devices</i><span class="translate">SetIp</span></a></p>
 
             <div class="row" id="setip_box">
                 <div class="row" name="thisDIV">
@@ -126,6 +126,7 @@
                         <select id="setip_serial" type="text"></select>
                         <label class="translate" for="setip_serial">device</label>
                     </div>
+                    <dic class="hiddendiv"><input id="setip_serial_nr" type="text" /></dic>
                     <div class="input-field col s12 m2">
                         <input class="validate" id="setip_ip" type="text" />
                         <label class="translate" for="setip_ip">deviceIp</label>
