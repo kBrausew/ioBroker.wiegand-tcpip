@@ -227,16 +227,28 @@ class WiegandTcpip extends utils.Adapter {
                     if (obj.callback) {
                         uapi.getDevices(lConf)
                             .then(uRet => {
-                                //this.log.info(JSON.stringify(uRet));
                                 this.sendTo(obj.from, obj.command, uRet, obj.callback);
                             })
                             .catch(err => {
-                                this.log.error(JSON.stringify(err.message));
+                                const uRetErr = {
+                                    "error": true,
+                                    "err": err
+                                };
+                                this.log.error("onMessage Error (" + obj.command + "): " + err.message.toString());
+                                this.sendTo(obj.from, obj.command, uRetErr, obj.callback);
                             });
                     }
                     break;
 
                 default:
+                    {
+                        const uRetNoCommand = {
+                            "error": true,
+                            "err": { "message": _("Not a Command") }
+                        };
+                        this.log.error("onMessage Error (" + obj.command + "): " + uRetNoCommand.err.message.toString());
+                        this.sendTo(obj.from, obj.command, uRetNoCommand, obj.callback);
+                    }
                     break;
             }
         }

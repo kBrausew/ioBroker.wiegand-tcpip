@@ -38,7 +38,7 @@
         <div class="col s12" id="tab-area">
             <ul class="tabs blue lighten-3">
                 <li class="tab col s3"><a href="#tab-main" class="translate active">controller_setup</a></li>
-                <li class="tab col s3"><a href="#tab-tool" class="translate">tools</a></li>
+                <li class="tab col s3"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
             </ul>
         </div>
 
@@ -114,44 +114,15 @@
             </div>
         </div>
 
-        <!-- ########## Tools /-->
-        <div id="tab-tool" class="row s12 page">
-            <div class="row">
-                <table>
-                    <tr>
-                        <td style="align-content: center; text-align: center; vertical-align: middle;">
-
-                        </td>
-                        <td width="150px">&nbsp;</td>
-                        <td style="align-content: center; text-align: center; vertical-align: middle;">
-
-                        </td>
-                        <td style="align-content: center; text-align: center; vertical-align: middle;">
-                            <a class="btn-floating waves-effect waves-light btn disabled" id="setip_btn">
-                                <i class="material-icons left">build</i><span class="translate">SetIp</span></a>
-                        </td>
-                        <td>
-                            <a class="btn-floating waves-effect waves-light btn disabled" id="card_btn">
-                                <i class="material-icons left">credit_card</i><span class="translate">Card</span></a>
-                        </td>
-                        <td>
-                            <a class="btn-floating waves-effect waves-light btn disabled" id="finger_btn">
-                                <i class="material-icons left">fingerprint</i><span
-                                    class="translate">Fingerprint</span></a>
-                        </td>
-                        <td>
-                            <a class="btn-floating waves-effect waves-light btn disabled" id="profile_btn">
-                                <i class="material-icons left">access_time</i><span class="translate">profile</span></a>
-                        </td>
-                        <td width="100%"></td>
-                    </tr>
-                </table>
-            </div>
+        <!-- ########## Tools Set IP /-->
+        <div id="tab-tool-ip" class="row s12 page">
+            <p class="translate title">setip_title</p>
+            <p><a class="btn-floating waves-effect waves-light btn" id="setip_btn">
+                    <i class="material-icons left">build</i><span class="translate">SetIp</span></a></p>
 
             <div class="row" id="setip_box">
-                <p class="translate title">setip_title</p>
-                <div class="row">
-                    <div class="input-field col s12 m4">
+                <div class="row" name="thisDIV">
+                    <div class="input-field col s12 m3">
                         <select id="setip_serial" type="text"></select>
                         <label class="translate" for="setip_serial">device</label>
                     </div>
@@ -159,14 +130,18 @@
                         <input class="validate" id="setip_ip" type="text" />
                         <label class="translate" for="setip_ip">deviceIp</label>
                     </div>
+                    <div class="input-field col s12 m2">
+                        <input class="validate" id="setip_mask" type="text" />
+                        <label class="translate" for="setip_mask">ipMask</label>
+                    </div>
+                    <div class="input-field col s12 m2">
+                        <input class="validate" id="setip_gateway" type="text" />
+                        <label class="translate" for="setip_gateway">gateWay</label>
+                    </div>
 
                     <div class="input-field col s12">
-                        <div class="row">
                             <a class="btn-floating waves-effect waves-light btn" id="setip_ok_btn">
-                                <i class="material-icons left">check_circle</i><span class="translate"></span></a>
-                            <a class="btn-floating waves-effect waves-light btn" id="setip_cancel_btn">
-                                <i class="material-icons left">cancel</i><span class="translate"></span></a>
-                        </div>
+                                <i class="material-icons left">check_circle</i><span class="translate">set_ip</span></a>
                     </div>
                 </div>
             </div>

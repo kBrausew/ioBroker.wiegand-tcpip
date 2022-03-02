@@ -16,5 +16,6 @@
     "serial": "Serial Number",
     "setup_info": "Settings for Controllers, TCP/IP and Wiegand bus",
     "timeout": "Timeout",
-    "wiegand_setup": "Door Access Controllers Settings"
+    "wiegand_setup": "Door Access Controllers Settings",
+    "no-conntroller": "No controller found in the local network"
 }
