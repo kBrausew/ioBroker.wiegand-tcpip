@@ -59,19 +59,19 @@ class WiegandTcpip extends utils.Adapter {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
                     this.treeStructure(dev.serial);
-                    if(dev.deviceIp && dev.exposedIP && dev.exposedPort){
+                    if (dev.deviceIp && dev.exposedIP && dev.exposedPort) {
                         // full rig
                         dev.broadcast = false;
-                    } else if(dev.deviceIp || dev.exposedIP || dev.exposedPort) {
-                        if(!dev.deviceIp) dev.deviceIp = lBroadcast;
-                        if(!dev.exposedIP) dev.exposedIP = lBroadcast;
-                        if(!dev.exposedPort) dev.exposedPort = lPort;
+                    } else if (dev.deviceIp || dev.exposedIP || dev.exposedPort) {
+                        if (!dev.deviceIp) dev.deviceIp = lBroadcast;
+                        if (!dev.exposedIP) dev.exposedIP = lBroadcast;
+                        if (!dev.exposedPort) dev.exposedPort = rPort;
                         dev.broadcast = true;
-                        this.log.warn("Incorrect controller-setup for non/broadcast: "+dev.serial);
+                        this.log.warn("Incorrect controller-setup for non/broadcast: " + dev.serial);
                     } else {
                         dev.deviceIp = lBroadcast;
                         dev.exposedIP = lBroadcast;
-                        dev.exposedPort = lPort;
+                        dev.exposedPort = rPort;
                         dev.broadcast = true;
                     }
                     this.devs.push({
@@ -86,11 +86,6 @@ class WiegandTcpip extends utils.Adapter {
             } else this.log.error("Controller configured more than once: " + dev.serial.toString());
         }
 
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
-        //this.log.silly(JSON.stringify(this.ctx));
-        //this.log.silly(JSON.stringify(this.devs));
-        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
-
         this.getDevices((err, res) => {
             if (!err && res) {
                 res.forEach((obj) => {
@@ -100,33 +95,38 @@ class WiegandTcpip extends utils.Adapter {
                             this.delObject(obj._id, { recursive: true }, (err) => {
                                 this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
                             });
-                            this.log.info(obj._id + " deleted");
+                            this.log.info("Controller: "+ obj._id + " deleted");
                         } else this.log.silly(obj._id + " ok");
                     }
                 });
             }
         });
 
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
+        //this.log.silly(JSON.stringify(this.ctx));
+        //this.log.silly(JSON.stringify(this.devs));
+        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
+
         await this.assureRun();
         this.heartbeat = this.setInterval(this.assureRun.bind(this), 10000);// this.lheartbeat);
     }
 
-    async assureRun(){
-        if(!this.assureRun_once){
+    async assureRun() {
+        if (!this.assureRun_once) {
             this.assureRun_once = true;
             //################################################################################
             //Major Try-Catch: no change code befor...
-            try{
+            try {
                 for (const dev of this.ctrls) {
                     try {
                         const lStat = await uapi.getStatus(this.ctx, dev.serial);
                         let eventNr = 0;
-                        if(lStat){
-                            if(lStat.state){
-                                if(lStat.state.event){
+                        if (lStat) {
+                            if (lStat.state) {
+                                if (lStat.state.event) {
                                     eventNr = parseInt(lStat.state.event.index, 10) || 0;
-                                    if(dev.run != false && dev.eventNr != eventNr){
-                                        this.log.warn("May connection lost (better restart): "+dev.serial);
+                                    if (dev.run != false && dev.eventNr != eventNr) {
+                                        this.log.warn("May connection lost (better restart): " + dev.serial);
                                         dev.run = false;
                                     }
                                 }
@@ -134,21 +134,21 @@ class WiegandTcpip extends utils.Adapter {
                         }
                         //this.log.info(JSON.stringify(lStat));
 
-                        if(!dev.run){
-                            this.log.info("Connect to controller: "+dev.serial);
-                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(),"YYYY-MM-DD hh:mm:ss"));
+                        if (!dev.run) {
+                            this.log.info("Connect to controller: " + dev.serial);
+                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
                             await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
-                            await uapi.setListener(this.ctx, dev.serial, dev.exposedIP , dev.exposedPort);
+                            await uapi.setListener(this.ctx, dev.serial, dev.exposedIP, dev.exposedPort);
                             dev.eventNr = eventNr;
 
                             dev.run = true;
                         }
                     } catch (err) {
                         dev.run = false;
-                        this.log.error("Problem with controller "+dev.serial + ": " + err.message);
+                        this.log.error("Problem with controller " + dev.serial + ": " + err.message);
                     }
                 }
-            } catch (e){
+            } catch (e) {
                 this.log.error("Major problem in heartbeat: " + e.message);
             }
             //Major Try-Catch: no change code after...
@@ -157,31 +157,6 @@ class WiegandTcpip extends utils.Adapter {
         } else this.log.error("Heartbeat is too short for all required tasks");
     }
 
-    /**
-     * Is called when adapter shuts down - callback has to be called under any circumstances!
-     * @param {() => void} callback
-     */
-    onUnload(callback) {
-        try {
-            if (this.ulistener) {
-                this.ulistener.close();
-                this.ulistener = null;
-                this.log.debug("Listener Close");
-            } else this.log.debug("Listener is not runing");
-        // eslint-disable-next-line no-empty
-        } catch (e) {}
-
-        try {
-            if(this.heartbeat){
-                clearInterval(this.heartbeat);
-                this.heartbeat = null;
-                this.log.debug("Clear interval");
-            }
-        // eslint-disable-next-line no-empty
-        } catch (e) {}
-
-        callback();
-    }
 
     /**
      * @param {string} ip
@@ -247,6 +222,32 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUapiError(err) {
         this.log.error("Event receive error: " + err.message);
+    }
+
+    /**
+     * Is called when adapter shuts down - callback has to be called under any circumstances!
+     * @param {() => void} callback
+     */
+    onUnload(callback) {
+        try {
+            if (this.ulistener) {
+                this.ulistener.close();
+                this.ulistener = null;
+                this.log.debug("Listener Close");
+            } else this.log.debug("Listener is not runing");
+            // eslint-disable-next-line no-empty
+        } catch (e) { }
+
+        try {
+            if (this.heartbeat) {
+                clearInterval(this.heartbeat);
+                this.heartbeat = null;
+                this.log.debug("Clear interval");
+            }
+            // eslint-disable-next-line no-empty
+        } catch (e) { }
+
+        callback();
     }
 
     // If you need to react to object changes, uncomment the following block and the corresponding line in the constructor.
