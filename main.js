@@ -10,7 +10,6 @@ const utils = require("@iobroker/adapter-core");
 const os = require("os");
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
-//const { translateText } = require("./lib/tools");
 
 class WiegandTcpip extends utils.Adapter {
     /**
@@ -29,7 +28,7 @@ class WiegandTcpip extends utils.Adapter {
 
         this.ulistener = null;      // socket listener
         this.heartbeat = null;      // interval heartbeat
-        this.lheartbeat = 0;        // interval ms
+        //this.lheartbeat = 0;        // interval ms
         this.ctrls = [];            // controller of this.config validated
         this.serials = {};          // serials
         this.devs = [];             // uAPI devices (config)
@@ -39,26 +38,30 @@ class WiegandTcpip extends utils.Adapter {
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
+        const lBind = this.config.bind || "0.0.0.0";
+        const lPort = this.config.port || 60000;
+        const rPort = this.config.r_port || 60099;
+        const lTimeout = this.config.timeout || 2500;
+        const lheartbeat = this.config.heartbeat || 60000;
+        const lListen = lBind + ":" + rPort.toString();
+        const lBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255"; //"0.0.0.0";
+        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
+
+        this.unsubscribeStates("*");
+
         this.setObjectNotExists("controllers", {
             type: "folder",
             common: { name: "controllers", type: "folder" },
             native: {},
         });
 
-        const lBind = this.config.bind || "0.0.0.0";
-        const lPort = this.config.port || 60000;
-        const rPort = this.config.r_port || 60099;
-        const lTimeout = this.config.timeout || 2500;
-        this.lheartbeat = this.config.heartbeat || 60000;
-        const lListen = lBind + ":" + rPort.toString();
-        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
-        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
-
+        let itemNr = 1;
         for (const dev of this.config.controllers) {
             if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
-                    this.treeStructure(dev.serial);
+                    this.treeStructure(dev.serial, itemNr);
+                    ++itemNr;
                     if (dev.deviceIp && dev.exposedIP && dev.exposedPort) {
                         // full rig
                         dev.broadcast = false;
@@ -95,7 +98,7 @@ class WiegandTcpip extends utils.Adapter {
                             this.delObject(obj._id, { recursive: true }, (err) => {
                                 this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
                             });
-                            this.log.info("Controller: "+ obj._id + " deleted");
+                            this.log.info("Controller: " + obj._id + " deleted");
                         } else this.log.silly(obj._id + " ok");
                     }
                 });
@@ -108,7 +111,7 @@ class WiegandTcpip extends utils.Adapter {
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         await this.assureRun();
-        this.heartbeat = this.setInterval(this.assureRun.bind(this), 10000);// this.lheartbeat);
+        this.heartbeat = this.setInterval(this.assureRun.bind(this), lheartbeat);
     }
 
     async assureRun() {
@@ -147,6 +150,7 @@ class WiegandTcpip extends utils.Adapter {
                         dev.run = false;
                         this.log.error("Problem with controller " + dev.serial + ": " + err.message);
                     }
+                    this.setState("controllers."+dev.serial+".reachable", { ack: true, val: dev.run});
                 }
             } catch (e) {
                 this.log.error("Major problem in heartbeat: " + e.message);
@@ -162,7 +166,7 @@ class WiegandTcpip extends utils.Adapter {
      * @param {string} ip
      */
     getBroadcastAddresses(ip) {
-        if (ip == "0.0.0.0") return ip;
+        if (ip == "0.0.0.0") return "255.255.255.255";// ip;
         const interfaces = os.networkInterfaces();
         for (const iface in interfaces) {
             for (const i in interfaces[iface]) {
@@ -179,42 +183,73 @@ class WiegandTcpip extends utils.Adapter {
 
     /**
      * @param {string | number} serialNr
+     * @param {number} itemNr
      */
-    treeStructure(serialNr) {
+    treeStructure(serialNr, itemNr) {
         const lSerialNr = serialNr.toString();
-        const lId = "controllers." + lSerialNr;
+        const lRootPath = "controllers." + lSerialNr;
 
         this.log.info("Create controller objects: " + lSerialNr);
-        this.setObjectNotExists(lId, {
+        this.setObjectNotExists(lRootPath, {
             type: "device",
-            common: { name: lSerialNr, },
+            common: { name: "Controller-"+itemNr.toString(), },
             native: {},
         });
 
-        for (let i = 1; i <= 4; i++) {
-            const cId = lId + "." + i.toString();
-            this.setObjectNotExists(cId, {
-                type: "channel",
-                common: { name: i.toString(), },
-                native: {},
-            });
+        this.createOneState(lRootPath, "eventNr", "number", "indicator.reachable", true, false, 0);
+        this.createOneState(lRootPath, "reachable", "boolean", "indicator.reachable", true, false, false);
 
-            const ulState = cId + ".unlock";
-            this.setObjectNotExists(ulState, {
-                type: "state",
-                common: { name: "unlock", type: "boolean", role: "switch", read: true, write: false },
+        for (let i = 1; i <= 4; i++) {
+            const lDoorPath = lRootPath + "." + i.toString();
+            this.setObjectNotExists(lDoorPath, {
+                type: "channel",
+                common: { name: "Door-" + i.toString(), },
                 native: {},
-            }, (err, obj) => {
-                if (obj) this.setState(ulState, { val: false, ack: true });
             });
+            this.createOneState(lDoorPath, "lastSwipe", "string", "value", true, false, "");
+            this.createOneState(lDoorPath, "remoteOpen", "boolean", "level.lock", false, true, false);
+            this.subscribeStates(lDoorPath+".remoteOpen");
+            this.createOneState(lDoorPath, "unlooked", "boolean", "value.lock", true, false, false);
         }
     }
 
     /**
-     * @param {any} event
+     * @param {string} path
+     * @param {string} name
+     * @param {string} type
+     * @param {string} role
+     * @param {boolean} read
+     * @param {boolean} write
+     * @param {any} val
      */
-    onUapiEvent(event) {
-        this.log.info("Event: " + JSON.stringify(event));
+    createOneState(path, name, type, role, read, write, val) {
+        const lPath = path + "." + name;
+        this.setObjectNotExists(lPath, {
+            type: "state",
+            common: { name: name, type: type, role: role, read: read, write: write },
+            native: {},
+        }, (err, obj) => {
+            if (obj) {
+                this.setState(lPath, { val: val, ack: true });
+                this.log.silly(name+": New State @ "+lPath);
+            }
+        });
+    }
+
+    /**
+     * @param {any} evt
+     */
+    onUapiEvent(evt) {
+        //this.log.info("Event: " + JSON.stringify(evt));
+        if(evt && evt.state && evt.state.serialNumber && evt.state.event && evt.state.event.granted && evt.state.event.door){
+            const lEvt = evt.state.event;
+            const lCtrl = evt.state.serialNumber;
+            const lGranted = lEvt.granted || false;
+            const lDoor = parseInt(lEvt.door, 10) || 0;
+
+            //this.setState("controllers."+lCtrl.toString()+"."+lDoor.toString()+".", {ack: true, val: c});
+            this.log.info("Controller: "+lCtrl+" Door: "+lDoor+" granted: "+lGranted);
+        }
     }
 
     /**
@@ -278,6 +313,7 @@ class WiegandTcpip extends utils.Adapter {
             this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
         } else {
             // The state was deleted
+            this.unsubscribeStates(id);
             this.log.info(`state ${id} deleted`);
         }
     }
