@@ -13,7 +13,6 @@ const uapi = require("uhppoted");
 //const { translateText } = require("./lib/tools");
 
 class WiegandTcpip extends utils.Adapter {
-
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
@@ -28,10 +27,160 @@ class WiegandTcpip extends utils.Adapter {
         this.on("message", this.onMessage.bind(this));
         this.on("unload", this.onUnload.bind(this));
 
-        this.ulistener = null;     // socket listener
-        this.ctrls = [];       // controller of this.config validated
-        this.serials = {};       // serials
-        this.devs = [];       // uAPI devices (config)
+        this.ulistener = null;      // socket listener
+        this.heartbeat = null;      // interval heartbeat
+        this.lheartbeat = 0;        // interval ms
+        this.ctrls = [];            // controller of this.config validated
+        this.serials = {};          // serials
+        this.devs = [];             // uAPI devices (config)
+    }
+
+    /**
+     * Is called when databases are connected and adapter received configuration.
+     */
+    async onReady() {
+        this.setObjectNotExists("controllers", {
+            type: "folder",
+            common: { name: "controllers", type: "folder" },
+            native: {},
+        });
+
+        const lBind = this.config.bind || "0.0.0.0";
+        const lPort = this.config.port || 60000;
+        const rPort = this.config.r_port || 60099;
+        const lTimeout = this.config.timeout || 2500;
+        this.lheartbeat = this.config.heartbeat || 60000;
+        const lListen = lBind + ":" + rPort.toString();
+        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
+        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
+
+        for (const dev of this.config.controllers) {
+            if (!this.serials[dev.serial]) {
+                this.serials[dev.serial] = true;
+                if (dev.serial && !isNaN(dev.serial)) {
+                    this.treeStructure(dev.serial);
+                    if(dev.deviceIp && dev.exposedIP && dev.exposedPort){
+                        // full rig
+                        dev.broadcast = false;
+                    } else if(dev.deviceIp || dev.exposedIP || dev.exposedPort) {
+                        if(!dev.deviceIp) dev.deviceIp = lBroadcast;
+                        if(!dev.exposedIP) dev.exposedIP = lBroadcast;
+                        if(!dev.exposedPort) dev.exposedPort = lPort;
+                        dev.broadcast = true;
+                        this.log.warn("Incorrect controller-setup for non/broadcast: "+dev.serial);
+                    } else {
+                        dev.deviceIp = lBroadcast;
+                        dev.exposedIP = lBroadcast;
+                        dev.exposedPort = lPort;
+                        dev.broadcast = true;
+                    }
+                    this.devs.push({
+                        "deviceId": dev.serial,
+                        "address": dev.deviceIp,
+                        "forceBroadcast": dev.broadcast
+                    });
+                    dev.run = false;
+                    dev.eventNr = 0;
+                    this.ctrls.push(dev);
+                } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
+            } else this.log.error("Controller configured more than once: " + dev.serial.toString());
+        }
+
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
+        //this.log.silly(JSON.stringify(this.ctx));
+        //this.log.silly(JSON.stringify(this.devs));
+        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
+
+        this.getDevices((err, res) => {
+            if (!err && res) {
+                res.forEach((obj) => {
+                    const spl = obj._id.split(".");
+                    if (spl.length == 4 && spl[2] == "controllers") {
+                        if (!this.serials[spl[3]]) {
+                            this.delObject(obj._id, { recursive: true }, (err) => {
+                                this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
+                            });
+                            this.log.info(obj._id + " deleted");
+                        } else this.log.silly(obj._id + " ok");
+                    }
+                });
+            }
+        });
+
+        await this.assureRun();
+        this.heartbeat = this.setInterval(this.assureRun.bind(this), 10000);// this.lheartbeat);
+    }
+
+    async assureRun(){
+        if(!this.assureRun_once){
+            this.assureRun_once = true;
+            //################################################################################
+            //Major Try-Catch: no change code befor...
+            try{
+                for (const dev of this.ctrls) {
+                    try {
+                        const lStat = await uapi.getStatus(this.ctx, dev.serial);
+                        let eventNr = 0;
+                        if(lStat){
+                            if(lStat.state){
+                                if(lStat.state.event){
+                                    eventNr = parseInt(lStat.state.event.index, 10) || 0;
+                                    if(dev.run != false && dev.eventNr != eventNr){
+                                        this.log.warn("May connection lost (better restart): "+dev.serial);
+                                        dev.run = false;
+                                    }
+                                }
+                            }
+                        }
+                        //this.log.info(JSON.stringify(lStat));
+
+                        if(!dev.run){
+                            this.log.info("Connect to controller: "+dev.serial);
+                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(),"YYYY-MM-DD hh:mm:ss"));
+                            await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
+                            await uapi.setListener(this.ctx, dev.serial, dev.exposedIP , dev.exposedPort);
+                            dev.eventNr = eventNr;
+
+                            dev.run = true;
+                        }
+                    } catch (err) {
+                        dev.run = false;
+                        this.log.error("Problem with controller "+dev.serial + ": " + err.message);
+                    }
+                }
+            } catch (e){
+                this.log.error("Major problem in heartbeat: " + e.message);
+            }
+            //Major Try-Catch: no change code after...
+            //################################################################################
+            this.assureRun_once = false;
+        } else this.log.error("Heartbeat is too short for all required tasks");
+    }
+
+    /**
+     * Is called when adapter shuts down - callback has to be called under any circumstances!
+     * @param {() => void} callback
+     */
+    onUnload(callback) {
+        try {
+            if (this.ulistener) {
+                this.ulistener.close();
+                this.ulistener = null;
+                this.log.debug("Listener Close");
+            } else this.log.debug("Listener is not runing");
+        // eslint-disable-next-line no-empty
+        } catch (e) {}
+
+        try {
+            if(this.heartbeat){
+                clearInterval(this.heartbeat);
+                this.heartbeat = null;
+                this.log.debug("Clear interval");
+            }
+        // eslint-disable-next-line no-empty
+        } catch (e) {}
+
+        callback();
     }
 
     /**
@@ -60,7 +209,7 @@ class WiegandTcpip extends utils.Adapter {
         const lSerialNr = serialNr.toString();
         const lId = "controllers." + lSerialNr;
 
-        this.log.info("Setup controller: " + lSerialNr);
+        this.log.info("Create controller objects: " + lSerialNr);
         this.setObjectNotExists(lId, {
             type: "device",
             common: { name: lSerialNr, },
@@ -98,98 +247,6 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUapiError(err) {
         this.log.error("Event receive error: " + err.message);
-    }
-
-    /**
-     * Is called when databases are connected and adapter received configuration.
-     */
-    async onReady() {
-        this.setObjectNotExists("controllers", {
-            type: "folder",
-            common: { name: "controllers", type: "folder" },
-            native: {},
-        });
-
-        const lBind = this.config.bind || "0.0.0.0";
-        const lPort = this.config.port || 60000;
-        const rPort = this.config.r_port || 60099;
-        const lTimeout = this.config.timeout || 2500;
-        const lListen = lBind + ":" + rPort.toString();
-        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
-        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
-
-        for (const dev of this.config.controllers) {
-            if (!this.serials[dev.serial]) {
-                this.serials[dev.serial] = true;
-                if (dev.serial && !isNaN(dev.serial)) {
-                    this.treeStructure(dev.serial);
-                    if(dev.deviceIp && dev.exposedIP && dev.exposedPort){
-                        //
-                        dev.broadcast = false;
-                    } else {
-                        dev.deviceIp = lBroadcast;
-                        dev.exposedIP = lBroadcast;
-                        dev.exposedPort = lPort.toString();
-                        dev.broadcast = true;
-                    }
-                    this.devs.push({
-                        "deviceId": dev.serial,
-                        "address": dev.deviceIp,
-                        "forceBroadcast": dev.broadcast
-                    });
-                    this.ctrls.push(dev);
-                } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
-            } else this.log.error("Controller configured more than once: " + dev.serial.toString());
-        }
-
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
-        this.log.silly(JSON.stringify(this.ctx));
-        this.log.silly(JSON.stringify(this.devs));
-        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
-
-        for (const dev of this.ctrls) {
-            try {
-                await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
-                await uapi.setListener(this.ctx, dev.serial, "127.0.0.1", rPort);
-                //await uapi.openDoor(this.ctx, dev.serial, 2);
-            } catch (err) {
-                this.log.error(dev.serial + ": " + err.message);
-            }
-        }
-
-        this.getDevices((err, res) => {
-            if (!err && res) {
-                res.forEach((obj) => {
-                    const spl = obj._id.split(".");
-                    if (spl.length == 4 && spl[2] == "controllers") {
-                        if (!this.serials[spl[3]]) {
-                            this.delObject(obj._id, { recursive: true }, (err) => {
-                                this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
-                            });
-                            this.log.info(obj._id + " deleted");
-                        } else this.log.silly(obj._id + " ok");
-                    }
-                });
-            }
-        });
-
-    }
-
-    /**
-     * Is called when adapter shuts down - callback has to be called under any circumstances!
-     * @param {() => void} callback
-     */
-    onUnload(callback) {
-        try {
-            if (this.ulistener) {
-                this.ulistener.close();
-                this.ulistener = null;
-                this.log.debug("Listener Close");
-            } else this.log.debug("Listener is not runing");
-            callback();
-        } catch (e) {
-            callback();
-        }
     }
 
     // If you need to react to object changes, uncomment the following block and the corresponding line in the constructor.
