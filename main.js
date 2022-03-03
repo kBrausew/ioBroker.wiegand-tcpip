@@ -30,7 +30,7 @@ class WiegandTcpip extends utils.Adapter {
 
         this.ulistener = null;     // socket listener
         this.ctrls = [];       // controller of this.config validated
-        this.serials = {};       // valide serials
+        this.serials = {};       // serials
         this.devs = [];       // uAPI devices (config)
     }
 
@@ -42,6 +42,7 @@ class WiegandTcpip extends utils.Adapter {
         const interfaces = os.networkInterfaces();
         for (const iface in interfaces) {
             for (const i in interfaces[iface]) {
+                // @ts-ignore
                 const f = interfaces[iface][i];
                 //this.log.info(JSON.stringify(f));
                 if (f.family === "IPv4" && f.address == ip) {
@@ -121,21 +122,27 @@ class WiegandTcpip extends utils.Adapter {
             if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
-                    if (dev.enabled) {
-                        this.treeStructure(dev.serial);
-                        this.devs.push({
-                            "deviceId": dev.serial,
-                            "address": dev.deviceIp,
-                            "hostIP": dev.exposedIP,
-                            "port": dev.exposedPort,
-                            "forceBroadcast": true
-                        });
-                        this.ctrls.push(dev);
-                    } else this.log.error("Controller disabled: [" + dev.serial.toString() + "]");
+                    this.treeStructure(dev.serial);
+                    if(dev.deviceIp && dev.exposedIP && dev.exposedPort){
+                        //
+                        dev.broadcast = false;
+                    } else {
+                        dev.deviceIp = lBroadcast;
+                        dev.exposedIP = lBroadcast;
+                        dev.exposedPort = lPort.toString();
+                        dev.broadcast = true;
+                    }
+                    this.devs.push({
+                        "deviceId": dev.serial,
+                        "address": dev.deviceIp,
+                        "forceBroadcast": dev.broadcast
+                    });
+                    this.ctrls.push(dev);
                 } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
             } else this.log.error("Controller configured more than once: " + dev.serial.toString());
         }
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, [], false) };
+
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
         this.log.silly(JSON.stringify(this.ctx));
         this.log.silly(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
@@ -225,6 +232,7 @@ class WiegandTcpip extends utils.Adapter {
      */
     onMessage(obj) {
         if (typeof obj === "object" && obj.message) {
+            // @ts-ignore
             const lBind = obj.message.bind || "0.0.0.0";
             const lConf = { config: new uapi.Config("config", lBind, lBind + ":60000", lBind + ":60001", 2500, [], false) };
             switch (obj.command) {
@@ -247,6 +255,7 @@ class WiegandTcpip extends utils.Adapter {
                 case "setip":
                     if (obj.callback) {
                         this.log.silly(JSON.stringify(obj.message));
+                        // @ts-ignore
                         uapi.setIP(lConf, obj.message.deviceId, obj.message.address, obj.message.netmask, obj.message.gateway)
                             .then(uRet => {
                                 this.sendTo(obj.from, obj.command, uRet, obj.callback);
