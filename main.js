@@ -10,6 +10,7 @@ const utils = require("@iobroker/adapter-core");
 const os = require("os");
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
+const { stat } = require("fs");
 
 class WiegandTcpip extends utils.Adapter {
     /**
@@ -44,7 +45,8 @@ class WiegandTcpip extends utils.Adapter {
         const lTimeout = this.config.timeout || 2500;
         const lheartbeat = this.config.heartbeat || 60000;
         const lListen = lBind + ":" + rPort.toString();
-        const lBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255"; //"0.0.0.0";
+        const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
+        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
         const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
 
         this.unsubscribeStates("*");
@@ -69,13 +71,13 @@ class WiegandTcpip extends utils.Adapter {
                         dev.broadcast = false;
                     } else if (dev.deviceIp || dev.exposedIP || dev.exposedPort) {
                         if (!dev.deviceIp) dev.deviceIp = lBroadcast;
-                        if (!dev.exposedIP) dev.exposedIP = lBroadcast;
+                        if (!dev.exposedIP) dev.exposedIP = lBind;
                         if (!dev.exposedPort) dev.exposedPort = rPort;
                         dev.broadcast = true;
                         this.log.warn("Incorrect controller-setup for non/broadcast: " + dev.serial);
                     } else {
                         dev.deviceIp = lBroadcast;
-                        dev.exposedIP = lBroadcast;
+                        dev.exposedIP = rBroadcast;
                         dev.exposedPort = rPort;
                         dev.broadcast = true;
                     }
@@ -113,7 +115,7 @@ class WiegandTcpip extends utils.Adapter {
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         await this.assureRun();
-        this.heartbeat = this.setInterval(this.assureRun.bind(this), 15000);// lheartbeat);
+        this.heartbeat = this.setInterval(this.assureRun.bind(this), lheartbeat);
     }
 
     async assureRun() {
@@ -148,6 +150,17 @@ class WiegandTcpip extends utils.Adapter {
 
                             dev.run = true;
                         }
+
+                        /*
+                        // test: remoteOpen
+                                                uapi.openDoor(this.ctx, dev.serial, 1)
+                                                    .then(ret => {
+                                                        this.log.info("open Door: " + JSON.stringify(ret));
+                                                    })
+                                                    .catch(err => {
+                                                        this.log.error(dev.serial + ": remote Open Door: 1 :: " + err.message);
+                                                    });
+                        */
                     } catch (err) {
                         dev.run = false;
                         this.log.error("Problem with controller " + dev.serial + ": " + err.message);
@@ -193,7 +206,11 @@ class WiegandTcpip extends utils.Adapter {
      * @param {string} ip
      */
     getBroadcastAddresses(ip) {
-        if (ip == "0.0.0.0") return "255.255.255.255";// ip;
+        // if (ip == "0.0.0.0"){
+        //     if(local){
+        //         return "255.255.255.255";
+        //     } else return "0.0.0.0";// ip;
+        // }
         const interfaces = os.networkInterfaces();
         for (const iface in interfaces) {
             for (const i in interfaces[iface]) {
@@ -233,7 +250,7 @@ class WiegandTcpip extends utils.Adapter {
                 common: { name: "Door-" + i.toString(), },
                 native: {},
             });
-            this.createOneState(lDoorPath, "lastSwipe", "string", "value", true, false, "");
+            this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, null);
             this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false);
             this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0);
             this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "");
@@ -301,7 +318,7 @@ class WiegandTcpip extends utils.Adapter {
                         this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
                         this.setTimeout(() => {
                             this.setState(lRoot + ".unlocked", { ack: true, val: false });
-                        }, 10);
+                        }, 50);
                     }
                 });
             }
@@ -320,6 +337,8 @@ class WiegandTcpip extends utils.Adapter {
             this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
             this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
             this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
+
+            this.setState(lRoot + ".remoteOpen", { ack: true, val: true });
 
             if (ctrl && lEvt.index) {
                 ctrl.eventNr = lEvt.index;
@@ -385,9 +404,45 @@ class WiegandTcpip extends utils.Adapter {
      * @param {ioBroker.State | null | undefined} state
      */
     onStateChange(id, state) {
+        const id_part = id.split(".");
+        if (id_part.length < 6 || id_part[0] != this.name || id_part[1] != this.instance.toString() || id_part[5] != "remoteOpen") {
+            return;
+        }
         if (state) {
             // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
+            const lLocal = "system.adapter." + this.name + "." + this.instance;
+            const lFrom = state.from || lLocal;
+            if (lFrom != lLocal) {
+                const lctrl = parseInt(id_part[3], 10);
+                const ldoor = parseInt(id_part[4], 10);
+                if (state.val == true && !isNaN(lctrl) && !isNaN(ldoor)) {
+                    const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
+                    if (ctrl.run) {
+                        uapi.openDoor(this.ctx, lctrl, ldoor)
+                            .then(ret => {
+                                // uapi.getEventIndex(this.ctx, lctrl)
+                                //     .then(lRet => {
+                                //         const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
+                                ////         if (ctrl) ++ctrl.eventNr;
+                                //         if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
+                                //             ctrl.eventNr = lRet.index;
+                                //         } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                                //     })
+                                //     .catch(lErr => {
+                                //         //das wird noch folgen haben... aber nicht hier ;-)
+                                //     });
+                                this.log.debug(lctrl+": Request remote open Door: " + ldoor + " :: " + JSON.stringify(ret));
+                            })
+                            .catch(err => {
+                                this.log.error(lctrl + ": remote Open Door: " + ldoor + " :: " + err.message);
+                            });
+                    } else this.log.error("Can not open unreached device: " + lctrl);
+                    this.setTimeout(() => {
+                        this.setState(id, { ack: true, val: false });
+                    }, 50);
+                }
+            }
+            //this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
         } else {
             // The state was deleted
             this.unsubscribeStates(id);
