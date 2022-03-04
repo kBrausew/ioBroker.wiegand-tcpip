@@ -60,8 +60,10 @@ class WiegandTcpip extends utils.Adapter {
             if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
-                    this.treeStructure(dev.serial, itemNr);
+                    dev.index = itemNr;
+                    dev.errorCount = 0;
                     ++itemNr;
+                    await this.treeStructure(dev.serial, dev.index);
                     if (dev.deviceIp && dev.exposedIP && dev.exposedPort) {
                         // full rig
                         dev.broadcast = false;
@@ -111,7 +113,7 @@ class WiegandTcpip extends utils.Adapter {
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         await this.assureRun();
-        this.heartbeat = this.setInterval(this.assureRun.bind(this), lheartbeat);
+        this.heartbeat = this.setInterval(this.assureRun.bind(this), 15000);// lheartbeat);
     }
 
     async assureRun() {
@@ -121,9 +123,10 @@ class WiegandTcpip extends utils.Adapter {
             //Major Try-Catch: no change code befor...
             try {
                 for (const dev of this.ctrls) {
+                    //this.log.silly("Heartbeat: " + dev.serial);
                     try {
-                        const lStat = await uapi.getStatus(this.ctx, dev.serial);
                         let eventNr = 0;
+                        const lStat = await uapi.getStatus(this.ctx, dev.serial);
                         if (lStat) {
                             if (lStat.state) {
                                 if (lStat.state.event) {
@@ -135,7 +138,6 @@ class WiegandTcpip extends utils.Adapter {
                                 }
                             }
                         }
-                        //this.log.info(JSON.stringify(lStat));
 
                         if (!dev.run) {
                             this.log.info("Connect to controller: " + dev.serial);
@@ -150,10 +152,35 @@ class WiegandTcpip extends utils.Adapter {
                         dev.run = false;
                         this.log.error("Problem with controller " + dev.serial + ": " + err.message);
                     }
-                    this.setState("controllers."+dev.serial+".reachable", { ack: true, val: dev.run});
+                    try {
+                        const lReach = "controllers." + dev.serial + ".reachable";
+                        this.getState(lReach, (fErr, fStat) => {
+                            if (fStat) {
+                                if (fStat.val != dev.run) {
+                                    this.setState(lReach, { ack: true, val: dev.run });
+                                }
+                                dev.errorCount = 0;
+                            } else {
+                                if ((dev.errorCount % 100) == 0) {
+                                    if (fErr) {
+                                        this.log.error("... controller " + dev.serial + ": " + fErr.message);
+                                    } else this.log.error("Major-Problem with controller " + dev.serial);
+                                }
+                                if (dev.errorCount >= 3000) {
+                                    this.log.error("Major-Problem: Better restart... " + dev.serial);
+                                    this.restart();
+                                }
+
+                                ++dev.errorCount;
+                            }
+                        });
+                    } catch (err) {
+                        dev.run = false;
+                        this.log.error("Post-Constructur-Problem with controller " + dev.serial + ": " + err.message);
+                    }
                 }
             } catch (e) {
-                this.log.error("Major problem in heartbeat: " + e.message);
+                this.log.error("Major-problem in heartbeat: " + e.message);
             }
             //Major Try-Catch: no change code after...
             //################################################################################
@@ -192,11 +219,11 @@ class WiegandTcpip extends utils.Adapter {
         this.log.info("Create controller objects: " + lSerialNr);
         this.setObjectNotExists(lRootPath, {
             type: "device",
-            common: { name: "Controller-"+itemNr.toString(), },
+            common: { name: "Controller-" + itemNr.toString(), },
             native: {},
         });
 
-        this.createOneState(lRootPath, "eventNr", "number", "indicator.reachable", true, false, 0);
+        this.createOneState(lRootPath, "eventNr", "number", "value", true, false, null);
         this.createOneState(lRootPath, "reachable", "boolean", "indicator.reachable", true, false, false);
 
         for (let i = 1; i <= 4; i++) {
@@ -207,9 +234,15 @@ class WiegandTcpip extends utils.Adapter {
                 native: {},
             });
             this.createOneState(lDoorPath, "lastSwipe", "string", "value", true, false, "");
+            this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false);
+            this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0);
+            this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "");
+            this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0);
+            this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "");
             this.createOneState(lDoorPath, "remoteOpen", "boolean", "level.lock", false, true, false);
-            this.subscribeStates(lDoorPath+".remoteOpen");
-            this.createOneState(lDoorPath, "unlooked", "boolean", "value.lock", true, false, false);
+            this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false);
+            this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
+            //this.subscribeStatesAsync(lDoorPath + ".unlocked");
         }
     }
 
@@ -226,12 +259,13 @@ class WiegandTcpip extends utils.Adapter {
         const lPath = path + "." + name;
         this.setObjectNotExists(lPath, {
             type: "state",
+            // @ts-ignore
             common: { name: name, type: type, role: role, read: read, write: write },
             native: {},
         }, (err, obj) => {
             if (obj) {
                 this.setState(lPath, { val: val, ack: true });
-                this.log.silly(name+": New State @ "+lPath);
+                this.log.silly(name + ": New State @ " + lPath);
             }
         });
     }
@@ -241,14 +275,57 @@ class WiegandTcpip extends utils.Adapter {
      */
     onUapiEvent(evt) {
         //this.log.info("Event: " + JSON.stringify(evt));
-        if(evt && evt.state && evt.state.serialNumber && evt.state.event && evt.state.event.granted && evt.state.event.door){
+        if (evt && evt.state && evt.state.serialNumber && evt.state.event) {// && evt.state.event.granted && evt.state.event.door){
             const lEvt = evt.state.event;
             const lCtrl = evt.state.serialNumber;
             const lGranted = lEvt.granted || false;
             const lDoor = parseInt(lEvt.door, 10) || 0;
+            const lCard = parseInt(lEvt.card, 10) || 0;
+            const ctrl = this.ctrls.find(dev => dev.serial == lCtrl);
+            const lRoot = "controllers." + lCtrl.toString() + "." + lDoor.toString();
+            let requestCode = 0;
+            let requestText = "";
+            let reasonCode = 0;
+            let reasonText = "";
 
-            //this.setState("controllers."+lCtrl.toString()+"."+lDoor.toString()+".", {ack: true, val: c});
-            this.log.info("Controller: "+lCtrl+" Door: "+lDoor+" granted: "+lGranted);
+            if (!lEvt && !ctrl) {
+                this.log.error("Major-Problem with event receiving for: " + lRoot);
+                return;
+            }
+
+            if (lGranted) {
+                this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
+                    if (!fStat) {
+                        this.log.error("No state found: " + lRoot + ".unlocked");
+                    } else {
+                        this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
+                        this.setTimeout(() => {
+                            this.setState(lRoot + ".unlocked", { ack: true, val: false });
+                        }, 10);
+                    }
+                });
+            }
+
+            if (lEvt.type) {
+                requestCode = lEvt.type.code || 0;
+                requestText = lEvt.type.event || "";
+            }
+            if (lEvt.reason) {
+                reasonCode = lEvt.reason.code || 0;
+                reasonText = lEvt.reason.reason || 0;
+            }
+            this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
+            this.setState(lRoot + ".requestText", { ack: true, val: requestText });
+            this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
+            this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
+            this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
+            this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
+
+            if (ctrl && lEvt.index) {
+                ctrl.eventNr = lEvt.index;
+                this.setState("controllers." + lCtrl.toString() + ".eventNr", { ack: true, val: lEvt.index });
+            }
+            this.log.debug("Controller: " + lCtrl + " Door: " + lDoor + " granted: " + lGranted + " Card: " + lCard);
         }
     }
 
@@ -268,7 +345,7 @@ class WiegandTcpip extends utils.Adapter {
             if (this.ulistener) {
                 this.ulistener.close();
                 this.ulistener = null;
-                this.log.debug("Listener Close");
+                this.log.debug("CleanUp: Listener Close");
             } else this.log.debug("Listener is not runing");
             // eslint-disable-next-line no-empty
         } catch (e) { }
@@ -277,7 +354,7 @@ class WiegandTcpip extends utils.Adapter {
             if (this.heartbeat) {
                 clearInterval(this.heartbeat);
                 this.heartbeat = null;
-                this.log.debug("Clear interval");
+                this.log.debug("CleanUp: Clear interval");
             }
             // eslint-disable-next-line no-empty
         } catch (e) { }
@@ -310,7 +387,7 @@ class WiegandTcpip extends utils.Adapter {
     onStateChange(id, state) {
         if (state) {
             // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
         } else {
             // The state was deleted
             this.unsubscribeStates(id);

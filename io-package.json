@@ -89,6 +89,8 @@
                 "exposedIP": "",
                 "exposedPort": 0,
                 "broadcast": true,
+                "index": 1,
+                "errorCount": 0,
                 "run": false,
                 "eventNr": 0
             }
