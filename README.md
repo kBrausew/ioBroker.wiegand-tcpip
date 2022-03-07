@@ -12,7 +12,7 @@
 **Tests:** ![Test and Release](https://github.com/kbrausew/ioBroker.wiegand-tcpip/workflows/Test%20and%20Release/badge.svg)
 
 ## wiegand-tcpip adapter for ioBroker
-
+ 
 wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## Developer manual
