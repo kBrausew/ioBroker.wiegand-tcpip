@@ -81,17 +81,18 @@
         "port": 60000,
         "r_port": 60099,
         "timeout": 2500,
-        "heartbeat": 60000,
+        "heartbeat": 300000,
         "controllers": [
             {
                 "serial": 405419896,
                 "deviceIp": "",
                 "exposedIP": "",
-                "exposedPort": 0,
+                "exposedPort": "",
                 "broadcast": true,
                 "index": 1,
                 "errorCount": 0,
                 "run": false,
+                "heartbeatCount": 0,
                 "eventNr": 0
             }
         ]

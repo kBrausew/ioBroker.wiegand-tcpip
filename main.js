@@ -10,7 +10,7 @@ const utils = require("@iobroker/adapter-core");
 const os = require("os");
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
-const { stat } = require("fs");
+//const { stat } = require("fs");
 
 class WiegandTcpip extends utils.Adapter {
     /**
@@ -43,7 +43,7 @@ class WiegandTcpip extends utils.Adapter {
         const lPort = this.config.port || 60000;
         const rPort = this.config.r_port || 60099;
         const lTimeout = this.config.timeout || 2500;
-        const lheartbeat = this.config.heartbeat || 60000;
+        const lheartbeat = this.config.heartbeat || 300000;
         const lListen = lBind + ":" + rPort.toString();
         const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
         const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
@@ -63,7 +63,8 @@ class WiegandTcpip extends utils.Adapter {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
                     dev.index = itemNr;
-                    dev.errorCount = 0;
+                    dev.errorCount = 1;
+                    dev.heartbeatCount = 1;
                     ++itemNr;
                     await this.treeStructure(dev.serial, dev.index);
                     if (dev.deviceIp && dev.exposedIP && dev.exposedPort) {
@@ -133,12 +134,27 @@ class WiegandTcpip extends utils.Adapter {
                             if (lStat.state) {
                                 if (lStat.state.event) {
                                     eventNr = parseInt(lStat.state.event.index, 10) || 0;
-                                    if (dev.run != false && dev.eventNr != eventNr) {
-                                        this.log.warn("May connection lost (better restart): " + dev.serial);
+                                    if (dev.run == true && dev.eventNr != eventNr) {
+                                        this.log.warn("May connection lost (better restart): " + dev.serial + " / " + eventNr + " / " + dev.eventNr);
                                         dev.run = false;
                                     }
+                                    ++dev.heartbeatCount;
                                 }
                             }
+                        }
+
+                        if (dev.run && dev.heartbeatCount > 10) {
+                            //this.log.debug("Extendend HeartBeat: " + dev.heartbeatCount);
+                            const lList = await uapi.getListener(this.ctx, dev.serial);
+                            if (lList) {
+                                const lHost = lList.address || "";
+                                const lPort = lList.port || 0;
+                                if (lHost != dev.exposedIP || lPort != dev.exposedPort) {
+                                    this.log.warn("Extendend HeartBeat negative (better restart): " + dev.serial);
+                                    dev.run = false;
+                                }
+                            }
+                            dev.heartbeatCount = 1;
                         }
 
                         if (!dev.run) {
@@ -146,21 +162,37 @@ class WiegandTcpip extends utils.Adapter {
                             await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
                             await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
                             await uapi.setListener(this.ctx, dev.serial, dev.exposedIP, dev.exposedPort);
-                            dev.eventNr = eventNr;
 
+                            dev.eventNr = eventNr;
+                            dev.heartbeatCount = 1;
                             dev.run = true;
                         }
 
-                        /*
-                        // test: remoteOpen
-                                                uapi.openDoor(this.ctx, dev.serial, 1)
-                                                    .then(ret => {
-                                                        this.log.info("open Door: " + JSON.stringify(ret));
-                                                    })
-                                                    .catch(err => {
-                                                        this.log.error(dev.serial + ": remote Open Door: 1 :: " + err.message);
-                                                    });
-                        */
+                        if (dev.heartbeatCount == 1) {
+                            for (let i = 1; i <= 4; i++) {
+                                try {
+                                    const lContr = await uapi.getDoorControl(this.ctx, dev.serial, i);
+                                    //this.log.debug(JSON.stringify(lContr));
+                                    let lDelay = 0;
+                                    let lContr_n = 0;
+                                    if(lContr && lContr.doorControlState){
+                                        lDelay = lContr.doorControlState.delay || 0;
+                                        if(lContr.doorControlState.control) lContr_n = lContr.doorControlState.control.value || 0;
+                                    }
+                                    this.setState("controllers."+dev.serial+"."+i.toString()+".delay", {ack: true, val: lDelay});
+                                    this.setState("controllers."+dev.serial+"."+i.toString()+".control", {ack: true, val: lContr_n});
+                                }
+                                // eslint-disable-next-line no-empty
+                                catch (fError) { }
+                            }
+                        }
+
+                        /*if(dev.eventNr > 3){
+                            dev.eventNr = 1;
+                            await uapi.setEventIndex(this.ctx, dev.serial, dev.eventNr);
+                            this.log.debug(dev.eventNr);
+                        }*/
+
                     } catch (err) {
                         dev.run = false;
                         this.log.error("Problem with controller " + dev.serial + ": " + err.message);
@@ -168,16 +200,19 @@ class WiegandTcpip extends utils.Adapter {
                     try {
                         const lReach = "controllers." + dev.serial + ".reachable";
                         this.getState(lReach, (fErr, fStat) => {
-                            if (fStat) {
-                                if (fStat.val != dev.run) {
+                            if (!fErr) {
+                                let lState = false;
+                                // @ts-ignore
+                                if (fStat) lState = fStat.val || false;
+                                if (lState != dev.run) {
                                     this.setState(lReach, { ack: true, val: dev.run });
                                 }
-                                dev.errorCount = 0;
+                                dev.errorCount = 1;
                             } else {
                                 if ((dev.errorCount % 100) == 0) {
-                                    if (fErr) {
-                                        this.log.error("... controller " + dev.serial + ": " + fErr.message);
-                                    } else this.log.error("Major-Problem with controller " + dev.serial);
+                                    //if (fErr) {
+                                    this.log.error("... controller " + dev.serial + ": " + fErr.message);
+                                    //} else this.log.error("Major-Problem with controller " + dev.serial);
                                 }
                                 if (dev.errorCount >= 3000) {
                                     this.log.error("Major-Problem: Better restart... " + dev.serial);
@@ -229,19 +264,19 @@ class WiegandTcpip extends utils.Adapter {
      * @param {string | number} serialNr
      * @param {number} itemNr
      */
-    treeStructure(serialNr, itemNr) {
+    async treeStructure(serialNr, itemNr) {
         const lSerialNr = serialNr.toString();
         const lRootPath = "controllers." + lSerialNr;
 
         this.log.info("Create controller objects: " + lSerialNr);
-        this.setObjectNotExists(lRootPath, {
+        await this.setObjectNotExists(lRootPath, {
             type: "device",
             common: { name: "Controller-" + itemNr.toString(), },
             native: {},
         });
 
-        this.createOneState(lRootPath, "eventNr", "number", "value", true, false, null);
-        this.createOneState(lRootPath, "reachable", "boolean", "indicator.reachable", true, false, false);
+        await this.createOneState(lRootPath, "eventNr", "number", "value", true, false, 0, undefined);
+        await this.createOneState(lRootPath, "reachable", "boolean", "indicator.reachable", true, false, false, undefined);
 
         for (let i = 1; i <= 4; i++) {
             const lDoorPath = lRootPath + "." + i.toString();
@@ -250,16 +285,18 @@ class WiegandTcpip extends utils.Adapter {
                 common: { name: "Door-" + i.toString(), },
                 native: {},
             });
-            this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, null);
-            this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false);
-            this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0);
-            this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "");
-            this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0);
-            this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "");
-            this.createOneState(lDoorPath, "remoteOpen", "boolean", "level.lock", false, true, false);
-            this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false);
-            this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
-            //this.subscribeStatesAsync(lDoorPath + ".unlocked");
+            await this.createOneState(lDoorPath, "control", "number", "value", true, false, 0,
+                { "0": "unknown", "1": "normally open", "2": "normally closed", "3": "controlled" });
+            await this.createOneState(lDoorPath, "delay", "number", "value", true, false, 0, undefined);
+            await this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, 0, undefined);
+            await this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false, undefined);
+            await this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0, undefined);
+            await this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "", undefined);
+            await this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0, undefined);
+            await this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "", undefined);
+            await this.createOneState(lDoorPath, "remoteOpen", "boolean", "button.lock", false, true, true, undefined);
+            await this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false, undefined);
+            await this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
         }
     }
 
@@ -271,19 +308,20 @@ class WiegandTcpip extends utils.Adapter {
      * @param {boolean} read
      * @param {boolean} write
      * @param {any} val
+     * @param {object} stat
      */
-    createOneState(path, name, type, role, read, write, val) {
+    async createOneState(path, name, type, role, read, write, val, stat) {
         const lPath = path + "." + name;
-        this.setObjectNotExists(lPath, {
+        await this.setObjectNotExists(lPath, {
             type: "state",
             // @ts-ignore
-            common: { name: name, type: type, role: role, read: read, write: write },
-            native: {},
-        }, (err, obj) => {
-            if (obj) {
-                this.setState(lPath, { val: val, ack: true });
-                this.log.silly(name + ": New State @ " + lPath);
-            }
+            common: { name: name, type: type, role: role, def: val, states: stat, read: read, write: write },
+            native: {}
+            // }, (err, obj) => {
+            //     if (obj) {
+            //         this.setState(lPath, { val: val, ack: true });
+            //         this.log.silly(name + ": New State @ " + lPath);
+            //     }
         });
     }
 
@@ -298,14 +336,14 @@ class WiegandTcpip extends utils.Adapter {
             const lGranted = lEvt.granted || false;
             const lDoor = parseInt(lEvt.door, 10) || 0;
             const lCard = parseInt(lEvt.card, 10) || 0;
-            const ctrl = this.ctrls.find(dev => dev.serial == lCtrl);
+            const dev = this.ctrls.find(dev => dev.serial == lCtrl);
             const lRoot = "controllers." + lCtrl.toString() + "." + lDoor.toString();
             let requestCode = 0;
             let requestText = "";
             let reasonCode = 0;
             let reasonText = "";
 
-            if (!lEvt && !ctrl) {
+            if (!lEvt && !dev) {
                 this.log.error("Major-Problem with event receiving for: " + lRoot);
                 return;
             }
@@ -329,7 +367,7 @@ class WiegandTcpip extends utils.Adapter {
             }
             if (lEvt.reason) {
                 reasonCode = lEvt.reason.code || 0;
-                reasonText = lEvt.reason.reason || 0;
+                reasonText = lEvt.reason.reason || "";
             }
             this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
             this.setState(lRoot + ".requestText", { ack: true, val: requestText });
@@ -340,8 +378,11 @@ class WiegandTcpip extends utils.Adapter {
 
             this.setState(lRoot + ".remoteOpen", { ack: true, val: true });
 
-            if (ctrl && lEvt.index) {
-                ctrl.eventNr = lEvt.index;
+            if (dev && lEvt.index) {
+                ++dev.eventNr;// = lEvt.index;
+                if (dev.eventNr != lEvt.index) {
+                    this.log.error("Timing problem expected: " + dev.eventNr + " / receive: " + lEvt.index + " Event");
+                }
                 this.setState("controllers." + lCtrl.toString() + ".eventNr", { ack: true, val: lEvt.index });
             }
             this.log.debug("Controller: " + lCtrl + " Door: " + lDoor + " granted: " + lGranted + " Card: " + lCard);
@@ -404,11 +445,16 @@ class WiegandTcpip extends utils.Adapter {
      * @param {ioBroker.State | null | undefined} state
      */
     onStateChange(id, state) {
-        const id_part = id.split(".");
-        if (id_part.length < 6 || id_part[0] != this.name || id_part[1] != this.instance.toString() || id_part[5] != "remoteOpen") {
-            return;
-        }
         if (state) {
+            //check Id for handled operations
+            const id_part = id.split(".");
+            if (id_part.length < 6 || id_part[0] != this.name || id_part[1] != this.instance.toString() || id_part[2] != "controllers"
+                || id_part[5] != "remoteOpen") {
+
+                this.log.error("State possible not handled by this adapter: " + id);
+                return;
+            }
+
             // The state was changed
             const lLocal = "system.adapter." + this.name + "." + this.instance;
             const lFrom = state.from || lLocal;
@@ -423,30 +469,31 @@ class WiegandTcpip extends utils.Adapter {
                                 // uapi.getEventIndex(this.ctx, lctrl)
                                 //     .then(lRet => {
                                 //         const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
-                                ////         if (ctrl) ++ctrl.eventNr;
-                                //         if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
-                                //             ctrl.eventNr = lRet.index;
-                                //         } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                                //         // //if (ctrl) ++ctrl.eventNr;
+                                //         // if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
+                                //         //     ctrl.eventNr = lRet.index;
+                                //         // } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                                //         this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
                                 //     })
                                 //     .catch(lErr => {
                                 //         //das wird noch folgen haben... aber nicht hier ;-)
                                 //     });
-                                this.log.debug(lctrl+": Request remote open Door: " + ldoor + " :: " + JSON.stringify(ret));
+                                this.log.debug("Request remote open: " + lctrl + " Door-" + ldoor + ": " + JSON.stringify(ret));
                             })
                             .catch(err => {
-                                this.log.error(lctrl + ": remote Open Door: " + ldoor + " :: " + err.message);
+                                this.log.error("Error Remote Open Door: " + lctrl + "/" + ldoor + ": " + err.message);
                             });
-                    } else this.log.error("Can not open unreached device: " + lctrl);
-                    this.setTimeout(() => {
-                        this.setState(id, { ack: true, val: false });
-                    }, 50);
+                    } else this.log.error("Can not handle unreached device: " + lctrl);
+                    // this.setTimeout(() => {
+                    //     this.setState(id, { ack: true, val: false });
+                    // }, 50);
                 }
-            }
-            //this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
+            } else this.log.silly("Ignore state change from myself: i know what i do ;-)");
+            //this.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
         } else {
             // The state was deleted
             this.unsubscribeStates(id);
-            this.log.info(`state ${id} deleted`);
+            this.log.debug(`state ${id} deleted`);
         }
     }
 
