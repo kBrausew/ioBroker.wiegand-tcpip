@@ -414,7 +414,7 @@ class WiegandTcpip extends utils.Adapter {
 
         try {
             if (this.heartbeat) {
-                clearInterval(this.heartbeat);
+                this.clearInterval(this.heartbeat);
                 this.heartbeat = null;
                 this.log.debug("CleanUp: Clear interval");
             }

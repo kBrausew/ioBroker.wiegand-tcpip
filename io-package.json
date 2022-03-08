@@ -55,7 +55,7 @@
             "S4A ACB",
             "Door Access Controller Shenzhen Weigeng Industrial"
         ],
-        "license": "GPL-3.0-or-later",
+        "license": "GPL-3.0-only",
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "wiegand-tcpip.png",
@@ -79,7 +79,7 @@
     "native": {
         "bind": "0.0.0.0",
         "port": 60000,
-        "r_port": 60001,
+        "r_port": 60099,
         "timeout": 2500,
         "heartbeat": 300000,
         "controllers": [
