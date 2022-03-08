@@ -4,7 +4,7 @@
         "version": "0.4.2",
         "news": {
             "0.4.2": {
-                "en": "Remote Door Open Special: CTX get wrog config",
+                "en": "Remote Door Open Special: CTX get wrong config",
                 "de": "Remote Door Open Special: CTX erhält falsche Konfiguration",
                 "ru": "Специальное дистанционное открытие двери: CTX получает неправильную конфигурацию",
                 "pt": "Remote Door Open Special: CTX get wrog config",
