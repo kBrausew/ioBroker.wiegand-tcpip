@@ -2,7 +2,14 @@
 - [Initial start-up](#initial-start-up) Fist time access to the Device
 - [Setup the adapter](#door-access-controllers-settings) Setup the ioBroker Adapter
   - [TCP/IP Network Settings](#tcpip-network-settings) Setup the adapter network
-  - [Controllers Settings](#controllers-settings) Device setup 
+  - [Controllers Settings](#controllers-settings) Device setup
+    - [Broadcast](#broadcast)
+      - [Serial Number](#serial-number)
+    - [Dedicated network setup](#dedicated-network-setup)
+      - [Serial Number](#serial-number)
+      - [Device network address](#device-network-address)
+      - [Exposed Server Host address](#exposed-server-host-address)
+      - [Exposed Server Host port](#exposed-server-host-port)
 
 ## Initial start-up
 When you connect the device for the first time, it may be useful to enter the network data.
