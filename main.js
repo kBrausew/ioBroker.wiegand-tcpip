@@ -73,7 +73,7 @@ class WiegandTcpip extends utils.Adapter {
             .catch(err => {
                 this.log.error("Error Remote Open Door: " + deviceId + "/" + doorId + ": " + err.message);
             });
-    } 
+    }
 
     /**
      * Is called when databases are connected and adapter received configuration.
