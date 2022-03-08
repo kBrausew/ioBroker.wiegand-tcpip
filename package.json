@@ -21,7 +21,7 @@
       "name": "twystd"
     }
   ],
-  "homepage": "https://github.com/kbrausew/ioBroker.wiegand-tcpip",
+  "homepage": "https://github.com/kbrausew/iobroker.wiegand-tcpip",
   "license": "GPL-3.0-only",
   "keywords": [
     "UHPPOTE",
@@ -36,7 +36,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kBrausew/ioBroker.wiegand-tcpip.git"
+    "url": "git+https://github.com/kBrausew/iobroker.wiegand-tcpip.git"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^2.5.1",
@@ -88,7 +88,7 @@
     "release": "release-script"
   },
   "bugs": {
-    "url": "https://github.com/kbrausew/ioBroker.wiegand-tcpip/issues"
+    "url": "https://github.com/kbrausew/iobroker.wiegand-tcpip/issues"
   },
   "readmeFilename": "README.md"
 }
