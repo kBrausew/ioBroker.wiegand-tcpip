@@ -1,45 +1,45 @@
 {
     "common": {
         "name": "wiegand-tcpip",
-        "version": "0.0.1",
+        "version": "0.4.1",
         "news": {
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
+            "0.4.1": {
+                "en": "First Beta",
+                "de": "Erste Beta",
+                "ru": "Первая бета",
+                "pt": "Primeiro Beta",
+                "nl": "Eerste bèta",
+                "fr": "Première bêta",
+                "it": "Prima Beta",
+                "es": "Primera beta",
+                "pl": "Pierwsza wersja beta",
+                "zh-cn": "第一个测试版"
             }
         },
-        "title": "wiegand tcp/ip Controller (e.g. UHPPTOE)",
+        "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
         "titleLang": {
-            "en": "wiegand tcp/ip Controller (e.g. UHPPTOE)",
-            "de": "wiegand TCP/IP Controller (z.B. UHPPTOE)",
-            "ru": "Контроллер Wiegand TCP/IP (например, UHPPTOE)",
-            "pt": "Controlador wiegand tcp/ip (por exemplo, UHPPTOE)",
-            "nl": "wiegand tcp/ip-controller (bijv. UHPPTOE)",
-            "fr": "Contrôleur wiegand tcp/ip (par exemple UHPPTOE)",
-            "it": "Wiegand tcp/ip Controller (ad es. UHPPTOE)",
-            "es": "Controlador wiegand tcp/ip (por ejemplo, UHPPTOE)",
-            "pl": "wiegand tcp/ip kontroler (np. UHPPTOE)",
-            "zh-cn": "wiegand tcp/ip 控制器（例如 UHPPTOE）"
+            "en": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
+            "de": "Wiegand TCP/IP-Controller (z. B. UHPPTOE)",
+            "ru": "Контроллер TCP/IP Wiegand (например, UHPPTOE)",
+            "pt": "Controlador tcp/ip Wiegand (por exemplo, UHPPTOE)",
+            "nl": "Wiegand tcp/ip-controller (bijv. UHPPTOE)",
+            "fr": "Contrôleur tcp/ip Wiegand (par exemple UHPPTOE)",
+            "it": "Controller Wiegand TCP/IP (es. UHPPTOE)",
+            "es": "Controlador Wiegand tcp/ip (por ejemplo, UHPPTOE)",
+            "pl": "Kontroler Wiegand TCP/IP (np. UHPPTOE)",
+            "zh-cn": "Wiegand tcp/ip 控制器（例如 UHPPTOE）"
         },
         "desc": {
-            "en": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "de": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "ru": "Wiegand Контроллер доступа к дверям Shenzhen Weigeng Industrial",
-            "pt": "Controlador de acesso de porta wiegand Shenzhen Weigeng Industrial",
-            "nl": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "fr": "Contrôleur d'accès de porte wiegand Shenzhen Weigeng Industrial",
+            "en": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "de": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+            "ru": "Контроллер доступа к дверям Wiegand Shenzhen Weigeng Industrial",
+            "pt": "Controlador de acesso de porta Wiegand Shenzhen Weigeng Industrial",
+            "nl": "Wiegand Deur Toegang Controller Shenzhen Weigeng Industrial",
+            "fr": "Contrôleur d'accès de porte Wiegand Shenzhen Weigeng Industrial",
             "it": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "es": "Controlador de acceso de puerta wiegand Shenzhen Weigeng Industrial",
-            "pl": "Wiegand Kontroler dostępu do drzwi Shenzhen Weigeng Industrial",
-            "zh-cn": "wiegand 门禁控制器 深圳伟庚实业"
+            "es": "Controlador de acceso de puerta Wiegand Shenzhen Weigeng Industrial",
+            "pl": "Kontroler dostępu do drzwi Wiegand Shenzhen Weigeng Industrial",
+            "zh-cn": "韦根门禁控制器 深圳伟庚实业"
         },
         "authors": [
             "kbrausew <kbrausew@magenta.de>"
@@ -79,7 +79,7 @@
     "native": {
         "bind": "0.0.0.0",
         "port": 60000,
-        "r_port": 60099,
+        "r_port": 60001,
         "timeout": 2500,
         "heartbeat": 300000,
         "controllers": [
