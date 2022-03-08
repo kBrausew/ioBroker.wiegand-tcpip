@@ -1,10 +1,13 @@
 {
-  "name": "iobroker.wiegand-tcpip",
+  "name": "@kbrausew/iobroker.wiegand-tcpip",
   "version": "0.4.1",
   "description": "wiegand Door Access Controller Shenzhen Weigeng Industrial",
   "author": {
     "name": "kbrausew",
     "email": "kbrausew@magenta.de"
+  },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
   },
   "contributors": [
     {
@@ -70,6 +73,7 @@
     "lib/",
     "www/",
     "io-package.json",
+    "package.json",
     "LICENSE",
     "main.js"
   ],
