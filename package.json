@@ -1,7 +1,7 @@
 {
-  "name": "@kbrausew/iobroker.wiegand-tcpip",
+  "name": "iobroker.wiegand-tcpip",
   "version": "0.4.2",
-  "description": "W8iegand Door Access Controller Shenzhen Weigeng Industrial",
+  "description": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
   "author": {
     "name": "kbrausew",
     "email": "kbrausew@magenta.de"
