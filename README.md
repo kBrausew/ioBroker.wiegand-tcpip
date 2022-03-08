@@ -14,6 +14,9 @@
 ## **wiegand-tcpip** adapter for ioBroker
 Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
+## Setup the adapter
+[Setup Help](docs/setup.md)
+
 ## Recognition
 My very special thanks go to **uhppoted & twystd** without whose help this software would not have been possible :+1:
 https://github.com/uhppoted https://github.com/twystd

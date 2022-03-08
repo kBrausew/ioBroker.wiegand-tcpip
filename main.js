@@ -73,12 +73,14 @@ class WiegandTcpip extends utils.Adapter {
                     } else if (dev.deviceIp || dev.exposedIP || dev.exposedPort) {
                         if (!dev.deviceIp) dev.deviceIp = lBroadcast;
                         if (!dev.exposedIP) dev.exposedIP = lBind;
+                        // @ts-ignore
                         if (!dev.exposedPort) dev.exposedPort = rPort;
                         dev.broadcast = true;
                         this.log.warn("Incorrect controller-setup for non/broadcast: " + dev.serial);
                     } else {
                         dev.deviceIp = lBroadcast;
                         dev.exposedIP = rBroadcast;
+                        // @ts-ignore
                         dev.exposedPort = rPort;
                         dev.broadcast = true;
                     }
@@ -376,7 +378,7 @@ class WiegandTcpip extends utils.Adapter {
             this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
             this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
 
-            this.setState(lRoot + ".remoteOpen", { ack: true, val: true });
+            //this.setState(lRoot + ".remoteOpen", { ack: true, val: true });
 
             if (dev && lEvt.index) {
                 ++dev.eventNr;// = lEvt.index;
