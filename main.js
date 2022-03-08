@@ -112,7 +112,7 @@ class WiegandTcpip extends utils.Adapter {
             }
         });
 
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, true) };
         this.log.silly(JSON.stringify(this.ctx));
         this.log.silly(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
@@ -187,6 +187,7 @@ class WiegandTcpip extends utils.Adapter {
                                 // eslint-disable-next-line no-empty
                                 catch (fError) { }
                             }
+
                         }
 
                         /*if(dev.eventNr > 3){
