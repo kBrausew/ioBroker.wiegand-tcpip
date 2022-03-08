@@ -18,8 +18,9 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 [Setup Help](docs/setup.md)
 
 ## Recognition
-My very special thanks go to **uhppoted & twystd** without whose help this software would not have been possible :+1:
-https://github.com/uhppoted https://github.com/twystd
+My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
+- https://github.com/uhppoted
+- https://github.com/twystd
 
 ## Hardware
 * Wiegand to TCP/IP (https://ingenier.wordpress.com/zutrittskontrolle/  german)
@@ -38,12 +39,12 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
-### V0.4.0-alpha
-* First working package
 ### V0.4.1-beta
 * Small blemishes fixed and translation completed
+### V0.4.0-alpha
+* First working package
 
-### **WORK IN PROGRESS**
+### **Beta**
 * (kbrausew) First Beta
 
 ## License
