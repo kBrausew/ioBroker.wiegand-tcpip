@@ -113,8 +113,8 @@ class WiegandTcpip extends utils.Adapter {
         });
 
         this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, false) };
-        //this.log.silly(JSON.stringify(this.ctx));
-        //this.log.silly(JSON.stringify(this.devs));
+        this.log.silly(JSON.stringify(this.ctx));
+        this.log.silly(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         await this.assureRun();
@@ -330,7 +330,7 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {any} evt
      */
-    onUapiEvent(evt) {
+    async onUapiEvent(evt) {
         //this.log.info("Event: " + JSON.stringify(evt));
         if (evt && evt.state && evt.state.serialNumber && evt.state.event) {// && evt.state.event.granted && evt.state.event.door){
             const lEvt = evt.state.event;
@@ -394,7 +394,7 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {{ message: any; }} err
      */
-    onUapiError(err) {
+    async onUapiError(err) {
         this.log.error("Event receive error: " + err.message);
     }
 
@@ -402,7 +402,7 @@ class WiegandTcpip extends utils.Adapter {
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      * @param {() => void} callback
      */
-    onUnload(callback) {
+    async onUnload(callback) {
         try {
             if (this.ulistener) {
                 this.ulistener.close();
@@ -446,7 +446,7 @@ class WiegandTcpip extends utils.Adapter {
      * @param {string} id
      * @param {ioBroker.State | null | undefined} state
      */
-    onStateChange(id, state) {
+    async onStateChange(id, state) {
         if (state) {
             //check Id for handled operations
             const id_part = id.split(".");
@@ -466,6 +466,8 @@ class WiegandTcpip extends utils.Adapter {
                 if (state.val == true && !isNaN(lctrl) && !isNaN(ldoor)) {
                     const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
                     if (ctrl.run) {
+                        this.log.debug(JSON.stringify(this.ctx));
+                        this.log.debug("|"+lctrl+"|");
                         uapi.openDoor(this.ctx, lctrl, ldoor)
                             .then(ret => {
                                 // uapi.getEventIndex(this.ctx, lctrl)
@@ -505,7 +507,7 @@ class WiegandTcpip extends utils.Adapter {
      * Using this method requires "common.messagebox" property to be set to true in io-package.json
      * @param {ioBroker.Message} obj
      */
-    onMessage(obj) {
+    async onMessage(obj) {
         if (typeof obj === "object" && obj.message) {
             // @ts-ignore
             const lBind = obj.message.bind || "0.0.0.0";
