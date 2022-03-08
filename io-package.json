@@ -1,19 +1,19 @@
 {
     "common": {
         "name": "wiegand-tcpip",
-        "version": "0.4.1",
+        "version": "0.4.2",
         "news": {
-            "0.4.1": {
-                "en": "First Beta",
-                "de": "Erste Beta",
-                "ru": "Первая бета",
-                "pt": "Primeiro Beta",
-                "nl": "Eerste bèta",
-                "fr": "Première bêta",
-                "it": "Prima Beta",
-                "es": "Primera beta",
-                "pl": "Pierwsza wersja beta",
-                "zh-cn": "第一个测试版"
+            "0.4.2": {
+                "en": "little next Beta",
+                "de": "kleines nächstes8 Beta",
+                "ru": "маленькая следующая бета",
+                "pt": "pouco próximo Beta",
+                "nl": "kleine volgende bèta",
+                "fr": "petite prochaine Beta",
+                "it": "piccola prossima Beta",
+                "es": "pequeña próxima beta",
+                "pl": "mały następny Beta",
+                "zh-cn": "小下一个 Beta"
             }
         },
         "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
