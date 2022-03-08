@@ -1,9 +1,9 @@
 # `Setup`
-- [initial start-up](#initial-start-up) Fist time access to the Device
+- [Initial start-up](#initial-start-up) Fist time access to the Device
 - [Setup the adapter](#door-access-controllers-settings) Setup the ioBroker Adapter
   - [TCP/IP Network Settings](#tcpip-network-settings) Setup the adapter network
 
-## initial start-up
+## Initial start-up
 When you connect the device for the first time, it may be useful to enter the network data.
 
 These steps are optional and only required for using the device in another, remote network, outside the local network at the ioBroker instance
@@ -22,6 +22,18 @@ These steps are optional and only required for using the device in another, remo
 From the list, select the network host adapter to which you have connected your device.[^2]
 - Special addresses
   - `0.0.0.0` All available interfaces (Default)
+  - `127.0.0.1` Only local host network (for the [simulator](https://github.com/uhppoted/uhppote-simulator))
+  - All others can be used if you know what you want. e.g. VPN, Docker etc...
+#### Sender-Port
+Default is 60000. Without error message from the network there is no need the change that.
+#### Receiver-Port
+Default is 60001. Without error message from the network there is no need the change that.
+I redefined port 60099 for the adapter. If something doesn't work, change this back to the default.
+#### Connection Timeout in milli seconds
+Timeout for any communication over the network.
+Do not change without consultation.
+Values below 1000 and above 10000 can work for the time being,
+ but always lead to errors in real operation
   
 
 [^1]: If you are unable to connect the device to the same local network as the ioBroker instance,
