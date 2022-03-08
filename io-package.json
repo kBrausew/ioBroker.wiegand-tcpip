@@ -4,16 +4,16 @@
         "version": "0.4.2",
         "news": {
             "0.4.2": {
-                "en": "little next Beta",
-                "de": "kleines nächstes8 Beta",
-                "ru": "маленькая следующая бета",
-                "pt": "pouco próximo Beta",
-                "nl": "kleine volgende bèta",
-                "fr": "petite prochaine Beta",
-                "it": "piccola prossima Beta",
-                "es": "pequeña próxima beta",
-                "pl": "mały następny Beta",
-                "zh-cn": "小下一个 Beta"
+                "en": "Remote Door Open Special: CTX get wrog config",
+                "de": "Remote Door Open Special: CTX erhält falsche Konfiguration",
+                "ru": "Специальное дистанционное открытие двери: CTX получает неправильную конфигурацию",
+                "pt": "Remote Door Open Special: CTX get wrog config",
+                "nl": "Remote Door Open Special: CTX get wrog config",
+                "fr": "Spécial ouverture de porte à distance : CTX se trompe de configuration",
+                "it": "Speciale apertura porta remota: CTX ottiene una configurazione errata",
+                "es": "Especial de apertura de puerta remota: CTX obtiene una configuración incorrecta",
+                "pl": "Specjalna opcja zdalnego otwierania drzwi: CTX pobierz nieprawidłową konfigurację",
+                "zh-cn": "远程开门特别：CTX 获取 wrog 配置"
             }
         },
         "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
@@ -82,6 +82,7 @@
         "r_port": 60099,
         "timeout": 2500,
         "heartbeat": 300000,
+        "debugLL": false,
         "controllers": [
             {
                 "serial": 405419896,

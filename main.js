@@ -36,6 +36,45 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     /**
+     * @param {number} deviceId
+     * @param {number} doorId
+     */
+    doorOpenSpec(deviceId, doorId) {
+        const lBind = this.config.bind || "0.0.0.0";
+        const lPort = this.config.port || 60000;
+        const rPort = this.config.r_port || 60099;
+        const lTimeout = this.config.timeout || 2500;
+        //const lheartbeat = this.config.heartbeat || 300000;
+        const lListen = lBind + ":" + rPort.toString();
+        //const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
+        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
+        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
+        const debugll = this.config.debugLL || false;
+
+        const ctx = { config: new uapi.Config("doorOpenSpec", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
+        ctx.logger = this.log.debug;
+        uapi.openDoor(ctx, deviceId, doorId)
+            .then(ret => {
+                // uapi.getEventIndex(ctx, deviceId)
+                //     .then(lRet => {
+                //         const ctrl = this.ctrls.find(dev => dev.serial == deviceId);
+                //         // //if (ctrl) ++ctrl.eventNr;
+                //         // if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
+                //         //     ctrl.eventNr = lRet.index;
+                //         // } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                //         this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                //     })
+                //     .catch(lErr => {
+                //         //das wird noch folgen haben... aber nicht hier ;-)
+                //     });
+                this.log.debug("Request remote open: " + deviceId + " Door-" + doorId + ": " + JSON.stringify(ret));
+            })
+            .catch(err => {
+                this.log.error("Error Remote Open Door: " + deviceId + "/" + doorId + ": " + err.message);
+            });
+    }
+
+    /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
@@ -48,6 +87,7 @@ class WiegandTcpip extends utils.Adapter {
         const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
         const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
         const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
+        const debugll = this.config.debugLL || false;
 
         this.unsubscribeStates("*");
 
@@ -84,6 +124,7 @@ class WiegandTcpip extends utils.Adapter {
                         dev.exposedPort = rPort;
                         dev.broadcast = true;
                     }
+                    await uapi.addDevice(this.ctx, dev.serial, dev.deviceIp, dev.broadcast);
                     this.devs.push({
                         "deviceId": dev.serial,
                         "address": dev.deviceIp,
@@ -112,7 +153,8 @@ class WiegandTcpip extends utils.Adapter {
             }
         });
 
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, true) };
+        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
+        this.ctx.logger = this.log.debug;
         this.log.silly(JSON.stringify(this.ctx));
         this.log.silly(JSON.stringify(this.devs));
         this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
@@ -177,12 +219,12 @@ class WiegandTcpip extends utils.Adapter {
                                     //this.log.debug(JSON.stringify(lContr));
                                     let lDelay = 0;
                                     let lContr_n = 0;
-                                    if(lContr && lContr.doorControlState){
+                                    if (lContr && lContr.doorControlState) {
                                         lDelay = lContr.doorControlState.delay || 0;
-                                        if(lContr.doorControlState.control) lContr_n = lContr.doorControlState.control.value || 0;
+                                        if (lContr.doorControlState.control) lContr_n = lContr.doorControlState.control.value || 0;
                                     }
-                                    this.setState("controllers."+dev.serial+"."+i.toString()+".delay", {ack: true, val: lDelay});
-                                    this.setState("controllers."+dev.serial+"."+i.toString()+".control", {ack: true, val: lContr_n});
+                                    this.setState("controllers." + dev.serial + "." + i.toString() + ".delay", { ack: true, val: lDelay });
+                                    this.setState("controllers." + dev.serial + "." + i.toString() + ".control", { ack: true, val: lContr_n });
                                 }
                                 // eslint-disable-next-line no-empty
                                 catch (fError) { }
@@ -335,12 +377,12 @@ class WiegandTcpip extends utils.Adapter {
         //this.log.info("Event: " + JSON.stringify(evt));
         if (evt && evt.state && evt.state.serialNumber && evt.state.event) {// && evt.state.event.granted && evt.state.event.door){
             const lEvt = evt.state.event;
-            const lCtrl = evt.state.serialNumber;
+            const ldeviceId = evt.state.serialNumber;
             const lGranted = lEvt.granted || false;
-            const lDoor = parseInt(lEvt.door, 10) || 0;
+            const ldoorId = parseInt(lEvt.door, 10) || 0;
             const lCard = parseInt(lEvt.card, 10) || 0;
-            const dev = this.ctrls.find(dev => dev.serial == lCtrl);
-            const lRoot = "controllers." + lCtrl.toString() + "." + lDoor.toString();
+            const dev = this.ctrls.find(dev => dev.serial == ldeviceId);
+            const lRoot = "controllers." + ldeviceId.toString() + "." + ldoorId.toString();
             let requestCode = 0;
             let requestText = "";
             let reasonCode = 0;
@@ -386,9 +428,9 @@ class WiegandTcpip extends utils.Adapter {
                 if (dev.eventNr != lEvt.index) {
                     this.log.error("Timing problem expected: " + dev.eventNr + " / receive: " + lEvt.index + " Event");
                 }
-                this.setState("controllers." + lCtrl.toString() + ".eventNr", { ack: true, val: lEvt.index });
+                this.setState("controllers." + ldeviceId.toString() + ".eventNr", { ack: true, val: lEvt.index });
             }
-            this.log.debug("Controller: " + lCtrl + " Door: " + lDoor + " granted: " + lGranted + " Card: " + lCard);
+            this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
         }
     }
 
@@ -462,33 +504,13 @@ class WiegandTcpip extends utils.Adapter {
             const lLocal = "system.adapter." + this.name + "." + this.instance;
             const lFrom = state.from || lLocal;
             if (lFrom != lLocal) {
-                const lctrl = parseInt(id_part[3], 10);
-                const ldoor = parseInt(id_part[4], 10);
-                if (state.val == true && !isNaN(lctrl) && !isNaN(ldoor)) {
-                    const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
-                    if (ctrl.run) {
-                        this.log.debug(JSON.stringify(this.ctx));
-                        this.log.debug("|"+lctrl+"|");
-                        uapi.openDoor(this.ctx, lctrl, ldoor)
-                            .then(ret => {
-                                // uapi.getEventIndex(this.ctx, lctrl)
-                                //     .then(lRet => {
-                                //         const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
-                                //         // //if (ctrl) ++ctrl.eventNr;
-                                //         // if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
-                                //         //     ctrl.eventNr = lRet.index;
-                                //         // } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
-                                //         this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
-                                //     })
-                                //     .catch(lErr => {
-                                //         //das wird noch folgen haben... aber nicht hier ;-)
-                                //     });
-                                this.log.debug("Request remote open: " + lctrl + " Door-" + ldoor + ": " + JSON.stringify(ret));
-                            })
-                            .catch(err => {
-                                this.log.error("Error Remote Open Door: " + lctrl + "/" + ldoor + ": " + err.message);
-                            });
-                    } else this.log.error("Can not handle unreached device: " + lctrl);
+                const ldeviceId = parseInt(id_part[3], 10);
+                const ldoorId = parseInt(id_part[4], 10);
+                if (state.val == true && !isNaN(ldeviceId) && !isNaN(ldoorId)) {
+                    const dev = this.ctrls.find(dev => dev.serial == ldeviceId);
+                    if (dev.run) {
+                        this.doorOpenSpec(dev.serial, ldoorId);
+                    } else this.log.error("Can not handle unreached device: " + ldeviceId);
                     // this.setTimeout(() => {
                     //     this.setState(id, { ack: true, val: false });
                     // }, 50);
