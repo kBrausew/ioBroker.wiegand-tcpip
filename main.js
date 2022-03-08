@@ -467,7 +467,7 @@ class WiegandTcpip extends utils.Adapter {
                     const ctrl = this.ctrls.find(dev => dev.serial == lctrl);
                     if (ctrl.run) {
                         this.log.debug(JSON.stringify(this.ctx));
-                        this.log.debug("|"+lctrl+"|"); 
+                        this.log.debug("|"+lctrl+"|");
                         uapi.openDoor(this.ctx, lctrl, ldoor)
                             .then(ret => {
                                 // uapi.getEventIndex(this.ctx, lctrl)
