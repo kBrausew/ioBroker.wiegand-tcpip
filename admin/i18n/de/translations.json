@@ -7,6 +7,8 @@
     "device": "Geräte ID",
     "deviceIp": "Controller-IP",
     "enabled": "Aktiviert",
+    "exposedIp": "Offengelegte Server-Host-Adresse",
+    "exposedPort": "Offengelegter Server-Host-Port",
     "forceBroadcast": "Broadcast erzwingen",
     "gateWay": "Gateway",
     "heartbeat": "Heartbeat-Intervall in Millisekunden",
@@ -21,12 +23,10 @@
     "search": "Geräte im lokalen Netzwerk finden",
     "serial": "Seriennummer",
     "setIp": "Neue Netzwerkadresse einstellen",
-    "setup_info": "Einstellungen für Controller, TCP/IP und Wiegand-Bus",
-    "unknow-message": "Nachricht unbekannt",
-    "wiegand_setup": "Einstellungen der Türzugangs-Controller",
-    "exposedIp": "Offengelegte Server-Host-Adresse",
-    "exposedPort": "Offengelegter Server-Host-Port",
     "setip_title": "Einrichtung der Netzwerkadresse des Geräts",
+    "setup_info": "Einstellungen für Controller, TCP/IP und Wiegand-Bus",
     "timeout": "Verbindungs-Timeout in Millisekunden",
-    "tools_ip": "Remote-Einrichtung des Geräts"
+    "tools_ip": "Remote-Einrichtung des Geräts",
+    "unknow-message": "Nachricht unbekannt",
+    "wiegand_setup": "Einstellungen der Türzugangs-Controller"
 }
