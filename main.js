@@ -53,6 +53,7 @@ class WiegandTcpip extends utils.Adapter {
 
         const ctx = { config: new uapi.Config("doorOpenSpec", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
         ctx.logger = this.log.debug;
+        this.log.silly("doorOpenSpec: "+JSON.stringify(ctx));
         uapi.openDoor(ctx, deviceId, doorId)
             .then(ret => {
                 // uapi.getEventIndex(ctx, deviceId)
