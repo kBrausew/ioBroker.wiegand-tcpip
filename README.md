@@ -39,6 +39,16 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
+### V0.4.2 (Beta)
+#### Function:
+* Remote network setup
+* Broadcast device communication
+* Remote device communication
+#### Changes
+* Bug ::Found uncleared intervals:: change clearInterval to adapter.clearInterval
+* special remoteDoorOpen (in other contex change net-access-mode unmotivated to broadcast)
+* device lowlevel debug enabled (from UHPPOTE framework connect to ioBroker log)
+* add various "silly" log messages
 ### V0.4.1-beta
 * Small blemishes fixed and translation completed
 ### V0.4.0-alpha
