@@ -187,22 +187,22 @@ class WiegandTcpip extends utils.Adapter {
                                 if (lStat.state.event) {
                                     eventNr = parseInt(lStat.state.event.index, 10) || 0;
                                     if (dev.run == true && dev.eventNr != eventNr) {
-                                        this.log.warn("May connection lost (better restart): " + dev.serial + " / " + eventNr + " / " + dev.eventNr);
+                                        this.log.warn("May connection lost (try re-connect device): " + dev.serial + " / " + eventNr + " / " + dev.eventNr);
                                         dev.run = false;
                                     }
                                     ++dev.heartbeatCount;
                                 }
+                                this.checkTimeDiff(dev, lStat);
                             }
                         }
 
                         if (dev.run && dev.heartbeatCount > 10) {
-                            //this.log.debug("Extendend HeartBeat: " + dev.heartbeatCount);
                             const lList = await uapi.getListener(this.ctx, dev.serial);
                             if (lList) {
                                 const lHost = lList.address || "";
                                 const lPort = lList.port || 0;
                                 if (lHost != dev.exposedIP || lPort != dev.exposedPort) {
-                                    this.log.warn("Extendend HeartBeat negative (better restart): " + dev.serial);
+                                    this.log.warn("Extendend HeartBeat negative (try re-connect device): " + dev.serial);
                                     dev.run = false;
                                 }
                             }
@@ -211,13 +211,19 @@ class WiegandTcpip extends utils.Adapter {
 
                         if (!dev.run) {
                             this.log.info("Connect to controller: " + dev.serial);
-                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
                             await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
                             await uapi.setListener(this.ctx, dev.serial, dev.exposedIP, dev.exposedPort);
 
                             dev.eventNr = eventNr;
                             dev.heartbeatCount = 1;
                             dev.run = true;
+                            dev.setTime = true;
+                        }
+
+                        if (dev.setTime) {
+                            this.log.info("Reset the device clock: " + dev.serial);
+                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
+                            dev.setTime = false;
                         }
 
                         if (dev.heartbeatCount == 1) {
@@ -329,8 +335,8 @@ class WiegandTcpip extends utils.Adapter {
             native: {},
         });
 
-        await this.createOneState(lRootPath, "eventNr", "number", "value", true, false, 0, undefined);
-        await this.createOneState(lRootPath, "reachable", "boolean", "indicator.reachable", true, false, false, undefined);
+        await this.createOneState(lRootPath, "eventNr", "Last Event #", "number", "value", true, false, 0, undefined);
+        await this.createOneState(lRootPath, "reachable", "Device reachable", "boolean", "indicator.reachable", true, false, false, undefined);
 
         for (let i = 1; i <= 4; i++) {
             const lDoorPath = lRootPath + "." + i.toString();
@@ -342,17 +348,21 @@ class WiegandTcpip extends utils.Adapter {
                     native: {},
                 });
 
-                await this.createOneState(lDoorPath, "control", "number", "value", true, false, 0,
+                await this.createOneState(lDoorPath, "control", "Open Mode", "number", "value", true, false, 0,
                     { "0": "unknown", "1": "normally open", "2": "normally closed", "3": "controlled" });
-                await this.createOneState(lDoorPath, "delay", "number", "value", true, false, 0, undefined);
-                await this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, 0, undefined);
-                await this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false, undefined);
-                await this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0, undefined);
-                await this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "", undefined);
-                await this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0, undefined);
-                await this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "", undefined);
-                await this.createOneState(lDoorPath, "remoteOpen", "boolean", "button.lock", false, true, true, undefined);
-                await this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false, undefined);
+                await this.createOneState(lDoorPath, "delay", "Switch delay", "number", "value", true, false, 0, undefined);
+                //await this.createOneState(lDoorPath, "door", "State ?", "boolean", "value", true, false, false, undefined);
+                //await this.createOneState(lDoorPath, "button", "State ?", "boolean", "value", true, false, false, undefined);
+                await this.createOneState(lDoorPath, "directionCode", "Direction #", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "directionText", "Direction", "string", "value", true, false, "", undefined);
+                await this.createOneState(lDoorPath, "lastSwipe", "Card-/Unlock- Id", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "lastGranted", "Access Grant / Denied", "boolean", "value", true, false, false, undefined);
+                await this.createOneState(lDoorPath, "reasonCode", "Reason #", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "reasonText", "Reason", "string", "value", true, false, "", undefined);
+                await this.createOneState(lDoorPath, "requestCode", "Request #", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "requestText", "Request", "string", "value", true, false, "", undefined);
+                await this.createOneState(lDoorPath, "remoteOpen", "Open Door", "boolean", "button.open.door", false, true, true, undefined);
+                await this.createOneState(lDoorPath, "unlocked", "Door unlocked", "boolean", "value.lock", true, false, false, undefined);
                 await this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
             } else {
                 try {
@@ -371,6 +381,7 @@ class WiegandTcpip extends utils.Adapter {
 
     /**
      * @param {string} path
+     * @param {string} id
      * @param {string} name
      * @param {string} type
      * @param {string} role
@@ -379,8 +390,8 @@ class WiegandTcpip extends utils.Adapter {
      * @param {any} val
      * @param {object} stat
      */
-    async createOneState(path, name, type, role, read, write, val, stat) {
-        const lPath = path + "." + name;
+    async createOneState(path, id, name, type, role, read, write, val, stat) {
+        const lPath = path + "." + id;
         await this.setObjectNotExists(lPath, {
             type: "state",
             // @ts-ignore
@@ -411,50 +422,89 @@ class WiegandTcpip extends utils.Adapter {
             let requestText = "";
             let reasonCode = 0;
             let reasonText = "";
+            let directionCode = 0;
+            let directionText = "";
 
             if (!lEvt && !dev) {
                 this.log.error("Major-Problem with event receiving for: " + lRoot);
                 return;
             }
 
-            if (lGranted) {
-                this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
-                    if (!fStat) {
-                        this.log.error("No state found: " + lRoot + ".unlocked");
-                    } else {
-                        this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
-                        this.setTimeout(() => {
-                            this.setState(lRoot + ".unlocked", { ack: true, val: false });
-                        }, 50);
-                    }
-                });
+            if (ldoorId > 0) {
+                if (lGranted) {
+                    this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
+                        if (!fStat) {
+                            this.log.error("No state found: " + lRoot + ".unlocked");
+                        } else {
+                            this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
+                            this.setTimeout(() => {
+                                this.setState(lRoot + ".unlocked", { ack: true, val: false });
+                            }, 50);
+                        }
+                    });
+                }
+
+                if (lEvt.type) {
+                    requestCode = lEvt.type.code || 0;
+                    requestText = lEvt.type.event || "";
+                }
+                if (lEvt.reason) {
+                    reasonCode = lEvt.reason.code || 0;
+                    reasonText = lEvt.reason.reason || "";
+                }
+                if (lEvt.direction) {
+                    directionCode = lEvt.direction.code || 0;
+                    directionText = lEvt.direction.direction || "";
+                }
+                this.setState(lRoot + ".directionCode", { ack: true, val: directionCode });
+                this.setState(lRoot + ".directionText", { ack: true, val: directionText });
+                this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
+                this.setState(lRoot + ".requestText", { ack: true, val: requestText });
+                this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
+                this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
+                this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
+                this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
             }
 
-            if (lEvt.type) {
-                requestCode = lEvt.type.code || 0;
-                requestText = lEvt.type.event || "";
-            }
-            if (lEvt.reason) {
-                reasonCode = lEvt.reason.code || 0;
-                reasonText = lEvt.reason.reason || "";
-            }
-            this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
-            this.setState(lRoot + ".requestText", { ack: true, val: requestText });
-            this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
-            this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
-            this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
-            this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
-
-            //this.setState(lRoot + ".remoteOpen", { ack: true, val: true });
-
-            if (dev && lEvt.index) {
+            if (lEvt.index) {
                 ++dev.eventNr;// = lEvt.index;
                 if (dev.eventNr != lEvt.index) {
                     this.log.error("Timing problem expected: " + dev.eventNr + " / receive: " + lEvt.index + " Event");
                 }
                 this.setState("controllers." + ldeviceId.toString() + ".eventNr", { ack: true, val: lEvt.index });
             }
+            this.checkTimeDiff(dev, evt);
+
             this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
+        }
+    }
+
+    /**
+     * @param {{ state: { doors: {  }; buttons: { } }; }} pEvt
+     */
+    debugState(pEvt){
+        if(pEvt && pEvt.state){
+            if(pEvt.state.doors) this.log.debug("Doors: "+JSON.stringify(pEvt.state.doors));
+            if(pEvt.state.buttons) this.log.debug("Buttons :"+JSON.stringify(pEvt.state.buttons));
+        }
+    }
+
+    /**
+     * @param {{ setTime: boolean; serial: number; }} pDev
+     * @param {{ state: { system: { date: string; time: string; }; doors: {  }; buttons: { } }; }} pEvt
+     */
+    checkTimeDiff(pDev, pEvt){
+        //this.debugState(pEvt);
+        if(pEvt.state && pEvt.state.system){
+            if(pEvt.state.system.date && pEvt.state.system.time) {
+                const lNow = new Date();
+                const lDat = new Date(pEvt.state.system.date+"T"+pEvt.state.system.time);
+                const lDiff = Math.abs((lDat.getMilliseconds() - lNow.getMilliseconds()));
+                if(lDiff > 60000){
+                    pDev.setTime = true;
+                    this.log.debug("The device clock is no longer up to date: "+pDev.serial+" difference "+lDiff+"ms");
+                }
+            }
         }
     }
 

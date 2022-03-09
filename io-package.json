@@ -3,6 +3,9 @@
         "name": "wiegand-tcpip",
         "version": "0.4.2",
         "news": {
+            "0.4.3": {
+                "en": "tbd"
+            },
             "0.4.2": {
                 "en": "Remote Door Open Special: CTX get wrong config",
                 "de": "Remote Door Open Special: CTX erhält falsche Konfiguration",
@@ -14,6 +17,30 @@
                 "es": "Especial de apertura de puerta remota: CTX obtiene una configuración incorrecta",
                 "pl": "Specjalna opcja zdalnego otwierania drzwi: CTX pobierz nieprawidłową konfigurację",
                 "zh-cn": "远程开门特别：CTX 获取 wrog 配置"
+            },
+            "0.4.1": {
+                "en": "Small blemishes fixed and translation completed",
+                "de": "Kleine Schönheitsfehler behoben und Übersetzung abgeschlossen",
+                "ru": "Небольшие недочеты исправлены, перевод завершен.",
+                "pt": "Pequenos defeitos corrigidos e tradução concluída",
+                "nl": "Kleine onvolkomenheden verholpen en vertaling voltooid",
+                "fr": "Petits défauts corrigés et traduction terminée",
+                "it": "Piccole imperfezioni sistemate e traduzione completata",
+                "es": "Pequeñas imperfecciones arregladas y traducción completada",
+                "pl": "Poprawiono drobne skazy i ukończono tłumaczenie",
+                "zh-cn": "小瑕疵修复，翻译完成"
+            },
+            "0.4.0": {
+                "en": "First working package",
+                "de": "Erstes Arbeitspaket",
+                "ru": "Первый рабочий пакет",
+                "pt": "Primeiro pacote de trabalho",
+                "nl": "Eerste werkpakket",
+                "fr": "Premier paquet de travail",
+                "it": "Primo pacchetto funzionante",
+                "es": "Primer paquete de trabajo",
+                "pl": "Pierwszy pakiet roboczy",
+                "zh-cn": "第一个工作包"
             }
         },
         "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
@@ -85,7 +112,7 @@
         "debugLL": false,
         "controllers": [
             {
-                "serial": null,
+                "serial": 0,
                 "deviceIp": "",
                 "exposedIP": "",
                 "exposedPort": "",
