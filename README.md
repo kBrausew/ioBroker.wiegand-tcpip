@@ -1,13 +1,14 @@
-![Logo](admin/wiegand-tcpip.png)
 # ioBroker.wiegand-tcpip
+![Logo](admin/wiegand-tcpip.png)
 
+## State, Test & Badge
 [![NPM version](https://img.shields.io/npm/v/iobroker.wiegand-tcpip.svg)](https://www.npmjs.com/package/iobroker.wiegand-tcpip)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.wiegand-tcpip.svg)](https://www.npmjs.com/package/iobroker.wiegand-tcpip)
 ![Number of Installations](https://iobroker.live/badges/wiegand-tcpip-installed.svg)
-![Current version in stable repository](https://iobroker.live/badges/wiegand-tcpip-stable.svg)
+<!-- ![Current version in stable repository](https://iobroker.live/badges/wiegand-tcpip-stable.svg) -->
 <!-- [![Dependency Status](https://img.shields.io/david/kbrausew/iobroker.wiegand-tcpip.svg)](https://david-dm.org/kbrausew/iobroker.wiegand-tcpip) -->
 
-[![NPM](https://nodei.co/npm/iobroker.wiegand-tcpip.png?downloads=true)](https://nodei.co/npm/iobroker.wiegand-tcpip/)
+<!-- [![NPM](https://nodei.co/npm/iobroker.wiegand-tcpip.png?downloads=true)](https://nodei.co/npm/iobroker.wiegand-tcpip/) -->
 
 **Tests:** ![Test and Release](https://github.com/kbrausew/ioBroker.wiegand-tcpip/workflows/Test%20and%20Release/badge.svg)
 
@@ -16,6 +17,12 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## Setup the adapter
 [Setup Help](docs/setup.md)
+
+## Dependences
+| Component | Version |
+| :---: | :---: |
+| NodeJS | min 14.x |
+| JS-Controller | min 3.x |
 
 ## Recognition
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
