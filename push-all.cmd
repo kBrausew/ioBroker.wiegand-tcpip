@@ -11,7 +11,7 @@ REM	if errorlevel 1 goto :ERROR
 	echo.#
 	
 	echo.# COMMIT
-	git commit -a -m "%1: %COMPUTERNAME% %USERNAME% %DATE% %TIME%"
+	git commit -a -m "%~1: %COMPUTERNAME% %USERNAME% %DATE% %TIME%"
 	if errorlevel 1 goto :ERROR
 	echo.#
 	echo.#
