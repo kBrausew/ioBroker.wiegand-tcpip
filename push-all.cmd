@@ -1,12 +1,14 @@
 @echo off
 cd /d %~dp0
 
+if not .%2==. goto :ERROR_PARAM
+
 :BEGIN
-REM	echo.# ADD
-REM	git add .
+	echo.# ADD
+	git add .
 REM	if errorlevel 1 goto :ERROR
-REM	echo.#
-REM	echo.#
+	echo.#
+	echo.#
 	
 	echo.# COMMIT
 	git commit -a -m "%COMPUTERNAME% %USERNAME% %DATE% %TIME%"
@@ -27,6 +29,12 @@ REM	echo.#
 :ERROR
 	echo.# Es wurden nicht alle Schritte ausgeführt
 	pause
+	goto :FINISH
+
+:ERROR_PARAM
+	echo.# Stellen sie Kommentare bitte in doppelte Hochkommatas
+	pause
+	goto :FINISH
 
 :FINISH
 	
