@@ -85,10 +85,11 @@
         "debugLL": false,
         "controllers": [
             {
-                "serial": 405419896,
+                "serial": null,
                 "deviceIp": "",
                 "exposedIP": "",
                 "exposedPort": "",
+                "modelType": 4,
                 "broadcast": true,
                 "index": 1,
                 "errorCount": 0,

@@ -53,7 +53,7 @@ class WiegandTcpip extends utils.Adapter {
 
         const ctx = { config: new uapi.Config("doorOpenSpec", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
         ctx.logger = this.log.debug;
-        this.log.silly("doorOpenSpec: "+JSON.stringify(ctx));
+        this.log.silly("doorOpenSpec: " + JSON.stringify(ctx));
         uapi.openDoor(ctx, deviceId, doorId)
             .then(ret => {
                 // uapi.getEventIndex(ctx, deviceId)
@@ -103,11 +103,13 @@ class WiegandTcpip extends utils.Adapter {
             if (!this.serials[dev.serial]) {
                 this.serials[dev.serial] = true;
                 if (dev.serial && !isNaN(dev.serial)) {
+                    // @ts-ignore
+                    dev.modelType = parseInt(dev.modelType, 10) || 4;
                     dev.index = itemNr;
                     dev.errorCount = 1;
                     dev.heartbeatCount = 1;
                     ++itemNr;
-                    await this.treeStructure(dev.serial, dev.index);
+                    await this.treeStructure(dev.serial, dev.index, dev.modelType);
                     if (dev.deviceIp && dev.exposedIP && dev.exposedPort) {
                         // full rig
                         dev.broadcast = false;
@@ -134,8 +136,12 @@ class WiegandTcpip extends utils.Adapter {
                     dev.run = false;
                     dev.eventNr = 0;
                     this.ctrls.push(dev);
-                } else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
-            } else this.log.error("Controller configured more than once: " + dev.serial.toString());
+                }
+                // @ts-ignore
+                else this.log.error("Invalid serial number for controller: [" + dev.serial.toString() + "]");
+            }
+            // @ts-ignore
+            else this.log.error("Controller configured more than once: " + dev.serial.toString());
         }
 
         this.getDevices((err, res) => {
@@ -144,8 +150,9 @@ class WiegandTcpip extends utils.Adapter {
                     const spl = obj._id.split(".");
                     if (spl.length == 4 && spl[2] == "controllers") {
                         if (!this.serials[spl[3]]) {
-                            this.delObject(obj._id, { recursive: true }, (err) => {
-                                this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
+                            // eslint-disable-next-line no-unused-vars
+                            this.delObject(obj._id, { recursive: true }, (_err) => {
+                                //this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
                             });
                             this.log.info("Controller: " + obj._id + " deleted");
                         } else this.log.silly(obj._id + " ok");
@@ -214,7 +221,7 @@ class WiegandTcpip extends utils.Adapter {
                         }
 
                         if (dev.heartbeatCount == 1) {
-                            for (let i = 1; i <= 4; i++) {
+                            for (let i = 1; i <= dev.modelType; i++) {
                                 try {
                                     const lContr = await uapi.getDoorControl(this.ctx, dev.serial, i);
                                     //this.log.debug(JSON.stringify(lContr));
@@ -309,8 +316,9 @@ class WiegandTcpip extends utils.Adapter {
     /**
      * @param {string | number} serialNr
      * @param {number} itemNr
+     * @param {number} noOfDoors
      */
-    async treeStructure(serialNr, itemNr) {
+    async treeStructure(serialNr, itemNr, noOfDoors) {
         const lSerialNr = serialNr.toString();
         const lRootPath = "controllers." + lSerialNr;
 
@@ -326,23 +334,40 @@ class WiegandTcpip extends utils.Adapter {
 
         for (let i = 1; i <= 4; i++) {
             const lDoorPath = lRootPath + "." + i.toString();
-            this.setObjectNotExists(lDoorPath, {
-                type: "channel",
-                common: { name: "Door-" + i.toString(), },
-                native: {},
-            });
-            await this.createOneState(lDoorPath, "control", "number", "value", true, false, 0,
-                { "0": "unknown", "1": "normally open", "2": "normally closed", "3": "controlled" });
-            await this.createOneState(lDoorPath, "delay", "number", "value", true, false, 0, undefined);
-            await this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, 0, undefined);
-            await this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false, undefined);
-            await this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0, undefined);
-            await this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "", undefined);
-            await this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0, undefined);
-            await this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "", undefined);
-            await this.createOneState(lDoorPath, "remoteOpen", "boolean", "button.lock", false, true, true, undefined);
-            await this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false, undefined);
-            await this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
+            if (i <= noOfDoors) {
+                this.log.debug("Aktiviere: "+serialNr+" / "+i);
+                this.setObjectNotExists(lDoorPath, {
+                    type: "channel",
+                    common: { name: "Door-" + i.toString(), },
+                    native: {},
+                });
+
+                await this.createOneState(lDoorPath, "control", "number", "value", true, false, 0,
+                    { "0": "unknown", "1": "normally open", "2": "normally closed", "3": "controlled" });
+                await this.createOneState(lDoorPath, "delay", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "lastSwipe", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "lastGranted", "boolean", "value", true, false, false, undefined);
+                await this.createOneState(lDoorPath, "reasonCode", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "reasonText", "string", "value", true, false, "", undefined);
+                await this.createOneState(lDoorPath, "requestCode", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "requestText", "string", "value", true, false, "", undefined);
+                await this.createOneState(lDoorPath, "remoteOpen", "boolean", "button.lock", false, true, true, undefined);
+                await this.createOneState(lDoorPath, "unlocked", "boolean", "value.lock", true, false, false, undefined);
+                await this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
+            } else {
+                try {
+                    this.log.debug("De-Aktiviere: "+serialNr+" / "+i);
+                    this.unsubscribeStates(lDoorPath + ".remoteOpen");
+                    // eslint-disable-next-line no-unused-vars
+                    this.delObject(lDoorPath, { recursive: true }, (_err) => {
+                        //this.log.error("Device not valide: " + JSON.stringify(err) + " > " + lRootPath);
+                    });
+                }
+                // eslint-disable-next-line no-empty
+                catch (error) {
+                    this.log.debug("Fehler: "+serialNr+" / "+i);
+                }
+            }
         }
     }
 
