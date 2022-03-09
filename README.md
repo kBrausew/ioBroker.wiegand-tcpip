@@ -18,10 +18,10 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 ## Setup the adapter
 [Setup Help](docs/setup.md)
 
-## Dependences
+## **Dependences**
 | Component | Version |
 | :---: | :---: |
-| NodeJS | min 14.x |
+| **NodeJS** | **min 14.x** |
 | JS-Controller | min 3.x |
 
 ## Recognition
