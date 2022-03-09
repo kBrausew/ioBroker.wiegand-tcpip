@@ -152,7 +152,7 @@ class WiegandTcpip extends utils.Adapter {
                         if (!this.serials[spl[3]]) {
                             // eslint-disable-next-line no-unused-vars
                             this.delObject(obj._id, { recursive: true }, (_err) => {
-                                //this.log.error("Device not valide: " + JSON.stringify(err) + " > " + obj._id);
+                                this.log.warn("Clean Device not valide: " + JSON.stringify(_err) + " > " + obj._id);
                             });
                             this.log.info("Controller: " + obj._id + " deleted");
                         } else this.log.silly(obj._id + " ok");
@@ -322,7 +322,7 @@ class WiegandTcpip extends utils.Adapter {
         const lSerialNr = serialNr.toString();
         const lRootPath = "controllers." + lSerialNr;
 
-        this.log.info("Create controller objects: " + lSerialNr);
+        this.log.info("Create controller " + lSerialNr + " for Model " + noOfDoors + "-Door Objects");
         await this.setObjectNotExists(lRootPath, {
             type: "device",
             common: { name: "Controller-" + itemNr.toString(), },
@@ -335,7 +335,7 @@ class WiegandTcpip extends utils.Adapter {
         for (let i = 1; i <= 4; i++) {
             const lDoorPath = lRootPath + "." + i.toString();
             if (i <= noOfDoors) {
-                this.log.debug("Aktiviere: "+serialNr+" / "+i);
+                //this.log.debug("Aktiviere: "+serialNr+" / "+i);
                 this.setObjectNotExists(lDoorPath, {
                     type: "channel",
                     common: { name: "Door-" + i.toString(), },
@@ -356,16 +356,14 @@ class WiegandTcpip extends utils.Adapter {
                 await this.subscribeStatesAsync(lDoorPath + ".remoteOpen");
             } else {
                 try {
-                    this.log.debug("De-Aktiviere: "+serialNr+" / "+i);
+                    //this.log.debug("De-Aktiviere: "+serialNr+" / "+i);
                     this.unsubscribeStates(lDoorPath + ".remoteOpen");
                     // eslint-disable-next-line no-unused-vars
                     this.delObject(lDoorPath, { recursive: true }, (_err) => {
-                        //this.log.error("Device not valide: " + JSON.stringify(err) + " > " + lRootPath);
+                        this.log.warn("Delete Device not valide: " + JSON.stringify(_err) + " > " + lRootPath);
                     });
-                }
-                // eslint-disable-next-line no-empty
-                catch (error) {
-                    this.log.debug("Fehler: "+serialNr+" / "+i);
+                } catch (error) {
+                    this.log.warn("Error deactive device: " + serialNr + " / " + i + " :" + error.message);
                 }
             }
         }
