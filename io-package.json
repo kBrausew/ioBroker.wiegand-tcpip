@@ -4,7 +4,16 @@
         "version": "0.4.3",
         "news": {
             "0.4.3": {
-                "en": "Model select, Time running out, ..."
+                "en": "Model select, Time running out, ...",
+                "de": "Modellauswahl, Uhrzeit läuft davon, ...",
+                "ru": "Выбор модели, Время истекает, ...",
+                "pt": "Seleção de modelo, Tempo se esgotando, ...",
+                "nl": "Model selecteren, Tijd dringt, ...",
+                "fr": "Sélection du modèle, Temps qui s'écoule, ...",
+                "it": "Selezione modello, Tempo scaduto, ...",
+                "es": "Selección de modelo, Tiempo agotado, ...",
+                "pl": "Wybór modelu, Czas ucieka, ...",
+                "zh-cn": "型号选择，时间不多，..."
             },
             "0.4.2": {
                 "en": "Remote Door Open Special: CTX get wrong config",
@@ -67,6 +76,9 @@
             "es": "Controlador de acceso de puerta Wiegand Shenzhen Weigeng Industrial",
             "pl": "Kontroler dostępu do drzwi Wiegand Shenzhen Weigeng Industrial",
             "zh-cn": "韦根门禁控制器 深圳伟庚实业"
+        },
+        "docs": {
+            "en": "docs/setup.md"
         },
         "authors": [
             "kbrausew <kbrausew@magenta.de>"

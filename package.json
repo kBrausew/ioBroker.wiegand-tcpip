@@ -6,9 +6,6 @@
     "name": "kbrausew",
     "email": "kbrausew@magenta.de"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "contributors": [
     {
       "name": "kbrausew",
@@ -34,9 +31,12 @@
     "S4A ACB",
     "Door Access Controller Shenzhen Weigeng Industrial"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kBrausew/iobroker.wiegand-tcpip.git"
+    "url": "https://github.com/kBrausew/ioBroker.wiegand-tcpip.git"
   },
   "engines": {
     "node": ">=14.18.3"
@@ -73,6 +73,7 @@
   "files": [
     "admin{,/!(src)/**}/!(tsconfig|tsconfig.*).json",
     "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
+    "docs/",
     "lib/",
     "www/",
     "io-package.json",
