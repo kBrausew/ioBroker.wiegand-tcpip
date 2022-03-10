@@ -7,7 +7,7 @@
     "email": "kbrausew@magenta.de"
   },
   "publishConfig": {
-    "registry":"https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "contributors": [
     {
@@ -37,6 +37,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kBrausew/iobroker.wiegand-tcpip.git"
+  },
+  "engines": {
+    "node": ">=14.18.3"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^2.5.1",
