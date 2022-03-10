@@ -12,6 +12,35 @@ const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
 //const { stat } = require("fs");
 
+/**
+ * @callback cbLogger
+ *
+ * @function fnLogger
+ *
+ * @typedef {{  lBind: string,
+ *              lPort: number,
+ *              rPort: number,
+ *              lTimeout: number,
+ *              lHeartbeat: number,
+ *              lListen: string,
+ *              lBroadcast: string,
+ *              lBroadcastP: string,
+ *              rBroadcast: string,
+ *              debugll: boolean }} localConfig
+ *
+ * @typedef {{  name: string,
+*               bind: string,
+*               broadcast: string,
+*               listen: string,
+*               timeout: number,
+*               devices: [Object],
+*               debug: boolean }} uapiConfig
+*
+* @typedef {{   config: uapiConfig,
+*               locale: string,
+*               logger: function  }} uapiContext
+*/
+
 class WiegandTcpip extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -29,66 +58,51 @@ class WiegandTcpip extends utils.Adapter {
 
         this.ulistener = null;      // socket listener
         this.heartbeat = null;      // interval heartbeat
-        //this.lheartbeat = 0;        // interval ms
         this.ctrls = [];            // controller of this.config validated
         this.serials = {};          // serials
         this.devs = [];             // uAPI devices (config)
     }
 
     /**
-     * @param {number} deviceId
-     * @param {number} doorId
-     */
-    doorOpenSpec(deviceId, doorId) {
-        const lBind = this.config.bind || "0.0.0.0";
-        const lPort = this.config.port || 60000;
-        const rPort = this.config.r_port || 60099;
-        const lTimeout = this.config.timeout || 2500;
-        //const lheartbeat = this.config.heartbeat || 300000;
-        const lListen = lBind + ":" + rPort.toString();
-        //const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
-        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
-        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
-        const debugll = this.config.debugLL || false;
+     * @returns {localConfig}
+    */
+    createCFG() {
+        const lCFG = {};
+        lCFG.lBind = this.config.bind || "0.0.0.0";
+        lCFG.lPort = this.config.port || 60000;
+        lCFG.rPort = this.config.r_port || 60099;
+        lCFG.lTimeout = this.config.timeout || 2500;
+        lCFG.lHeartbeat = this.config.heartbeat || 300000;
+        lCFG.lListen = lCFG.lBind + ":" + lCFG.rPort.toString();
+        lCFG.lBroadcast = this.getBroadcastAddresses(lCFG.lBind) || "0.0.0.0";
+        lCFG.lBroadcastP = `${lCFG.lBroadcast}:${lCFG.lPort.toString()}`;
+        lCFG.rBroadcast = this.getBroadcastAddresses(lCFG.lBind) || "255.255.255.255";
+        lCFG.debugll = this.config.debugLL || false;
 
-        const ctx = { config: new uapi.Config("doorOpenSpec", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
-        ctx.logger = this.log.debug;
-        this.log.silly("doorOpenSpec: " + JSON.stringify(ctx));
-        uapi.openDoor(ctx, deviceId, doorId)
-            .then(ret => {
-                // uapi.getEventIndex(ctx, deviceId)
-                //     .then(lRet => {
-                //         const ctrl = this.ctrls.find(dev => dev.serial == deviceId);
-                //         // //if (ctrl) ++ctrl.eventNr;
-                //         // if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
-                //         //     ctrl.eventNr = lRet.index;
-                //         // } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
-                //         this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
-                //     })
-                //     .catch(lErr => {
-                //         //das wird noch folgen haben... aber nicht hier ;-)
-                //     });
-                this.log.debug("Request remote open: " + deviceId + " Door-" + doorId + ": " + JSON.stringify(ret));
-            })
-            .catch(err => {
-                this.log.error("Error Remote Open Door: " + deviceId + "/" + doorId + ": " + err.message);
-            });
+        return lCFG;
+    }
+
+    /**
+     * @param {string} pName
+     * @param {localConfig} pCFG
+     * @param {any[]} pDevs
+     * @param {function} cLogger
+     * @returns {uapiContext}
+     */
+    createCTX(pName, pCFG, pDevs, cLogger) {
+        /** @type uapiContext */
+        // @ts-ignore
+        const lCTX = { config: new uapi.Config(pName, pCFG.lBind, pCFG.lBroadcastP, pCFG.lListen, pCFG.lTimeout, pDevs, pCFG.debugll) };
+        if (cLogger) lCTX.logger = cLogger;
+        return lCTX;
     }
 
     /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
-        const lBind = this.config.bind || "0.0.0.0";
-        const lPort = this.config.port || 60000;
-        const rPort = this.config.r_port || 60099;
-        const lTimeout = this.config.timeout || 2500;
-        const lheartbeat = this.config.heartbeat || 300000;
-        const lListen = lBind + ":" + rPort.toString();
-        const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
-        const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
-        const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
-        const debugll = this.config.debugLL || false;
+        /** @type localConfig */
+        const lCFG = this.createCFG();
 
         this.unsubscribeStates("*");
 
@@ -114,20 +128,20 @@ class WiegandTcpip extends utils.Adapter {
                         // full rig
                         dev.broadcast = false;
                     } else if (dev.deviceIp || dev.exposedIP || dev.exposedPort) {
-                        if (!dev.deviceIp) dev.deviceIp = lBroadcast;
-                        if (!dev.exposedIP) dev.exposedIP = lBind;
+                        if (!dev.deviceIp) dev.deviceIp = lCFG.lBroadcast;
+                        if (!dev.exposedIP) dev.exposedIP = lCFG.lBind;
                         // @ts-ignore
-                        if (!dev.exposedPort) dev.exposedPort = rPort;
+                        if (!dev.exposedPort) dev.exposedPort = lCFG.rPort;
                         dev.broadcast = true;
                         this.log.warn("Incorrect controller-setup for non/broadcast: " + dev.serial);
                     } else {
-                        dev.deviceIp = lBroadcast;
-                        dev.exposedIP = rBroadcast;
+                        dev.deviceIp = lCFG.lBroadcast;
+                        dev.exposedIP = lCFG.rBroadcast;
                         // @ts-ignore
-                        dev.exposedPort = rPort;
+                        dev.exposedPort = lCFG.rPort;
                         dev.broadcast = true;
                     }
-                    await uapi.addDevice(this.ctx, dev.serial, dev.deviceIp, dev.broadcast);
+                    //await uapi.addDevice(lCTX, dev.serial, dev.deviceIp, dev.broadcast);
                     this.devs.push({
                         "deviceId": dev.serial,
                         "address": dev.deviceIp,
@@ -151,8 +165,8 @@ class WiegandTcpip extends utils.Adapter {
                     if (spl.length == 4 && spl[2] == "controllers") {
                         if (!this.serials[spl[3]]) {
                             // eslint-disable-next-line no-unused-vars
-                            this.delObject(obj._id, { recursive: true }, (_err) => {
-                                this.log.warn("Clean Device not valide: " + JSON.stringify(_err) + " > " + obj._id);
+                            this.delObject(obj._id, { recursive: true }, (err) => {
+                                if (err) this.log.debug("CleanUp device " + obj._id + ": " + err.message);
                             });
                             this.log.info("Controller: " + obj._id + " deleted");
                         } else this.log.silly(obj._id + " ok");
@@ -161,19 +175,62 @@ class WiegandTcpip extends utils.Adapter {
             }
         });
 
-        this.ctx = { config: new uapi.Config("ctx", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
-        this.ctx.logger = this.log.debug;
-        this.log.silly(JSON.stringify(this.ctx));
+        const lCTX = this.createCTX("ctx", lCFG, this.devs, this.log.debug);
+        this.log.silly(JSON.stringify(lCTX));
         this.log.silly(JSON.stringify(this.devs));
-        this.ulistener = await uapi.listen(this.ctx, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
+        this.ulistener = await uapi.listen(lCTX, this.onUapiEvent.bind(this), this.onUapiError.bind(this));
 
         await this.assureRun();
-        this.heartbeat = this.setInterval(this.assureRun.bind(this), lheartbeat);
+        this.heartbeat = this.setInterval(this.assureRun.bind(this), lCFG.lHeartbeat);
+    }
+
+    /**
+     * @param {number} deviceId
+     * @param {number} doorId
+     */
+    doorOpenSpec(deviceId, doorId) {
+        // const lBind = this.config.bind || "0.0.0.0";
+        // const lPort = this.config.port || 60000;
+        // const rPort = this.config.r_port || 60099;
+        // const lTimeout = this.config.timeout || 2500;
+        // //const lheartbeat = this.config.heartbeat || 300000;
+        // const lListen = lBind + ":" + rPort.toString();
+        // //const rBroadcast = this.getBroadcastAddresses(lBind) || "255.255.255.255";
+        // const lBroadcast = this.getBroadcastAddresses(lBind) || "0.0.0.0";
+        // const lBroadcastP = `${lBroadcast}:${lPort.toString()}`;
+        // const debugll = this.config.debugLL || false;
+
+        //const ctx = { config: new uapi.Config("doorOpenSpec", lBind, lBroadcastP, lListen, lTimeout, this.devs, debugll) };
+        /** @type uapiContext */
+        const lCTX = this.createCTX("specRemOp", this.createCFG(), this.devs, this.log.debug);
+        //ctx.logger = this.log.debug;
+        this.log.silly("doorOpenSpec: " + JSON.stringify(lCTX));
+        uapi.openDoor(lCTX, deviceId, doorId)
+            .then(ret => {
+                // uapi.getEventIndex(ctx, deviceId)
+                //     .then(lRet => {
+                //         const ctrl = this.ctrls.find(dev => dev.serial == deviceId);
+                //         // //if (ctrl) ++ctrl.eventNr;
+                //         // if (ctrl && lRet && lRet.index && (ctrl.eventNr + 1) == lRet.index) {
+                //         //     ctrl.eventNr = lRet.index;
+                //         // } else this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                //         this.log.debug("??: " + ctrl.eventNr + " :: " + JSON.stringify(lRet));
+                //     })
+                //     .catch(lErr => {
+                //         //das wird noch folgen haben... aber nicht hier ;-)
+                //     });
+                this.log.debug("Request remote open: " + deviceId + " Door-" + doorId + ": " + JSON.stringify(ret));
+            })
+            .catch(err => {
+                this.log.error("Error Remote Open Door: " + deviceId + "/" + doorId + ": " + err.message);
+            });
     }
 
     async assureRun() {
         if (!this.assureRun_once) {
             this.assureRun_once = true;
+            /** @type uapiContext */
+            const lCTX = this.createCTX("assureRun", this.createCFG(), this.devs, this.log.debug);
             //################################################################################
             //Major Try-Catch: no change code befor...
             try {
@@ -181,7 +238,7 @@ class WiegandTcpip extends utils.Adapter {
                     //this.log.silly("Heartbeat: " + dev.serial);
                     try {
                         let eventNr = 0;
-                        const lStat = await uapi.getStatus(this.ctx, dev.serial);
+                        const lStat = await uapi.getStatus(lCTX, dev.serial);
                         if (lStat) {
                             if (lStat.state) {
                                 if (lStat.state.event) {
@@ -197,7 +254,7 @@ class WiegandTcpip extends utils.Adapter {
                         }
 
                         if (dev.run && dev.heartbeatCount > 10) {
-                            const lList = await uapi.getListener(this.ctx, dev.serial);
+                            const lList = await uapi.getListener(lCTX, dev.serial);
                             if (lList) {
                                 const lHost = lList.address || "";
                                 const lPort = lList.port || 0;
@@ -211,8 +268,8 @@ class WiegandTcpip extends utils.Adapter {
 
                         if (!dev.run) {
                             this.log.info("Connect to controller: " + dev.serial);
-                            await uapi.recordSpecialEvents(this.ctx, dev.serial, true);
-                            await uapi.setListener(this.ctx, dev.serial, dev.exposedIP, dev.exposedPort);
+                            await uapi.recordSpecialEvents(lCTX, dev.serial, true);
+                            await uapi.setListener(lCTX, dev.serial, dev.exposedIP, dev.exposedPort);
 
                             dev.eventNr = eventNr;
                             dev.heartbeatCount = 1;
@@ -222,14 +279,14 @@ class WiegandTcpip extends utils.Adapter {
 
                         if (dev.setTime) {
                             this.log.info("Reset the device clock: " + dev.serial);
-                            await uapi.setTime(this.ctx, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
+                            await uapi.setTime(lCTX, dev.serial, this.formatDate(Date.now(), "YYYY-MM-DD hh:mm:ss"));
                             dev.setTime = false;
                         }
 
                         if (dev.heartbeatCount == 1) {
                             for (let i = 1; i <= dev.modelType; i++) {
                                 try {
-                                    const lContr = await uapi.getDoorControl(this.ctx, dev.serial, i);
+                                    const lContr = await uapi.getDoorControl(lCTX, dev.serial, i);
                                     //this.log.debug(JSON.stringify(lContr));
                                     let lDelay = 0;
                                     let lContr_n = 0;
@@ -248,7 +305,7 @@ class WiegandTcpip extends utils.Adapter {
 
                         /*if(dev.eventNr > 3){
                             dev.eventNr = 1;
-                            await uapi.setEventIndex(this.ctx, dev.serial, dev.eventNr);
+                            await uapi.setEventIndex(lCTX, dev.serial, dev.eventNr);
                             this.log.debug(dev.eventNr);
                         }*/
 
@@ -368,9 +425,8 @@ class WiegandTcpip extends utils.Adapter {
                 try {
                     //this.log.debug("De-Aktiviere: "+serialNr+" / "+i);
                     this.unsubscribeStates(lDoorPath + ".remoteOpen");
-                    // eslint-disable-next-line no-unused-vars
-                    this.delObject(lDoorPath, { recursive: true }, (_err) => {
-                        this.log.warn("Delete Device not valide: " + JSON.stringify(_err) + " > " + lRootPath);
+                    this.delObject(lDoorPath, { recursive: true }, (err) => {
+                        if (err) this.log.debug("Deleted door not valide " + lDoorPath + ": " + err.message);
                     });
                 } catch (error) {
                     this.log.warn("Error deactive device: " + serialNr + " / " + i + " :" + error.message);
@@ -430,7 +486,7 @@ class WiegandTcpip extends utils.Adapter {
                 return;
             }
 
-            if (ldoorId > 0) {
+            if (ldoorId > 0 && ldoorId <= dev.modelType) {
                 if (lGranted) {
                     this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
                         if (!fStat) {
@@ -440,30 +496,36 @@ class WiegandTcpip extends utils.Adapter {
                             this.setTimeout(() => {
                                 this.setState(lRoot + ".unlocked", { ack: true, val: false });
                             }, 50);
+
+                            if (lEvt.type) {
+                                requestCode = lEvt.type.code || 0;
+                                requestText = lEvt.type.event || "";
+                            }
+                            if (lEvt.reason) {
+                                reasonCode = lEvt.reason.code || 0;
+                                reasonText = lEvt.reason.reason || "";
+                            }
+                            if (lEvt.direction) {
+                                directionCode = lEvt.direction.code || 0;
+                                directionText = lEvt.direction.direction || "";
+                            }
+                            this.setState(lRoot + ".directionCode", { ack: true, val: directionCode });
+                            this.setState(lRoot + ".directionText", { ack: true, val: directionText });
+                            this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
+                            this.setState(lRoot + ".requestText", { ack: true, val: requestText });
+                            this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
+                            this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
+                            this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
+                            this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
+
+                            this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
                         }
                     });
                 }
 
-                if (lEvt.type) {
-                    requestCode = lEvt.type.code || 0;
-                    requestText = lEvt.type.event || "";
-                }
-                if (lEvt.reason) {
-                    reasonCode = lEvt.reason.code || 0;
-                    reasonText = lEvt.reason.reason || "";
-                }
-                if (lEvt.direction) {
-                    directionCode = lEvt.direction.code || 0;
-                    directionText = lEvt.direction.direction || "";
-                }
-                this.setState(lRoot + ".directionCode", { ack: true, val: directionCode });
-                this.setState(lRoot + ".directionText", { ack: true, val: directionText });
-                this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
-                this.setState(lRoot + ".requestText", { ack: true, val: requestText });
-                this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
-                this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
-                this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
-                this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
+            } else {
+                const lIdStr = ldoorId || "Null";
+                this.log.error("Received Event has no valid Door Identifier: " + lIdStr);
             }
 
             if (lEvt.index) {
@@ -474,18 +536,16 @@ class WiegandTcpip extends utils.Adapter {
                 this.setState("controllers." + ldeviceId.toString() + ".eventNr", { ack: true, val: lEvt.index });
             }
             this.checkTimeDiff(dev, evt);
-
-            this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
         }
     }
 
     /**
      * @param {{ state: { doors: {  }; buttons: { } }; }} pEvt
      */
-    debugState(pEvt){
-        if(pEvt && pEvt.state){
-            if(pEvt.state.doors) this.log.debug("Doors: "+JSON.stringify(pEvt.state.doors));
-            if(pEvt.state.buttons) this.log.debug("Buttons :"+JSON.stringify(pEvt.state.buttons));
+    debugState(pEvt) {
+        if (pEvt && pEvt.state) {
+            if (pEvt.state.doors) this.log.debug("Doors: " + JSON.stringify(pEvt.state.doors));
+            if (pEvt.state.buttons) this.log.debug("Buttons :" + JSON.stringify(pEvt.state.buttons));
         }
     }
 
@@ -493,16 +553,16 @@ class WiegandTcpip extends utils.Adapter {
      * @param {{ setTime: boolean; serial: number; }} pDev
      * @param {{ state: { system: { date: string; time: string; }; doors: {  }; buttons: { } }; }} pEvt
      */
-    checkTimeDiff(pDev, pEvt){
+    checkTimeDiff(pDev, pEvt) {
         //this.debugState(pEvt);
-        if(pEvt.state && pEvt.state.system){
-            if(pEvt.state.system.date && pEvt.state.system.time) {
+        if (pEvt.state && pEvt.state.system) {
+            if (pEvt.state.system.date && pEvt.state.system.time) {
                 const lNow = new Date();
-                const lDat = new Date(pEvt.state.system.date+"T"+pEvt.state.system.time);
+                const lDat = new Date(pEvt.state.system.date + "T" + pEvt.state.system.time);
                 const lDiff = Math.abs((lDat.getMilliseconds() - lNow.getMilliseconds()));
-                if(lDiff > 60000){
+                if (lDiff > 60000) {
                     pDev.setTime = true;
-                    this.log.debug("The device clock is no longer up to date: "+pDev.serial+" difference "+lDiff+"ms");
+                    this.log.debug("The device clock is no longer up to date: " + pDev.serial + " difference " + lDiff + "ms");
                 }
             }
         }
