@@ -24,12 +24,12 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 | **NodeJS** | **min 14.x** |
 | JS-Controller | min 3.x |
 
-## Recognition
+## **Recognition**
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
 - https://github.com/uhppoted
 - https://github.com/twystd
 
-## Hardware
+## **Hardware**
 * Wiegand to TCP/IP (https://ingenier.wordpress.com/zutrittskontrolle/  german)
 * Door Access Controller Shenzhen Weigeng Industrial (http://wiegand.com.cn)
 * UHPPOTE -UT0311-L01 (up to L04) (https://github.com/uhppoted)
@@ -40,12 +40,18 @@ My very special thanks go to **@github/uhppoted & @github/twystd** without whose
 
 Not every listed hardware was tested by me. Don't hesitate to tell me about the compatibility.
 
-## Disclaimer:
+## **Disclaimer**
 I hereby exclude liability for any damage and consequential damage that may arise from testing or using the software.
 The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
-## Changelog
+## **Changelog**
+### V0.4.3
+#### Function
+* no new one
+#### Changes
+* setTime if device is running out
+* select the model in configuration
 ### V0.4.2 (Beta)
 #### Function:
 * Remote network setup

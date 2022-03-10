@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "wiegand-tcpip",
-        "version": "0.4.2",
+        "version": "0.4.3",
         "news": {
             "0.4.3": {
                 "en": "tbd"
