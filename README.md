@@ -51,7 +51,8 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 * no new one
 #### Changes
 * setTime if device is running out
-* select the model in configuration
+* add per Controller the Model (1-, 2- and 4-Doors)
+* add info direction
 ### V0.4.2 (Beta)
 #### Function:
 * Remote network setup
@@ -62,7 +63,6 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 * special remoteDoorOpen (in other contex change net-access-mode unmotivated to broadcast)
 * device lowlevel debug enabled (from UHPPOTE framework connect to ioBroker log)
 * add various "silly" log messages
-* add per Controller the Model (1-, 2- and 4-Doors)
 ### V0.4.1-beta
 * Small blemishes fixed and translation completed
 ### V0.4.0-alpha
