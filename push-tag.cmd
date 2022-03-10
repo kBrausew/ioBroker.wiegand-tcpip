@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 
 
     git tag -a "%~1" -m "Version: %~1 =>  %~2"
-    echo git push rep --tags
+    git push rep --tags
     goto :FINISH
 
 
