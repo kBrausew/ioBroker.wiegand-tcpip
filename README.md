@@ -45,6 +45,9 @@ I hereby exclude liability for any damage and consequential damage that may aris
 The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
+## Changelog
+[Changelog](CHANGELOG.md)
+
 ## License
 GPL-3.0-only
 

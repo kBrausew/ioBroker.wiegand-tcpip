@@ -504,8 +504,11 @@ class WiegandTcpip extends utils.Adapter {
                             this.log.error("No state found: " + lRoot + ".unlocked");
                         } else {
                             this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
-                            this.setTimeout(() => {
+                            let lTimeOut = this.setTimeout(() => {
                                 this.setState(lRoot + ".unlocked", { ack: true, val: false });
+                                this.clearTimeout(lTimeOut);
+                                // @ts-ignore
+                                lTimeOut = null;
                             }, 50);
 
                             if (lEvt.type) {
