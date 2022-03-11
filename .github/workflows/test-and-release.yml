@@ -4,7 +4,7 @@ on:
   push:
     # Configure your tested branches here, I like to check all of them. You can leave this out if you only want to deploy
     branches:
-      - "*"
+      - "master"
     # You MUST limit tags to ones that are compatible with the version scheme this script uses. DO NOT include any others or they will be released aswell
     tags:
       # normal versions
