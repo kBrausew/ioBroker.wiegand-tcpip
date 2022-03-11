@@ -1,0 +1,3 @@
+  "publishConfig": {
+    "@kbrausew:registry": "https://npm.pkg.github.com/"
+  },
