@@ -26,6 +26,7 @@
     "serial": "Seriennummer",
     "setIp": "Neue Netzwerkadresse einstellen",
     "setip_title": "Einrichtung der Netzwerkadresse des Geräts",
+    "settime": "Maximale Zeitabweichung in Millisekunden (min. 1200)",
     "setup_info": "Einstellungen für Controller, TCP/IP und Wiegand-Bus",
     "timeout": "Verbindungs-Timeout in Millisekunden",
     "tools_ip": "Remote-Einrichtung des Geräts",

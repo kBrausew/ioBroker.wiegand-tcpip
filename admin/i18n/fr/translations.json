@@ -26,6 +26,7 @@
     "serial": "Numéro de série",
     "setIp": "Définir une nouvelle adresse réseau",
     "setip_title": "Configuration de l'adresse réseau de l'appareil",
+    "settime": "Ecart de temps maximum en millisecondes (min. 1200)",
     "setup_info": "Paramètres pour contrôleurs, TCP/IP et bus Wiegand",
     "timeout": "Délai de connexion en millisecondes",
     "tools_ip": "Configuration à distance de l'appareil",

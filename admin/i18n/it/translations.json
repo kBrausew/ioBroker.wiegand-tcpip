@@ -26,6 +26,7 @@
     "serial": "Numero di serie",
     "setIp": "Imposta un nuovo indirizzo di rete",
     "setip_title": "Configurazione dell'indirizzo di rete del dispositivo",
+    "settime": "Deviazione temporale massima in millisecondi (min. 1200)",
     "setup_info": "Impostazioni per controller, TCP/IP e bus Wiegand",
     "timeout": "Timeout di connessione in milli secondi",
     "tools_ip": "Configurazione remota del dispositivo",

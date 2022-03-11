@@ -4,11 +4,10 @@
     Placeholder for the next version (at the beginning of the line):
     ## **WORK IN PROGRESS**
 -->
-
-## **WORK IN PROGRESS**
-
+## 0.4.4 (2022-03-11)
 -   Structur Native uAPI-Framework
--   Some Parameters setTime
+-   user action for setTime
+-   setup docs
 
 ## v0.4.3
 * setTime if device is running out

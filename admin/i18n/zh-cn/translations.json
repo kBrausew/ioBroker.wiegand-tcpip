@@ -26,6 +26,7 @@
     "serial": "序列号",
     "setIp": "设置新的网络地址",
     "setip_title": "设备网络地址设置",
+    "settime": "以毫秒为单位的最大时间偏差（最小 1200）",
     "setup_info": "控制器、TCP/IP 和 Wiegand 总线的设置",
     "timeout": "以毫秒为单位的连接超时",
     "tools_ip": "设备远程设置",

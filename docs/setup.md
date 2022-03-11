@@ -56,6 +56,16 @@ Default is 300000 (300 seconds == 5 minutes).
 Time in between two attempts to establish a standard connection to the device to decide if it's alive.
 Values below 60000 and above 900000 can cause unwanted side effects that are difficult to analyze.
 
+#### **Maximum time deviation in milliseconds**
+Default is 60000 (60 secons == 1 minute)
+Maximum time deviation in milliseconds.
+If the deviation is larger, the controller clock is recalibrated
+Values below 1200 milliseconds are ignored and the calibration is switched off
+
+#### **Low Level Debug**
+Default off. If enabled the raw network communication was logged to the debug log
+No need to change without a request from a developer
+
 ### **Controllers Settings**
 Device setup for forward and reverse channel via the network.
 Use the **+ / add** and the **trash** per available device

@@ -78,6 +78,13 @@ class WiegandTcpip extends utils.Adapter {
         lCFG.lBroadcastP = `${lCFG.lBroadcast}:${lCFG.lPort.toString()}`;
         lCFG.rBroadcast = this.getBroadcastAddresses(lCFG.lBind) || "255.255.255.255";
         lCFG.debugll = this.config.debugLL || false;
+        // lCFG.settime = this.config.settime || 1200;
+
+        // if (!lCFG || lCFG.settime < 2) {
+        //     lCFG.settime = 0;
+        // } else if (lCFG.settime < 1200) {
+        //     lCFG.settime = 1200;
+        // }
 
         return lCFG;
     }
@@ -103,6 +110,10 @@ class WiegandTcpip extends utils.Adapter {
     async onReady() {
         /** @type localConfig */
         const lCFG = this.createCFG();
+        this.config.settime = this.config.settime || 0;
+        if (this.config.settime < 1200 ) {
+            this.log.warn("Automatic clock setting disabled");
+        }
 
         this.unsubscribeStates("*");
 
@@ -555,12 +566,12 @@ class WiegandTcpip extends utils.Adapter {
      */
     checkTimeDiff(pDev, pEvt) {
         //this.debugState(pEvt);
-        if (pEvt.state && pEvt.state.system) {
+        if (this.config.settime && this.config.settime > 1200 && pEvt.state && pEvt.state.system) {
             if (pEvt.state.system.date && pEvt.state.system.time) {
                 const lNow = new Date();
                 const lDat = new Date(pEvt.state.system.date + "T" + pEvt.state.system.time);
                 const lDiff = Math.abs((lDat.getMilliseconds() - lNow.getMilliseconds()));
-                if (lDiff > 60000) {
+                if (lDiff > this.config.settime) {
                     pDev.setTime = true;
                     this.log.debug("The device clock is no longer up to date: " + pDev.serial + " difference " + lDiff + "ms");
                 }

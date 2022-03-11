@@ -26,6 +26,7 @@
     "serial": "Numer seryjny",
     "setIp": "Ustaw nowy adres sieciowy",
     "setip_title": "Konfiguracja adresu sieciowego urządzenia",
+    "settime": "Maksymalne odchylenie czasu w milisekundach (min. 1200)",
     "setup_info": "Ustawienia dla kontrolerów, TCP/IP i magistrali Wiegand",
     "timeout": "Limit czasu połączenia w milisekundach",
     "tools_ip": "Zdalna konfiguracja urządzenia",

@@ -26,6 +26,7 @@
     "serial": "Número de série",
     "setIp": "Definir novo endereço de rede",
     "setip_title": "Configuração do endereço de rede do dispositivo",
+    "settime": "Desvio de tempo máximo em milissegundos (mín. 1200)",
     "setup_info": "Configurações para controladores, TCP/IP e barramento Wiegand",
     "timeout": "Tempo limite de conexão em milissegundos",
     "tools_ip": "Configuração remota do dispositivo",

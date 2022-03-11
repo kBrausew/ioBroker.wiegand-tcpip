@@ -26,6 +26,7 @@
     "serial": "Serial Number",
     "setIp": "Set new network address",
     "setip_title": "Device network address setup",
+    "settime": "Maximum time deviation in milliseconds (min. 1200)",
     "setup_info": "Settings for Controllers, TCP/IP and Wiegand bus",
     "timeout": "Connection Timeout in milli seconds",
     "tools_ip": "Device remote setup",

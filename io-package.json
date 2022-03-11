@@ -1,143 +1,156 @@
 {
-    "common": {
-        "name": "wiegand-tcpip",
-        "version": "0.4.3",
-        "news": {
-            "0.4.3": {
-                "en": "Model select, Time running out, ...",
-                "de": "Modellauswahl, Uhrzeit läuft davon, ...",
-                "ru": "Выбор модели, Время истекает, ...",
-                "pt": "Seleção de modelo, Tempo se esgotando, ...",
-                "nl": "Model selecteren, Tijd dringt, ...",
-                "fr": "Sélection du modèle, Temps qui s'écoule, ...",
-                "it": "Selezione modello, Tempo scaduto, ...",
-                "es": "Selección de modelo, Tiempo agotado, ...",
-                "pl": "Wybór modelu, Czas ucieka, ...",
-                "zh-cn": "型号选择，时间不多，..."
-            },
-            "0.4.2": {
-                "en": "Remote Door Open Special: CTX get wrong config",
-                "de": "Remote Door Open Special: CTX erhält falsche Konfiguration",
-                "ru": "Специальное дистанционное открытие двери: CTX получает неправильную конфигурацию",
-                "pt": "Remote Door Open Special: CTX get wrog config",
-                "nl": "Remote Door Open Special: CTX get wrog config",
-                "fr": "Spécial ouverture de porte à distance : CTX se trompe de configuration",
-                "it": "Speciale apertura porta remota: CTX ottiene una configurazione errata",
-                "es": "Especial de apertura de puerta remota: CTX obtiene una configuración incorrecta",
-                "pl": "Specjalna opcja zdalnego otwierania drzwi: CTX pobierz nieprawidłową konfigurację",
-                "zh-cn": "远程开门特别：CTX 获取 wrog 配置"
-            },
-            "0.4.1": {
-                "en": "Small blemishes fixed and translation completed",
-                "de": "Kleine Schönheitsfehler behoben und Übersetzung abgeschlossen",
-                "ru": "Небольшие недочеты исправлены, перевод завершен.",
-                "pt": "Pequenos defeitos corrigidos e tradução concluída",
-                "nl": "Kleine onvolkomenheden verholpen en vertaling voltooid",
-                "fr": "Petits défauts corrigés et traduction terminée",
-                "it": "Piccole imperfezioni sistemate e traduzione completata",
-                "es": "Pequeñas imperfecciones arregladas y traducción completada",
-                "pl": "Poprawiono drobne skazy i ukończono tłumaczenie",
-                "zh-cn": "小瑕疵修复，翻译完成"
-            },
-            "0.4.0": {
-                "en": "First working package",
-                "de": "Erstes Arbeitspaket",
-                "ru": "Первый рабочий пакет",
-                "pt": "Primeiro pacote de trabalho",
-                "nl": "Eerste werkpakket",
-                "fr": "Premier paquet de travail",
-                "it": "Primo pacchetto funzionante",
-                "es": "Primer paquete de trabajo",
-                "pl": "Pierwszy pakiet roboczy",
-                "zh-cn": "第一个工作包"
-            }
-        },
-        "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
-        "titleLang": {
-            "en": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
-            "de": "Wiegand TCP/IP-Controller (z. B. UHPPTOE)",
-            "ru": "Контроллер TCP/IP Wiegand (например, UHPPTOE)",
-            "pt": "Controlador tcp/ip Wiegand (por exemplo, UHPPTOE)",
-            "nl": "Wiegand tcp/ip-controller (bijv. UHPPTOE)",
-            "fr": "Contrôleur tcp/ip Wiegand (par exemple UHPPTOE)",
-            "it": "Controller Wiegand TCP/IP (es. UHPPTOE)",
-            "es": "Controlador Wiegand tcp/ip (por ejemplo, UHPPTOE)",
-            "pl": "Kontroler Wiegand TCP/IP (np. UHPPTOE)",
-            "zh-cn": "Wiegand tcp/ip 控制器（例如 UHPPTOE）"
-        },
-        "desc": {
-            "en": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "de": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "ru": "Контроллер доступа к дверям Wiegand Shenzhen Weigeng Industrial",
-            "pt": "Controlador de acesso de porta Wiegand Shenzhen Weigeng Industrial",
-            "nl": "Wiegand Deur Toegang Controller Shenzhen Weigeng Industrial",
-            "fr": "Contrôleur d'accès de porte Wiegand Shenzhen Weigeng Industrial",
-            "it": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
-            "es": "Controlador de acceso de puerta Wiegand Shenzhen Weigeng Industrial",
-            "pl": "Kontroler dostępu do drzwi Wiegand Shenzhen Weigeng Industrial",
-            "zh-cn": "韦根门禁控制器 深圳伟庚实业"
-        },
-        "docs": {
-            "en": "docs/setup.md"
-        },
-        "authors": [
-            "kbrausew <kbrausew@magenta.de>"
-        ],
-        "keywords": [
-            "UHPPOTE",
-            "Wiegand to TCP/IP",
-            "VBESTLIFE",
-            "Dioche",
-            "Tangxi",
-            "i-keys SC300xNT SC90xNT",
-            "Secukey C1 - C4",
-            "S4A ACB",
-            "Door Access Controller Shenzhen Weigeng Industrial"
-        ],
-        "license": "GPL-3.0-only",
-        "platform": "Javascript/Node.js",
-        "main": "main.js",
-        "icon": "wiegand-tcpip.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/kbrausew/iobroker.wiegand-tcpip/master/admin/wiegand-tcpip.png",
-        "readme": "https://github.com/kbrausew/iobroker.wiegand-tcpip/blob/master/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "hardware",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "assumption",
-        "materialize": true,
-        "dependencies": [
-            {
-                "js-controller": ">=2.0.0"
-            }
-        ],
-        "messagebox": true
+  "common": {
+    "name": "wiegand-tcpip",
+    "version": "0.4.4",
+    "news": {
+      "0.4.4": {
+        "en": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "de": "Struktur Natives uAPI-Framework, user action for setTime, setup docs",
+        "ru": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "pt": "Estrutura nativa uAPI-Framework, user action for setTime, setup docs",
+        "nl": "Structuur Native uAPI-framework, user action for setTime, setup docs",
+        "fr": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "it": "Struttura uAPI-Framework nativo, user action for setTime, setup docs",
+        "es": "Estructura nativa uAPI-Framework, user action for setTime, setup docs",
+        "pl": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "zh-cn": "Structur Native uAPI-Framework, user action for setTime, setup docs"
+      },
+      "0.4.3": {
+        "en": "Model select, Time running out, ...",
+        "de": "Modellauswahl, Uhrzeit läuft davon, ...",
+        "ru": "Выбор модели, Время истекает, ...",
+        "pt": "Seleção de modelo, Tempo se esgotando, ...",
+        "nl": "Model selecteren, Tijd dringt, ...",
+        "fr": "Sélection du modèle, Temps qui s'écoule, ...",
+        "it": "Selezione modello, Tempo scaduto, ...",
+        "es": "Selección de modelo, Tiempo agotado, ...",
+        "pl": "Wybór modelu, Czas ucieka, ...",
+        "zh-cn": "型号选择，时间不多，..."
+      },
+      "0.4.2": {
+        "en": "Remote Door Open Special: CTX get wrong config",
+        "de": "Remote Door Open Special: CTX erhält falsche Konfiguration",
+        "ru": "Специальное дистанционное открытие двери: CTX получает неправильную конфигурацию",
+        "pt": "Remote Door Open Special: CTX get wrog config",
+        "nl": "Remote Door Open Special: CTX get wrog config",
+        "fr": "Spécial ouverture de porte à distance : CTX se trompe de configuration",
+        "it": "Speciale apertura porta remota: CTX ottiene una configurazione errata",
+        "es": "Especial de apertura de puerta remota: CTX obtiene una configuración incorrecta",
+        "pl": "Specjalna opcja zdalnego otwierania drzwi: CTX pobierz nieprawidłową konfigurację",
+        "zh-cn": "远程开门特别：CTX 获取 wrog 配置"
+      },
+      "0.4.1": {
+        "en": "Small blemishes fixed and translation completed",
+        "de": "Kleine Schönheitsfehler behoben und Übersetzung abgeschlossen",
+        "ru": "Небольшие недочеты исправлены, перевод завершен.",
+        "pt": "Pequenos defeitos corrigidos e tradução concluída",
+        "nl": "Kleine onvolkomenheden verholpen en vertaling voltooid",
+        "fr": "Petits défauts corrigés et traduction terminée",
+        "it": "Piccole imperfezioni sistemate e traduzione completata",
+        "es": "Pequeñas imperfecciones arregladas y traducción completada",
+        "pl": "Poprawiono drobne skazy i ukończono tłumaczenie",
+        "zh-cn": "小瑕疵修复，翻译完成"
+      },
+      "0.4.0": {
+        "en": "First working package",
+        "de": "Erstes Arbeitspaket",
+        "ru": "Первый рабочий пакет",
+        "pt": "Primeiro pacote de trabalho",
+        "nl": "Eerste werkpakket",
+        "fr": "Premier paquet de travail",
+        "it": "Primo pacchetto funzionante",
+        "es": "Primer paquete de trabajo",
+        "pl": "Pierwszy pakiet roboczy",
+        "zh-cn": "第一个工作包"
+      }
     },
-    "native": {
-        "bind": "0.0.0.0",
-        "port": 60000,
-        "r_port": 60099,
-        "timeout": 2500,
-        "heartbeat": 300000,
-        "debugLL": false,
-        "controllers": [
-            {
-                "serial": 0,
-                "deviceIp": "",
-                "exposedIP": "",
-                "exposedPort": "",
-                "modelType": 4,
-                "broadcast": true,
-                "index": 1,
-                "errorCount": 0,
-                "run": false,
-                "heartbeatCount": 0,
-                "eventNr": 0
-            }
-        ]
+    "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
+    "titleLang": {
+      "en": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
+      "de": "Wiegand TCP/IP-Controller (z. B. UHPPTOE)",
+      "ru": "Контроллер TCP/IP Wiegand (например, UHPPTOE)",
+      "pt": "Controlador tcp/ip Wiegand (por exemplo, UHPPTOE)",
+      "nl": "Wiegand tcp/ip-controller (bijv. UHPPTOE)",
+      "fr": "Contrôleur tcp/ip Wiegand (par exemple UHPPTOE)",
+      "it": "Controller Wiegand TCP/IP (es. UHPPTOE)",
+      "es": "Controlador Wiegand tcp/ip (por ejemplo, UHPPTOE)",
+      "pl": "Kontroler Wiegand TCP/IP (np. UHPPTOE)",
+      "zh-cn": "Wiegand tcp/ip 控制器（例如 UHPPTOE）"
     },
-    "objects": [],
-    "instanceObjects": []
+    "desc": {
+      "en": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+      "de": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+      "ru": "Контроллер доступа к дверям Wiegand Shenzhen Weigeng Industrial",
+      "pt": "Controlador de acesso de porta Wiegand Shenzhen Weigeng Industrial",
+      "nl": "Wiegand Deur Toegang Controller Shenzhen Weigeng Industrial",
+      "fr": "Contrôleur d'accès de porte Wiegand Shenzhen Weigeng Industrial",
+      "it": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
+      "es": "Controlador de acceso de puerta Wiegand Shenzhen Weigeng Industrial",
+      "pl": "Kontroler dostępu do drzwi Wiegand Shenzhen Weigeng Industrial",
+      "zh-cn": "韦根门禁控制器 深圳伟庚实业"
+    },
+    "docs": {
+      "en": "docs/setup.md"
+    },
+    "authors": [
+      "kbrausew <kbrausew@magenta.de>"
+    ],
+    "keywords": [
+      "UHPPOTE",
+      "Wiegand to TCP/IP",
+      "VBESTLIFE",
+      "Dioche",
+      "Tangxi",
+      "i-keys SC300xNT SC90xNT",
+      "Secukey C1 - C4",
+      "S4A ACB",
+      "Door Access Controller Shenzhen Weigeng Industrial"
+    ],
+    "license": "GPL-3.0-only",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "wiegand-tcpip.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/kbrausew/iobroker.wiegand-tcpip/master/admin/wiegand-tcpip.png",
+    "readme": "https://github.com/kbrausew/iobroker.wiegand-tcpip/blob/master/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "assumption",
+    "materialize": true,
+    "dependencies": [
+      {
+        "js-controller": ">=2.0.0"
+      }
+    ],
+    "messagebox": true
+  },
+  "native": {
+    "bind": "0.0.0.0",
+    "port": 60000,
+    "r_port": 60099,
+    "timeout": 2500,
+    "heartbeat": 300000,
+    "settime": 60000,
+    "debugLL": false,
+    "controllers": [
+      {
+        "serial": 0,
+        "deviceIp": "",
+        "exposedIP": "",
+        "exposedPort": "",
+        "modelType": 4,
+        "broadcast": true,
+        "index": 1,
+        "errorCount": 0,
+        "run": false,
+        "heartbeatCount": 0,
+        "eventNr": 0
+      }
+    ]
+  },
+  "objects": [],
+  "instanceObjects": []
 }

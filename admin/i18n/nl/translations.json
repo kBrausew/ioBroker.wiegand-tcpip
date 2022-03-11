@@ -26,6 +26,7 @@
     "serial": "Serienummer",
     "setIp": "Nieuw netwerkadres instellen",
     "setip_title": "Apparaat netwerkadres instellen",
+    "settime": "Maximale tijdsafwijking in milliseconden (min. 1200)",
     "setup_info": "Instellingen voor controllers, TCP/IP en Wiegand-bus",
     "timeout": "Verbindingstime-out in milliseconden",
     "tools_ip": "Apparaat instellen op afstand",
