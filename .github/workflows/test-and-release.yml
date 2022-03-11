@@ -1,11 +1,3 @@
-  "publishConfig": {
-    "@kbrausew:registry": "https://npm.pkg.github.com/"
-  },
-
-
-
-check and release
-###############################################################################
 name: Test and Release
 
 # Run this job on all pushes and pull requests
@@ -90,4 +82,3 @@ jobs:
          # If your sentry project is linked to a GitHub repository, you can enable the following option
          # sentry-github-integration: true
 
-###############################################################################
