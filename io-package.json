@@ -1,8 +1,20 @@
 {
   "common": {
     "name": "wiegand-tcpip",
-    "version": "0.4.4",
+    "version": "0.4.5",
     "news": {
+      "0.4.5": {
+        "en": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "de": "Struktur Natives uAPI-Framework, user action for setTime, setup docs",
+        "ru": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "pt": "Estrutura nativa uAPI-Framework, user action for setTime, setup docs",
+        "nl": "Structuur Native uAPI-framework, user action for setTime, setup docs",
+        "fr": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "it": "Struttura uAPI-Framework nativo, user action for setTime, setup docs",
+        "es": "Estructura nativa uAPI-Framework, user action for setTime, setup docs",
+        "pl": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "zh-cn": "Structur Native uAPI-Framework, user action for setTime, setup docs"
+      },
       "0.4.4": {
         "en": "Structur Native uAPI-Framework, user action for setTime, setup docs",
         "de": "Struktur Natives uAPI-Framework, user action for setTime, setup docs",

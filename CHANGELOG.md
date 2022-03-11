@@ -4,6 +4,9 @@
     Placeholder for the next version (at the beginning of the line):
     ## **WORK IN PROGRESS**
 -->
+## 0.4.5 (2022-03-11)
+-   Bugfix: error in workflow
+
 ## 0.4.4 (2022-03-11)
 -   Structur Native uAPI-Framework
 -   user action for setTime
