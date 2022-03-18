@@ -88,7 +88,7 @@ Please enter all address data
 The serial number of your device
 
 #### **Device network address** [^7]
-The publicly known IP address of the device on the remote network. [^2]
+The publicly known IP address (Unicast) of the device on the remote network. [^2] 
 
 #### **Exposed Server Host address** [^7]
 The publicly known IP address of the ioBroker instance on the remote network. [^2]
@@ -100,7 +100,8 @@ The publicly known IP port of the ioBroker instance on the remote network after 
 
 [^1]: If you are unable to connect the device to the same local network as the ioBroker instance,
   you must set the IP addresses in another alternative way
-[^2]: The device only allows IPv4 addresses
+[^2]: You can replace the "Unicast Address" with the "Directed Broadcast Address" in the configuration.
+  The device only allows IPv4 addresses
 [^3]: ![Error message: No Device found](images/no-devices-found.png)
 [^4]: ![Error message: Adapter not started](images/adapter-not-run.png)
 [^5]: [NAT RFC#2663](https://datatracker.ietf.org/doc/html/rfc2663)
