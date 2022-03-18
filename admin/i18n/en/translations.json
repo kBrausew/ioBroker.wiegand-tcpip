@@ -18,7 +18,7 @@
     "ipMask": "IP Mask",
     "model": "Model",
     "net_setup": "TCP/IP Network Settings",
-    "no-controller": "No divices found in local network",
+    "no-controller": "No devices found in local network",
     "op-ok": "Operation succeeded",
     "port": "Sender-Port",
     "r_port": "Receiver-Port",
