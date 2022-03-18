@@ -87,6 +87,9 @@ Please enter all address data
 #### **Serial Number**
 The serial number of your device
 
+#### **Model Type**
+Enter the Door Model
+
 #### **Device network address** [^7]
 The publicly known IP address (Unicast) of the device on the remote network. [^2] [^8]
 
