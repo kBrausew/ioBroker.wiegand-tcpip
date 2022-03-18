@@ -70,10 +70,10 @@ No need to change without a request from a developer
 Device setup for forward and reverse channel via the network.
 Use the **+ / add** and the **trash** per available device
 There are two options for communication between the host (ioBroker) and the device.
-Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast)
+Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast) [^7]
 
 
-#### **Limited Broadcast**
+#### **Limited Broadcast** [^7]
 Add only the serial number and no other address / network data.
   >In this case, all components must be in the same subnet.
   >This includes both the sender (controller) and the receiver (ioBroker).
@@ -81,19 +81,19 @@ Add only the serial number and no other address / network data.
 
 >In all other cases, ALWAYS use "dedicated network setup"
 
-#### **Dedicated network setup (Unicast & Directed Broadcast)**
+#### **Dedicated network setup (Unicast & Directed Broadcast)** [^7]
 Please enter all address data
 
 #### **Serial Number**
 The serial number of your device
 
-#### **Device network address**
+#### **Device network address** [^7]
 The publicly known IP address of the device on the remote network. [^2]
 
-#### **Exposed Server Host address**
+#### **Exposed Server Host address** [^7]
 The publicly known IP address of the ioBroker instance on the remote network. [^2]
 
-#### **Exposed Server Host port**
+#### **Exposed Server Host port** [^7]
 The publicly known IP port of the ioBroker instance on the remote network after NAT [^5] and Docker-Exposed [^6] .
 
 
@@ -105,3 +105,4 @@ The publicly known IP port of the ioBroker instance on the remote network after 
 [^4]: ![Error message: Adapter not started](images/adapter-not-run.png)
 [^5]: [NAT RFC#2663](https://datatracker.ietf.org/doc/html/rfc2663)
 [^6]: [Docker CLI: Port](https://docs.docker.com/engine/reference/commandline/port/)
+[^7]: ![Network Setup](images/network-setup.png)
