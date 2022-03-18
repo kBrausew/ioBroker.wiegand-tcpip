@@ -429,6 +429,7 @@ class WiegandTcpip extends utils.Adapter {
                 await this.createOneState(lDoorPath, "directionCode", "Direction #", "number", "value", true, false, 0, undefined);
                 await this.createOneState(lDoorPath, "directionText", "Direction", "string", "value", true, false, "", undefined);
                 await this.createOneState(lDoorPath, "lastSwipe", "Card-/Unlock- Id", "number", "value", true, false, 0, undefined);
+                await this.createOneState(lDoorPath, "unauthorized", "Unauthorized Card-/Unlock- Id", "number", "value", true, false, 0, undefined);
                 await this.createOneState(lDoorPath, "lastGranted", "Access Grant / Denied", "boolean", "value", true, false, false, undefined);
                 await this.createOneState(lDoorPath, "reasonCode", "Reason #", "number", "value", true, false, 0, undefined);
                 await this.createOneState(lDoorPath, "reasonText", "Reason", "string", "value", true, false, "", undefined);
@@ -503,11 +504,11 @@ class WiegandTcpip extends utils.Adapter {
             }
 
             if (ldoorId > 0 && ldoorId <= dev.modelType) {
-                if (lGranted) {
-                    this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
-                        if (!fStat) {
-                            this.log.error("No state found: " + lRoot + ".unlocked");
-                        } else {
+                this.getState(lRoot + ".unlocked", (_fErr, fStat) => {
+                    if (!fStat) {
+                        this.log.error("No state found: " + lRoot + ".unlocked");
+                    } else {
+                        if (lGranted) {
                             this.setState(lRoot + ".unlocked", { ack: true, val: lGranted });
                             let lTimeOut = this.setTimeout(() => {
                                 this.setState(lRoot + ".unlocked", { ack: true, val: false });
@@ -515,36 +516,38 @@ class WiegandTcpip extends utils.Adapter {
                                 // @ts-ignore
                                 lTimeOut = null;
                             }, 50);
-
-                            if (lEvt.type) {
-                                requestCode = lEvt.type.code || 0;
-                                requestText = lEvt.type.event || "";
-                            }
-                            if (lEvt.reason) {
-                                reasonCode = lEvt.reason.code || 0;
-                                reasonText = lEvt.reason.reason || "";
-                            }
-                            if (lEvt.direction) {
-                                directionCode = lEvt.direction.code || 0;
-                                directionText = lEvt.direction.direction || "";
-                            }
-                            this.setState(lRoot + ".directionCode", { ack: true, val: directionCode });
-                            this.setState(lRoot + ".directionText", { ack: true, val: directionText });
-                            this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
-                            this.setState(lRoot + ".requestText", { ack: true, val: requestText });
-                            this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
-                            this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
-                            this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
-                            this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
-
-                            this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
+                        } else {
+                            this.setState(lRoot + ".unauthorized", { ack: true, val: lCard });
                         }
-                    });
-                }
+
+                        if (lEvt.type) {
+                            requestCode = lEvt.type.code || 0;
+                            requestText = lEvt.type.event || "";
+                        }
+                        if (lEvt.reason) {
+                            reasonCode = lEvt.reason.code || 0;
+                            reasonText = lEvt.reason.reason || "";
+                        }
+                        if (lEvt.direction) {
+                            directionCode = lEvt.direction.code || 0;
+                            directionText = lEvt.direction.direction || "";
+                        }
+                        this.setState(lRoot + ".directionCode", { ack: true, val: directionCode });
+                        this.setState(lRoot + ".directionText", { ack: true, val: directionText });
+                        this.setState(lRoot + ".requestCode", { ack: true, val: requestCode });
+                        this.setState(lRoot + ".requestText", { ack: true, val: requestText });
+                        this.setState(lRoot + ".reasonCode", { ack: true, val: reasonCode });
+                        this.setState(lRoot + ".reasonText", { ack: true, val: reasonText });
+                        this.setState(lRoot + ".lastSwipe", { ack: true, val: lCard });
+                        this.setState(lRoot + ".lastGranted", { ack: true, val: lGranted });
+
+                        this.log.debug("Controller: " + ldeviceId + " Door: " + ldoorId + " granted: " + lGranted + " Card: " + lCard);
+                    }
+                });
 
             } else {
                 const lIdStr = ldoorId || "Null";
-                this.log.error("Received Event has no valid Door Identifier: " + lIdStr);
+                this.log.error("Received Event has no valid Door Identifier: " + lIdStr + " (Controller: " + ldeviceId.toString() +")");
             }
 
             if (lEvt.index) {
@@ -556,6 +559,13 @@ class WiegandTcpip extends utils.Adapter {
             }
             this.checkTimeDiff(dev, evt);
         }
+    }
+
+    /**
+     * @param {{ message: any; }} err
+     */
+    async onUapiError(err) {
+        this.log.error("Event receive error: " + err.message);
     }
 
     /**
@@ -585,13 +595,6 @@ class WiegandTcpip extends utils.Adapter {
                 }
             }
         }
-    }
-
-    /**
-     * @param {{ message: any; }} err
-     */
-    async onUapiError(err) {
-        this.log.error("Event receive error: " + err.message);
     }
 
     /**
