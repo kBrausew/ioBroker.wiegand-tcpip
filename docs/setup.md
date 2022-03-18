@@ -72,6 +72,11 @@ Use the **+ / add** and the **trash** per available device
 There are two options for communication between the host (ioBroker) and the device.
 Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast) [^7]
 
+#### **Serial Number**
+The serial number of your device
+
+#### **Model Type**
+Enter the Door Model
 
 #### **Limited Broadcast** [^7]
 Add only the serial number and the Model-Type and no other address / network data.
@@ -84,12 +89,6 @@ Add only the serial number and the Model-Type and no other address / network dat
 #### **Dedicated network setup (Unicast & Directed Broadcast)** [^7]
 Please enter all address data
 
-#### **Serial Number**
-The serial number of your device
-
-#### **Model Type**
-Enter the Door Model
-
 #### **Device network address** [^7]
 The publicly known IP address (Unicast) of the device on the remote network. [^2] [^8]
 
@@ -98,6 +97,8 @@ The publicly known IP address (Unicast) of the ioBroker instance on the remote n
 
 #### **Exposed Server Host port** [^7]
 The publicly known IP port of the ioBroker instance on the remote network after NAT [^5] and Docker-Exposed [^6] .
+
+
 
 
 
