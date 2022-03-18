@@ -74,7 +74,7 @@ Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast) [^7
 
 
 #### **Limited Broadcast** [^7]
-Add only the serial number and no other address / network data.
+Add only the serial number and the Model-Type and no other address / network data.
   >In this case, all components must be in the same subnet.
   >This includes both the sender (controller) and the receiver (ioBroker).
   >This can be recognized by the same gateway address and network mask on both components.
