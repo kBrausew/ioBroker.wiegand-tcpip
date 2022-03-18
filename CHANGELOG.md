@@ -4,6 +4,13 @@
     Placeholder for the next version (at the beginning of the line):
     ## **WORK IN PROGRESS**
 -->
+
+## **WORK IN PROGRESS**
+-   Documentation
+-   Translations
+-   Cosmetic improvements
+-   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720)
+
 ## 0.4.5 (2022-03-11)
 -   Bugfix: error in workflow
 

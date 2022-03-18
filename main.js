@@ -10,6 +10,7 @@ const utils = require("@iobroker/adapter-core");
 const os = require("os");
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
+const { stat } = require("fs");
 //const { stat } = require("fs");
 
 /**
@@ -111,17 +112,21 @@ class WiegandTcpip extends utils.Adapter {
         /** @type localConfig */
         const lCFG = this.createCFG();
         this.config.settime = this.config.settime || 0;
-        if (this.config.settime < 1200 ) {
+        if (this.config.settime < 1200) {
             this.log.warn("Automatic clock setting disabled");
         }
 
-        this.unsubscribeStates("*");
+        // there is no subsciption at startup
+        //this.unsubscribeStates("*");
 
+        /*
+        moved to io-package.json section "instanceObjects"
         this.setObjectNotExists("controllers", {
             type: "folder",
             common: { name: "controllers", type: "folder" },
             native: {},
         });
+        */
 
         let itemNr = 1;
         for (const dev of this.config.controllers) {
@@ -641,33 +646,34 @@ class WiegandTcpip extends utils.Adapter {
         if (state) {
             //check Id for handled operations
             const id_part = id.split(".");
-            if (id_part.length < 6 || id_part[0] != this.name || id_part[1] != this.instance.toString() || id_part[2] != "controllers"
-                || id_part[5] != "remoteOpen") {
-
+            if (id_part.length < 6 || id_part[0] != this.name || id_part[1] != this.instance.toString()
+                || id_part[2] != "controllers" || id_part[5] != "remoteOpen") {
                 this.log.error("State possible not handled by this adapter: " + id);
                 return;
             }
 
-            // The state was changed
-            const lLocal = "system.adapter." + this.name + "." + this.instance;
-            const lFrom = state.from || lLocal;
-            if (lFrom != lLocal) {
-                const ldeviceId = parseInt(id_part[3], 10);
-                const ldoorId = parseInt(id_part[4], 10);
-                if (state.val == true && !isNaN(ldeviceId) && !isNaN(ldoorId)) {
-                    const dev = this.ctrls.find(dev => dev.serial == ldeviceId);
-                    if (dev.run) {
-                        this.doorOpenSpec(dev.serial, ldoorId);
-                    } else this.log.error("Can not handle unreached device: " + ldeviceId);
-                    // this.setTimeout(() => {
-                    //     this.setState(id, { ack: true, val: false });
-                    // }, 50);
-                }
-            } else this.log.silly("Ignore state change from myself: i know what i do ;-)");
-            //this.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
+            if (!state.ack) {
+                // The state was changed
+                const lLocal = "system.adapter." + this.name + "." + this.instance;
+                const lFrom = state.from || lLocal;
+                if (lFrom != lLocal) {
+                    const ldeviceId = parseInt(id_part[3], 10);
+                    const ldoorId = parseInt(id_part[4], 10);
+                    if (state.val == true && !isNaN(ldeviceId) && !isNaN(ldoorId)) {
+                        const dev = this.ctrls.find(dev => dev.serial == ldeviceId);
+                        if (dev.run) {
+                            this.doorOpenSpec(dev.serial, ldoorId);
+                        } else this.log.error("Can not handle unreached device: " + ldeviceId);
+                        // this.setTimeout(() => {
+                        //     this.setState(id, { ack: true, val: false });
+                        // }, 50);
+                    }
+                } else this.log.silly("Ignore state change from myself: i know what i do ;-)");
+                //this.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack}) (from = ${state.from})`);
+            } else this.log.silly("State ... with ACK = TRUE should already have been dealt with");
         } else {
             // The state was deleted
-            this.unsubscribeStates(id);
+            /* No hands, no cookies */  //this.unsubscribeStates(id);
             this.log.debug(`state ${id} deleted`);
         }
     }
