@@ -69,12 +69,18 @@ No need to change without a request from a developer
 ### **Controllers Settings**
 Device setup for forward and reverse channel via the network.
 Use the **+ / add** and the **trash** per available device
-There are two options for communication between the host (ioBroker) and the device. Broadcast and dedicated network setup
+There are two options for communication between the host (ioBroker) and the device.
+Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast)
 
-#### **Broadcast**
-Add only the serial number and no other address / network data
 
-#### **Dedicated network setup**
+#### **Limited Broadcast**
+Add only the serial number and no other address / network data.
+  In this case, all components must be in the same subnet.
+  This includes both the sender (controller) and the receiver (ioBroker).
+  This can be recognized by the same gateway address and network mask on both components.
+> In all other cases, ALWAYS use "dedicated network setup"
+
+#### **Dedicated network setup (Unicast & Directed Broadcast)**
 Please enter all address data
 
 #### **Serial Number**
