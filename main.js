@@ -8,9 +8,9 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const os = require("os");
+// @ts-ignore
 const ipaddr = require("ipaddr.js");
 const uapi = require("uhppoted");
-const { stat } = require("fs");
 //const { stat } = require("fs");
 
 /**
