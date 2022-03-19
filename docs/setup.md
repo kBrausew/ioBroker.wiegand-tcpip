@@ -57,23 +57,23 @@ Time in between two attempts to establish a standard connection to the device to
 Values below 60000 and above 900000 can cause unwanted side effects that are difficult to analyze.
 
 #### **Maximum time deviation in milliseconds**
-Default is 60000 (60 secons == 1 minute)
+Default is 60000 (60 seconds == 1 minute)
 Maximum time deviation in milliseconds.
-If the deviation is larger, the controller clock is recalibrated
-Values below 1200 milliseconds are ignored and the calibration is switched off
+If the deviation is larger, the controller clock is recalibrated.
+Values below 1200 milliseconds are ignored and the calibration is switched off.
 
 #### **Low Level Debug**
-Default off. If enabled the raw network communication was logged to the debug log
-No need to change without a request from a developer
+Default off. If enabled the raw network communication was logged to the debug log.
+No need to change without a request from a developer.
 
 ### **Controllers Settings**
 Device setup for forward and reverse channel via the network.
-Use the **+ / add** and the **trash** per available device
+Use the **+ / add** and the **trash** per available device.
 There are two options for communication between the host (ioBroker) and the device.
-Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast) [^7]
+Limited Broadcast and dedicated network setup (Unicast & Directed Broadcast). [^7]
 
 #### **Serial Number**
-The serial number of your device
+The serial number of your device.
 
 #### **Model Type**
 Enter the Door Model
@@ -84,10 +84,10 @@ Add only the serial number and the Model-Type and no other address / network dat
   >This includes both the sender (controller) and the receiver (ioBroker).
   >This can be recognized by the same gateway address and network mask on both components.
 
->In all other cases, ALWAYS use "dedicated network setup"
+>In all other cases, ALWAYS use "dedicated network setup".
 
 #### **Dedicated network setup (Unicast & Directed Broadcast)** [^7]
-Please enter all address data
+Please enter all address data...
 
 #### **Device network address** [^7]
 The publicly known IP address (Unicast) of the device on the remote network. [^2] [^8]
@@ -105,7 +105,7 @@ The publicly known IP port of the ioBroker instance on the remote network after 
 [^1]: If you are unable to connect the device to the same local network as the ioBroker instance,
   you must set the IP addresses in another alternative way
 
-[^2]: The device only allows IPv4 addresses
+[^2]: The device only allows IPv4 addresses.
 
 [^3]: ![Error message: No Device found](images/no-devices-found.png)
 
