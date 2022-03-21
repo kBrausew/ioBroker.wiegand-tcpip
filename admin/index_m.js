@@ -132,6 +132,8 @@ function load(settings, onChange) {
 
     controllers = settings.controllers || [];
     values2table("controllers", controllers, onChange);
+    cards = settings.cards || [];
+    values2table("cards", cards, onChange);
     onChange(false);
     // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
     if (M) M.updateTextFields();
@@ -153,6 +155,7 @@ function save(callback) {
     });
 
     obj.controllers = table2values("controllers");
+    obj.cards = table2values("cards");
 
     callback(obj);
 }
