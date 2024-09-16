@@ -36,10 +36,10 @@
     "url": "https://github.com/kBrausew/ioBroker.wiegand-tcpip.git"
   },
   "engines": {
-    "node": ">=14.18.3"
+    "node": ">=18"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^2.5.1",
+    "@iobroker/adapter-core": "^3.1.6",
     "ipaddr.js": "^2.0.1",
     "os": "^0.1.2",
     "uhppoted": "^0.7.2"
@@ -48,7 +48,7 @@
     "@alcalzone/release-script": "^3.5.6",
     "@alcalzone/release-script-plugin-iobroker": "^3.5.7",
     "@alcalzone/release-script-plugin-license": "^3.5.3",
-    "@iobroker/testing": "^2.5.4",
+    "@iobroker/testing": "^4.1.3",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",
     "@types/gulp": "^4.0.9",
