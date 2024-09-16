@@ -51,6 +51,7 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 -   Translations
 -   Cosmetic improvements
 -   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720)
+
 [Changelog](CHANGELOG.md)
 
 ## License
