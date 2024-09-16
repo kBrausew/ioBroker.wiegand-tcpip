@@ -21,8 +21,8 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 ## **Dependences**
 | Component | Version |
 | :---: | :---: |
-| **NodeJS** | **min 14.18.3** |
-| JS-Controller | min 3.x |
+| **NodeJS** | **min 18** |
+| JS-Controller | min 5.x |
 
 ## **Recognition**
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
@@ -46,6 +46,11 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
+0.4.6 (2022-03-18)
+-   Documentation
+-   Translations
+-   Cosmetic improvements
+-   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720)
 [Changelog](CHANGELOG.md)
 
 ## License
