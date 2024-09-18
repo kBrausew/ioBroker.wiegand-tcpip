@@ -45,7 +45,7 @@ I hereby exclude liability for any damage and consequential damage that may aris
 The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
-## Changelog [Changelog](CHANGELOG.md)
+## Changelog [History](CHANGELOG.md)
 0.4.6 (2022-03-18)
 -   Documentation
 -   Translations
