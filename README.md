@@ -50,7 +50,7 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 -   Documentation
 -   Translations
 -   Cosmetic improvements
--   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720)
+-   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720).
 
 ## License
 GPL-3.0-only
