@@ -38,7 +38,7 @@ My very special thanks go to **@github/uhppoted & @github/twystd** without whose
 * Secukey C1 - C4 (http://secukey.com.cn/)
 * S4A ACB (http://www.s4a.com.cn/)
 
-Not every listed hardware was tested by me. Don't hesitate to tell me about the compatibility.
+Not every listed hardware was tested by me. Don't hesitate to tell me about the compatibility
 
 ## **Disclaimer**
 I hereby exclude liability for any damage and consequential damage that may arise from testing or using the software.
