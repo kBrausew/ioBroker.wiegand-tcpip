@@ -75,7 +75,7 @@
     ],
     "licenseInformation":  {
       "license": "GPL-3.0-only",
-      "type": "GNU General Public License v3.0 only"
+      "type": "free"
     },
     "platform": "Javascript/Node.js",
     "main": "main.js",
