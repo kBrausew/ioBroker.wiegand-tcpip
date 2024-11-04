@@ -41,9 +41,9 @@
 
         <div class="col s12" id="tab-area">
             <ul class="tabs blue lighten-3">
-                <li class="tab col s3"><a href="#tab-main" class="translate active">controller_setup</a></li>
-                <li class="tab col s3"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
-                <li class="tab col s3"><a href="#tab-tool-cards" class="translate">tools_cards</a></li>
+                <li class="tab col s3 m4 l4"><a href="#tab-main" class="translate active">controller_setup</a></li>
+                <li class="tab col s3 m4 l4"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
+                <li class="tab col s3 m3 l3"><a href="#tab-tool-cards" class="translate">tools_cards</a></li>
             </ul>
         </div>
 
@@ -51,15 +51,15 @@
         <div id="tab-main" class="row s12 page">
             <p class="translate title">net_setup</p>
             <div class="row">
-                <div class="input-field col s12 m4">
+                <div class="input-field col s12 m6 l4">
                     <select class="value" id="bind"></select>
                     <label class="translate" for="bind">iface</label>
                 </div>
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value validate" id="port" min=1 max=65534 maxlength="5" required type="number" />
                     <label class="translate" for="port">port</label>
                 </div>
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value validate" id="r_port" min=1 max=65534 maxlength="5" required type="number" />
                     <label class="translate" for="r_port">r_port</label>
                 </div>
@@ -75,19 +75,19 @@
                     </div>
                 </div /-->
             <div class="row">
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value validate" id="timeout" min=1000 required type="number" />
                     <label class="translate" for="timeout">timeout</label>
                 </div>
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value validate" id="heartbeat" min=1000 required type="number" />
                     <label class="translate" for="heartbeat">heartbeat</label>
                 </div>
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value validate" id="settime" min=1200 required type="number" />
                     <label class="translate" for="settime">settime</label>
                 </div>
-                <div class="input-field col s12 m2">
+                <div class="input-field col s12 m6 l4">
                     <input class="value" id="debugLL" min=1000 required type="checkbox" />
                     <label class="translate" for="debugLL">Low Level Debug</label>
                 </div>
@@ -139,20 +139,20 @@
 
             <div class="row" id="setip_box">
                 <div class="row" name="thisDIV">
-                    <div class="input-field col s12 m3">
+                    <div class="input-field col s12 m6 l4">
                         <select id="setip_serial" type="text"></select>
                         <label class="translate" for="setip_serial">device</label>
                     </div>
                     <div class="hiddendiv"><input id="setip_serial_nr" type="text" /></div>
-                    <div class="input-field col s12 m2">
+                    <div class="input-field col s12 m6 l4">
                         <input class="validate" id="setip_ip" type="text" />
                         <label class="translate" for="setip_ip">deviceIp</label>
                     </div>
-                    <div class="input-field col s12 m2">
+                    <div class="input-field col s12 m6 l4">
                         <input class="validate" id="setip_mask" type="text" />
                         <label class="translate" for="setip_mask">ipMask</label>
                     </div>
-                    <div class="input-field col s12 m2">
+                    <div class="input-field col s12 m6 l4">
                         <input class="validate" id="setip_gateway" type="text" />
                         <label class="translate" for="setip_gateway">gateWay</label>
                     </div>

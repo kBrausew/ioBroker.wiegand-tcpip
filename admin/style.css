@@ -2,23 +2,26 @@
 * {
     box-sizing: border-box
 }
+
 .m {
     /* Don't cut off dropdowns! */
     overflow: initial;
 }
+
 .m.adapter-container,
-.m.adapter-container > div.App {
+.m.adapter-container>div.App {
     /* Fix layout/scrolling issues with tabs */
     height: 100%;
     width: 100%;
     position: relative;
 }
-.m .select-wrapper + label {
+
+.m .select-wrapper+label {
     /* The positioning for dropdown labels is messed up */
     transform: none !important;
 }
 
-label > i[title] {
+label>i[title] {
     /* Display the help cursor for the tooltip icons and fix their positioning */
     cursor: help;
     margin-left: 0.25em;
@@ -31,57 +34,90 @@ label > i[title] {
 
 /* Add your styles here */
 
-        /* Title of each section */
-        .title {
-            font-weight: bold;
-        }
+/* Title of each section */
+.title {
+    font-weight: bold;
+}
 
-        /* Info text of each section */
-        .info {
-            margin-left: 1em;
-        }
+/* Info text of each section */
+.info {
+    margin-left: 1em;
+}
 
-        /* Table header */
-        .table-values th {
-            height: 2em;
-            background-color: #2196F3;
-            font-size: 90%;
-        }
+/* Table header */
+.table-values th {
+    height: 2em;
+    background-color: #2196F3;
+    font-size: 90%;
+}
 
-        /* Table: Add button */
-        /*.table-button-add {
+/* Table: Add button */
+/*.table-button-add {
             margin: 0.3em 0 1em 0;
         }*/
 
-        /* Button for Table */
-        .btn {
-            margin: 0.3em 0 1em 0;
-        }
+/* Button for Table */
+.btn {
+    margin: 0.3em 0 1em 0;
+}
 
-        #header-area {
-            margin-top: 5px;
-            margin-bottom: 1px;
-            background-color: #64b5f6;
-        }
+#header-area {
+    margin-top: 5px;
+    margin-bottom: 1px;
+    background-color: #64b5f6;
+}
 
-        #header-area #header-logo-title .logo {
-            float: left;
-            margin-right: 10px;
-        }
+#header-area #header-logo-title .logo {
+    float: left;
+    margin-right: 10px;
+}
 
-        #header-area #header-logo-title p {
-            line-height: normal !important;
-            margin: 0 !important;
-            padding: 8px 0 0 8px;
-        }
+#header-area #header-logo-title p {
+    line-height: normal !important;
+    margin: 0 !important;
+    padding: 8px 0 0 8px;
+}
 
-        #header-area #header-logo-title p>span.h-title {
-            font-size: 1.8em !important;
-            color: white;
-        }
+#header-area #header-logo-title p>span.h-title {
+    font-size: 1.8em !important;
+    color: white;
+}
 
-        #header-area #header-logo-title p>span.h-sub-title {
-            font-size: 1.0em !important;
-            color: white;
-            font-style: italic;
-        }
+#header-area #header-logo-title p>span.h-sub-title {
+    font-size: 1.0em !important;
+    color: white;
+    font-style: italic;
+}
+
+body {
+    overflow: hidden;
+}
+
+.adapter-body {
+    height: calc(100% - 70px);
+    overflow: hidden;
+}
+
+.m .blue.lighten-3 {
+    overflow: hidden;
+}
+
+.m .page {
+    height: calc(100% - 140px);
+}
+
+/* Style for small Screens */
+@media screen and (max-width: 768px) {
+
+    .m.adapter-container,
+    .m.adapter-container>div.App {
+        height: calc(100% - 80px);
+    }
+
+}
+
+@media (max-width: 601px) {
+    .m .dropdown-menu {
+        position: fixed;
+    }
+}
