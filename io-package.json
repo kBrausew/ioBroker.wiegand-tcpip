@@ -13,6 +13,7 @@
         "it": "Documentazione, traduzioni e miglioramenti estetici #PR1720",
         "es": "Documentación, traducciones y mejoras cosméticas #PR1720",
         "pl": "Dokumentacja, tłumaczenia i ulepszenia kosmetyczne #PR1720",
+        "uk": "Documentation, translations and cosmetic improvements #PR1720",
         "zh-cn": "文档、翻译和外观改进 #PR1720"
       },
       "0.4.5": {
@@ -25,10 +26,10 @@
         "it": "Struttura uAPI-Framework nativo, user action for setTime, setup docs",
         "es": "Estructura nativa uAPI-Framework, user action for setTime, setup docs",
         "pl": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "uk": "Structur Native uAPI-Framework, user action for setTime, setup docs",
         "zh-cn": "Structur Native uAPI-Framework, user action for setTime, setup docs"
       }
     },
-    "title": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
     "titleLang": {
       "en": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
       "de": "Wiegand TCP/IP-Controller (z. B. UHPPTOE)",
@@ -39,6 +40,7 @@
       "it": "Controller Wiegand TCP/IP (es. UHPPTOE)",
       "es": "Controlador Wiegand tcp/ip (por ejemplo, UHPPTOE)",
       "pl": "Kontroler Wiegand TCP/IP (np. UHPPTOE)",
+      "uk": "Wiegand tcp/ip Controller (e.g. UHPPTOE)",
       "zh-cn": "Wiegand tcp/ip 控制器（例如 UHPPTOE）"
     },
     "desc": {
@@ -51,6 +53,7 @@
       "it": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
       "es": "Controlador de acceso de puerta Wiegand Shenzhen Weigeng Industrial",
       "pl": "Kontroler dostępu do drzwi Wiegand Shenzhen Weigeng Industrial",
+      "uk": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
       "zh-cn": "韦根门禁控制器 深圳伟庚实业"
     },
     "docs": {
@@ -70,7 +73,7 @@
       "S4A ACB",
       "Door Access Controller Shenzhen Weigeng Industrial"
     ],
-    "license": "GPL-3.0-only",
+    "licenseInformation": "GPL-3.0-only",
     "platform": "Javascript/Node.js",
     "main": "main.js",
     "icon": "wiegand-tcpip.png",
@@ -80,6 +83,7 @@
     "loglevel": "info",
     "mode": "daemon",
     "type": "hardware",
+    "tier": "default",
     "compact": true,
     "connectionType": "local",
     "dataSource": "push",
