@@ -74,7 +74,7 @@
       "Door Access Controller Shenzhen Weigeng Industrial"
     ],
     "license": "GPL-3.0-only",
-    "licenseInformation": "GNU General Public License v3.0 only",
+    "licenseInformation": "free",
     "platform": "Javascript/Node.js",
     "main": "main.js",
     "icon": "wiegand-tcpip.png",
