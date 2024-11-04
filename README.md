@@ -46,14 +46,14 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
-0.4.6 (2022-03-18)
--   Documentation
--   Translations
--   Cosmetic improvements
--   Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720).
+### 0.4.6 (2022-03-18)
+* Documentation
+* Translations
+* Cosmetic improvements
+* Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720).
 
 ## [History]
-- [CHANGELOG](CHANGELOG.md)
+* [CHANGELOG](CHANGELOG.md)
 
 ## License
 GPL-3.0-only
