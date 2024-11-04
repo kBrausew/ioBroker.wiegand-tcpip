@@ -26,8 +26,8 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## **Recognition**
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
-- https://github.com/uhppoted
-- https://github.com/twystd
+* https://github.com/uhppoted
+* https://github.com/twystd
 
 ## **Hardware**
 * Wiegand to TCP/IP (https://ingenier.wordpress.com/zutrittskontrolle/  german)
