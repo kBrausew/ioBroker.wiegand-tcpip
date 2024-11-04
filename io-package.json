@@ -73,7 +73,8 @@
       "S4A ACB",
       "Door Access Controller Shenzhen Weigeng Industrial"
     ],
-    "licenseInformation": "GPL-3.0-only",
+    "license": "GPL-3.0-only",
+    "licenseInformation": "GNU General Public License v3.0 only",
     "platform": "Javascript/Node.js",
     "main": "main.js",
     "icon": "wiegand-tcpip.png",
@@ -83,7 +84,7 @@
     "loglevel": "info",
     "mode": "daemon",
     "type": "hardware",
-    "tier": "default",
+    "tier": 2,
     "compact": true,
     "connectionType": "local",
     "dataSource": "push",
