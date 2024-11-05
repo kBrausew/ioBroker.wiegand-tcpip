@@ -46,6 +46,11 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
+### **WORK IN PROGRESS**
+<!-- ### 0.4.7 (2024-11-05) /-->
+* Fix for ioBroker.BOT see issues
+* Changes to new dependencies Node 22.x, Admin 5 and JS-Controler 5.0.19...
+
 ### 0.4.6 (2022-03-18)
 * Documentation
 * Translations
