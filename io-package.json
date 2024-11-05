@@ -3,6 +3,19 @@
     "name": "wiegand-tcpip",
     "version": "0.4.6",
     "news": {
+      "0.4.7": {
+        "en": "Documentation, translations and cosmetic improvements #PR1720",
+        "de": "Dokumentation, Übersetzungen und kosmetische Verbesserungen #PR1720",
+        "ru": "Документация, переводы и косметические улучшения #PR1720",
+        "pt": "Documentação, traduções e melhorias estéticas #PR1720",
+        "nl": "Documentatie, vertalingen en cosmetische verbeteringen #PR1720",
+        "fr": "Documentation, traductions et améliorations cosmétiques #PR1720",
+        "it": "Documentazione, traduzioni e miglioramenti estetici #PR1720",
+        "es": "Documentación, traducciones y mejoras cosméticas #PR1720",
+        "pl": "Dokumentacja, tłumaczenia i ulepszenia kosmetyczne #PR1720",
+        "uk": "Documentation, translations and cosmetic improvements #PR1720",
+        "zh-cn": "文档、翻译和外观改进 #PR1720"
+      },
       "0.4.6": {
         "en": "Documentation, translations and cosmetic improvements #PR1720",
         "de": "Dokumentation, Übersetzungen und kosmetische Verbesserungen #PR1720",

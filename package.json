@@ -1,6 +1,6 @@
 {
   "name": "iobroker.wiegand-tcpip",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
   "author": {
     "name": "kbrausew",
