@@ -21,6 +21,7 @@
   "homepage": "https://github.com/kbrausew/iobroker.wiegand-tcpip",
   "license": "GPL-3.0-only",
   "keywords": [
+    "ioBroker",
     "UHPPOTE",
     "Wiegand to TCP/IP",
     "VBESTLIFE",
