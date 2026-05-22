@@ -86,7 +86,7 @@
       "S4A ACB",
       "Door Access Controller Shenzhen Weigeng Industrial"
     ],
-    "licenseInformation":  {
+    "licenseInformation": {
       "license": "GPL-3.0-only",
       "type": "free"
     },
@@ -105,7 +105,7 @@
     "materialize": true,
     "dependencies": [
       {
-        "js-controller": ">=5.0.19"
+        "js-controller": ">=6.0.11"
       }
     ],
     "messagebox": true
