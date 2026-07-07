@@ -64,4 +64,4 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 ## License
 GPL-3.0-only
 
-Copyright (c) 2024 kbrausew <kbrausew@magenta.de>
+Copyright (c) 2024-2026 kbrausew <kbrausew@magenta.de>
