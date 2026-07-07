@@ -46,8 +46,14 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
-### **WORK IN PROGRESS**
-- (copilot) Adapter requires node.js >= 22 now
+### 1.0.0 (2026-07-07)
+* Node.js >= 22 required (Node.js 20 EOL)
+* js-controller >= 6.0.11 required
+* Migrated to NPM Trusted Publishing (no more classic NPM tokens)
+* Migrated to ESLint 9 with `@iobroker/eslint-config`
+* Added Dependabot configuration with auto-merge
+* TypeScript 5.x, removed deprecated `common.materialize`
+* `node:` prefix added to all built-in module imports
 
 ### 0.4.7 (2024-11-05)
 * Fix for ioBroker.BOT see issues
