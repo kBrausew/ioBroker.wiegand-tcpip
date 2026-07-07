@@ -61,6 +61,8 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 
 #### [History](CHANGELOG.md)
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 GPL-3.0-only
 
