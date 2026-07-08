@@ -17,8 +17,9 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## Setup the adapter
 [Setup Help](docs/setup.md)
+[Release Checklist](docs/release-checklist.md)
 
-## **Dependences**
+## **Dependencies**
 | Component | Version |
 | :---: | :---: |
 | **NodeJS** | **min 22** |
@@ -54,6 +55,21 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 * Added Dependabot configuration with auto-merge
 * TypeScript 5.x, removed deprecated `common.materialize`
 * `node:` prefix added to all built-in module imports
+* Added UHPPOTE simulator based regression tests and release preflight scripts
+
+## Release preflight (step by step)
+Use the full checklist in [docs/release-checklist.md](docs/release-checklist.md).
+Short version:
+1. Install dependencies: `npm ci`
+2. Setup simulator: `npm run simulator:setup`
+3. Typecheck: `npm run check`
+4. Lint: `npm run lint`
+5. JS + package tests: `npm test`
+6. Unit tests: `npm run test:unit`
+7. Integration tests: `npm run test:integration`
+8. Regression tests: `npm run test:regression`
+9. Verify metadata files (`README.md`, `CHANGELOG.md`, `io-package.json`, `package.json`)
+10. Only release when all checks are green
 
 ### 0.4.7 (2024-11-05)
 * Fix for ioBroker.BOT see issues

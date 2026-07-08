@@ -4,6 +4,17 @@
     Placeholder for the next version (at the beginning of the line):
     ## **WORK IN PROGRESS**
 -->
+## 1.0.0 (2026-07-08)
+-   Node.js >= 22 required (Node.js 20 EOL)
+-   js-controller >= 6.0.11 required
+-   Migrated to NPM Trusted Publishing
+-   Migrated to ESLint 9 and flat config
+-   Added Dependabot and auto-merge workflows
+-   Added simulator based regression tests for adapter core flows
+
+## 0.4.7 (2024-11-05)
+-   Documentation, translations and cosmetic improvements
+
 ## 0.4.6 (2022-03-18)
 -   Documentation
 -   Translations
