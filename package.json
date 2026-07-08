@@ -1,6 +1,6 @@
 {
   "name": "iobroker.wiegand-tcpip",
-  "version": "0.4.7",
+  "version": "1.0.0",
   "description": "Wiegand Door Access Controller Shenzhen Weigeng Industrial",
   "author": {
     "name": "kbrausew",
@@ -18,7 +18,7 @@
       "name": "twystd"
     }
   ],
-  "homepage": "https://github.com/kbrausew/iobroker.wiegand-tcpip",
+  "homepage": "https://github.com/kBrausew/ioBroker.wiegand-tcpip",
   "license": "GPL-3.0-only",
   "keywords": [
     "ioBroker",
@@ -37,37 +37,38 @@
     "url": "https://github.com/kBrausew/ioBroker.wiegand-tcpip.git"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.2.2",
-    "ipaddr.js": "^2.0.1",
-    "os": "^0.1.2",
-    "uhppoted": "^0.8.8"
+    "@iobroker/adapter-core": "^3.4.1",
+    "ipaddr.js": "^2.4.0",
+    "uhppoted": "^0.9.0"
   },
   "devDependencies": {
-    "@alcalzone/release-script": "^3.5.6",
-    "@alcalzone/release-script-plugin-iobroker": "^3.5.7",
-    "@alcalzone/release-script-plugin-license": "^3.5.3",
-    "@iobroker/testing": "^4.1.3",
-    "@types/chai": "^4.3.0",
-    "@types/chai-as-promised": "^7.1.5",
-    "@types/gulp": "^4.0.9",
-    "@types/mocha": "^9.1.0",
-    "@types/node": "^22.7.4",
-    "@types/proxyquire": "^1.3.28",
-    "@types/sinon": "^10.0.11",
-    "@types/sinon-chai": "^3.2.8",
-    "axios": "^0.25.0",
-    "chai": "^4.3.6",
-    "chai-as-promised": "^7.1.1",
-    "eslint": "^7.32.0",
+    "@alcalzone/release-script": "^5.2.1",
+    "@alcalzone/release-script-plugin-iobroker": "^5.2.0",
+    "@alcalzone/release-script-plugin-license": "^5.2.0",
+    "@iobroker/testing": "^5.2.2",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/chai": "^4.3.20",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/gulp": "^4.0.18",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.20.1",
+    "@types/proxyquire": "^1.3.31",
+    "@types/sinon": "^10.0.20",
+    "@types/sinon-chai": "^3.2.12",
+    "@iobroker/eslint-config": "^2.3.4",
+    "axios": "^1.7.9",
+    "chai": "^4.5.0",
+    "chai-as-promised": "^7.1.2",
+    "eslint": "^9.39.4",
     "gulp": "^4.0.2",
-    "mocha": "^9.2.0",
+    "mocha": "^10.8.2",
     "proxyquire": "^2.1.3",
-    "sinon": "^13.0.1",
+    "sinon": "^19.0.5",
     "sinon-chai": "^3.7.0",
-    "typescript": "~4.4.4"
+    "typescript": "~6.0.3"
   },
   "main": "main.js",
   "files": [
@@ -82,17 +83,19 @@
     "main.js"
   ],
   "scripts": {
+    "simulator:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-uhppote-simulator.ps1",
     "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
     "test:package": "mocha test/package --exit",
     "test:unit": "mocha test/unit --exit",
     "test:integration": "mocha test/integration --exit",
+    "test:regression": "mocha test/regression.simulator.js --exit",
     "test": "npm run test:js && npm run test:package",
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint",
     "release": "release-script"
   },
   "bugs": {
-    "url": "https://github.com/kbrausew/iobroker.wiegand-tcpip/issues"
+    "url": "https://github.com/kBrausew/ioBroker.wiegand-tcpip/issues"
   },
   "readmeFilename": "README.md"
 }

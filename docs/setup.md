@@ -41,8 +41,7 @@ From the list, select the network host adapter to which you have connected your 
 Default is 60000. Without error message from the network there is no need the change that.
 
 #### **Receiver-Port**
-Default is 60001. Without error message from the network there is no need the change that.
-I redefined port 60099 for the adapter. If something doesn't work, change this back to the default.
+Default is 60099. Without error message from the network there is no need to change that.
 
 #### **Connection Timeout in milli seconds**
 Default is 2500 (2,5 seconds).

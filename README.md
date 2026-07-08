@@ -17,12 +17,13 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## Setup the adapter
 [Setup Help](docs/setup.md)
+[Release Checklist](docs/release-checklist.md)
 
-## **Dependences**
+## **Dependencies**
 | Component | Version |
 | :---: | :---: |
-| **NodeJS** | **min 18** |
-| JS-Controller | min 5.x |
+| **NodeJS** | **min 22** |
+| JS-Controller | min 6.x |
 
 ## **Recognition**
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:
@@ -46,6 +47,30 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
+### 1.0.0 (2026-07-07)
+* Node.js >= 22 required (Node.js 20 EOL)
+* js-controller >= 6.0.11 required
+* Migrated to NPM Trusted Publishing (no more classic NPM tokens)
+* Migrated to ESLint 9 with `@iobroker/eslint-config`
+* Added Dependabot configuration with auto-merge
+* TypeScript 5.x, removed deprecated `common.materialize`
+* `node:` prefix added to all built-in module imports
+* Added UHPPOTE simulator based regression tests and release preflight scripts
+
+## Release preflight (step by step)
+Use the full checklist in [docs/release-checklist.md](docs/release-checklist.md).
+Short version:
+1. Install dependencies: `npm ci`
+2. Setup simulator: `npm run simulator:setup`
+3. Typecheck: `npm run check`
+4. Lint: `npm run lint`
+5. JS + package tests: `npm test`
+6. Unit tests: `npm run test:unit`
+7. Integration tests: `npm run test:integration`
+8. Regression tests: `npm run test:regression`
+9. Verify metadata files (`README.md`, `CHANGELOG.md`, `io-package.json`, `package.json`)
+10. Only release when all checks are green
+
 ### 0.4.7 (2024-11-05)
 * Fix for ioBroker.BOT see issues
 * Changes to new dependencies Node 22.x, Admin 5 and JS-Controler 5.0.19...
@@ -58,7 +83,9 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 
 #### [History](CHANGELOG.md)
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 GPL-3.0-only
 
-Copyright (c) 2024 kbrausew <kbrausew@magenta.de>
+Copyright (c) 2024-2026 kbrausew <kbrausew@magenta.de>

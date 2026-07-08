@@ -1,0 +1,409 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawn } = require("node:child_process");
+const axios = require("axios");
+const { tests } = require("@iobroker/testing");
+
+const ADAPTER_ROOT = path.join(__dirname, "..");
+const SIMULATOR_EXE = path.join(
+  ADAPTER_ROOT,
+  ".tools",
+  "uhppote-simulator",
+  "uhppote-simulator.exe",
+);
+const SIMULATOR_DEVICES_DIR = path.join(
+  ADAPTER_ROOT,
+  ".tools",
+  "uhppote-simulator",
+  "devices",
+);
+const SIMULATOR_BIND_PORT = 60000;
+const SIMULATOR_REST_PORT = 18000;
+const SIMULATOR_REST = `http://127.0.0.1:${SIMULATOR_REST_PORT}`;
+const CONTROLLER_ID = 405419896;
+const AUTH_CARD = 10058400;
+const DENIED_CARD = 10059999;
+
+/** @type {import("node:child_process").ChildProcessWithoutNullStreams | undefined} */
+let simulatorProcess;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function sendToAsync(harness, command, message) {
+  return new Promise((resolve) => {
+    harness.sendTo("wiegand-tcpip.0", command, message, (response) => {
+      resolve(response);
+    });
+  });
+}
+
+async function waitForSimulatorReady(timeoutMs = 15000) {
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    try {
+      await axios.get(`${SIMULATOR_REST}/uhppote/simulator`, { timeout: 1000 });
+      return;
+    } catch {
+      await wait(250);
+    }
+  }
+
+  throw new Error("UHPPOTE simulator REST endpoint did not become ready in time.");
+}
+
+async function startSimulator() {
+  if (!fs.existsSync(SIMULATOR_EXE)) {
+    throw new Error(
+      `UHPPOTE simulator is missing at ${SIMULATOR_EXE}. Download and extract the Windows binary into .tools/uhppote-simulator first.`,
+    );
+  }
+
+  fs.mkdirSync(SIMULATOR_DEVICES_DIR, { recursive: true });
+
+  simulatorProcess = spawn(
+    SIMULATOR_EXE,
+    [
+      "--bind",
+      `127.0.0.1:${SIMULATOR_BIND_PORT}`,
+      "--rest",
+      `127.0.0.1:${SIMULATOR_REST_PORT}`,
+      "--devices",
+      SIMULATOR_DEVICES_DIR,
+    ],
+    {
+      cwd: ADAPTER_ROOT,
+      stdio: "ignore",
+    },
+  );
+
+  await waitForSimulatorReady();
+
+  try {
+    await axios.delete(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}`);
+  } catch {
+    // Ignore if controller does not exist yet.
+  }
+
+  await axios.post(`${SIMULATOR_REST}/uhppote/simulator`, {
+    "device-id": CONTROLLER_ID,
+    "device-type": "UT0311-L04",
+    compressed: false,
+  });
+}
+
+async function stopSimulator() {
+  if (!simulatorProcess) {
+    return;
+  }
+
+  const processToStop = simulatorProcess;
+  simulatorProcess = undefined;
+
+  if (processToStop.killed || processToStop.exitCode !== null) {
+    return;
+  }
+
+  processToStop.kill("SIGTERM");
+  await wait(500);
+
+  if (processToStop.exitCode === null) {
+    processToStop.kill("SIGKILL");
+  }
+}
+
+async function waitForState(harness, id, predicate, timeoutMs = 20000, pollMs = 250) {
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    const state = await harness.states.getStateAsync(id);
+    if (state && predicate(state)) {
+      return state;
+    }
+    await wait(pollMs);
+  }
+
+  throw new Error(`Timed out waiting for state ${id}`);
+}
+
+tests.integration(path.join(__dirname, ".."), {
+  defineAdditionalTests({ suite }) {
+    suite("UHPPOTE simulator regression", (getHarness) => {
+      /** @type {import("@iobroker/testing/build/tests/integration/lib/harness").TestHarness} */
+      let harness;
+
+      before(async function () {
+        this.timeout(30000);
+        harness = getHarness();
+        await startSimulator();
+      });
+
+      after(async function () {
+        this.timeout(10000);
+        await stopSimulator();
+      });
+
+      it("connects and processes a simulated swipe event", async function () {
+        this.timeout(60000);
+
+        await harness.changeAdapterConfig("wiegand-tcpip", {
+          native: {
+            bind: "127.0.0.1",
+            port: SIMULATOR_BIND_PORT,
+            r_port: 60099,
+            timeout: 2500,
+            heartbeat: 3000,
+            settime: 60000,
+            debugLL: false,
+            controllers: [
+              {
+                serial: CONTROLLER_ID,
+                deviceIp: "127.0.0.1",
+                exposedIP: "127.0.0.1",
+                exposedPort: 60099,
+                modelType: 4,
+                broadcast: false,
+                index: 1,
+                errorCount: 0,
+                run: false,
+                heartbeatCount: 0,
+                eventNr: 0,
+              },
+            ],
+          },
+        });
+
+        await harness.startAdapterAndWait();
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.reachable`,
+          (state) => state.val === true,
+          30000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.control`,
+          (state) => typeof state.val === "number",
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.delay`,
+          (state) => typeof state.val === "number",
+          20000,
+        );
+
+        await axios.put(
+          `${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/cards/${AUTH_CARD}`,
+          {
+            "start-date": "2026-01-01",
+            "end-date": "2027-12-31",
+            doors: [1],
+            PIN: 1357,
+          },
+        );
+
+        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1,
+          "card-number": AUTH_CARD,
+          direction: 1,
+          PIN: 1357,
+        });
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastSwipe`,
+          (state) => state.val === AUTH_CARD,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastGranted`,
+          (state) => state.val === true,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.directionCode`,
+          (state) => typeof state.val === "number" && state.val > 0,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.requestCode`,
+          (state) => typeof state.val === "number" && state.val > 0,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.reasonCode`,
+          (state) => typeof state.val === "number",
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.directionText`,
+          (state) => typeof state.val === "string" && state.val.length > 0,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.requestText`,
+          (state) => typeof state.val === "string" && state.val.length > 0,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.reasonText`,
+          (state) => typeof state.val === "string",
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.eventNr`,
+          (state) => typeof state.val === "number" && state.val > 0,
+          20000,
+        );
+      });
+
+      it("marks unauthorized swipe events as denied", async function () {
+        this.timeout(30000);
+
+        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1,
+          "card-number": DENIED_CARD,
+          direction: 1,
+          PIN: 0,
+        });
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.unauthorized`,
+          (state) => state.val === DENIED_CARD,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastGranted`,
+          (state) => state.val === false,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastSwipe`,
+          (state) => state.val === DENIED_CARD,
+          20000,
+        );
+      });
+
+      it("handles remoteOpen state changes and updates event counter", async function () {
+        this.timeout(30000);
+
+        const eventStateId = `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.eventNr`;
+        const remoteOpenStateId = `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.remoteOpen`;
+
+        const previousEvent = await harness.states.getStateAsync(eventStateId);
+        const previousEventNr = Number(previousEvent?.val || 0);
+
+        await harness.states.setStateAsync(remoteOpenStateId, {
+          val: true,
+          ack: false,
+          from: "system.adapter.test.0",
+        });
+
+        await waitForState(
+          harness,
+          eventStateId,
+          (state) => typeof state.val === "number" && state.val > previousEventNr,
+          20000,
+        );
+      });
+
+      it("supports messagebox commands (search + invalid)", async function () {
+        this.timeout(30000);
+
+        const searchResponse = await sendToAsync(harness, "search", {
+          bind: "127.0.0.1",
+        });
+
+        if (!searchResponse || searchResponse.error) {
+          throw new Error(`search command failed: ${JSON.stringify(searchResponse)}`);
+        }
+
+        const foundDevice = Array.isArray(searchResponse)
+          ? searchResponse.find((entry) => entry && entry.deviceId === CONTROLLER_ID)
+          : undefined;
+
+        if (!foundDevice) {
+          throw new Error(
+            `search result does not include expected controller ${CONTROLLER_ID}: ${JSON.stringify(searchResponse)}`,
+          );
+        }
+
+        const invalidResponse = await sendToAsync(harness, "not-a-command", {});
+
+        if (!invalidResponse || !invalidResponse.error) {
+          throw new Error(
+            `invalid command did not return expected error response: ${JSON.stringify(invalidResponse)}`,
+          );
+        }
+      });
+
+      it("ignores remoteOpen state changes coming from adapter itself", async function () {
+        this.timeout(30000);
+
+        const eventStateId = `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.eventNr`;
+        const remoteOpenStateId = `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.remoteOpen`;
+
+        const before = await harness.states.getStateAsync(eventStateId);
+        const beforeNr = Number(before?.val || 0);
+
+        await harness.states.setStateAsync(remoteOpenStateId, {
+          val: true,
+          ack: false,
+          from: "system.adapter.wiegand-tcpip.0",
+        });
+
+        await wait(1500);
+
+        const after = await harness.states.getStateAsync(eventStateId);
+        const afterNr = Number(after?.val || 0);
+
+        if (afterNr !== beforeNr) {
+          throw new Error(`eventNr changed unexpectedly for own-state remoteOpen (${beforeNr} -> ${afterNr})`);
+        }
+      });
+
+      it("handles setip messagebox command callback", async function () {
+        this.timeout(30000);
+
+        const response = await sendToAsync(harness, "setip", {
+          bind: "127.0.0.1",
+          deviceId: CONTROLLER_ID,
+          address: "not-an-ip",
+          netmask: "255.255.255.0",
+          gateway: "127.0.0.1",
+        });
+
+        if (response == null || typeof response !== "object") {
+          throw new Error(`setip should return an object response, got: ${JSON.stringify(response)}`);
+        }
+      });
+    });
+  },
+});
