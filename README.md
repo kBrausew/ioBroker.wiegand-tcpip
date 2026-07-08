@@ -21,8 +21,8 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 ## **Dependences**
 | Component | Version |
 | :---: | :---: |
-| **NodeJS** | **min 18** |
-| JS-Controller | min 5.x |
+| **NodeJS** | **min 22** |
+| JS-Controller | min 6.x |
 
 ## **Recognition**
 My very special thanks go to **@github/uhppoted & @github/twystd** without whose help this software would not have been possible :+1:

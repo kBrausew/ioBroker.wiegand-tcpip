@@ -12,6 +12,11 @@ on:
       # pre-releases
       - "v[0-9]+.[0-9]+.[0-9]+-**"
   pull_request: {}
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Performs quick checks before the expensive test runs
@@ -47,6 +52,56 @@ jobs:
           # Uncomment the following line if your adapter cannot be installed using 'npm ci'
           # install-command: 'npm install'
 
+  # Forward-compatibility check for upcoming Node.js versions (non-blocking)
+  adapter-tests-next:
+    needs: [check-and-lint]
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    continue-on-error: true
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ioBroker/testing-action-adapter@v1
+        with:
+          node-version: "26.x"
+          os: ubuntu-latest
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+
+  # Runs additional project-level checks automatically
+  project-checks:
+    needs: [check-and-lint]
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        continue-on-error: true
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: JavaScript tests
+        run: npm run test:js
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests
+        run: npm run test:integration
+
   # TODO: To enable automatic npm releases, create a token on npmjs.org
   # Enter this token as a GitHub secret (with name NPM_TOKEN) in the repository options
   # Then uncomment the following block:
@@ -56,7 +111,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    needs: [check-and-lint, adapter-tests]
+    needs: [check-and-lint, adapter-tests, project-checks]
 
     # Trigger this step only when a commit on any branch is tagged with a version number
     if: |

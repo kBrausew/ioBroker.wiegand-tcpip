@@ -1,5 +1,4 @@
 # No dot-directories except github/vscode
-.*/git pull
 !.vscode/
 !.github/
 
@@ -8,6 +7,13 @@
 *.code-workspace
 node_modules
 nbproject
+coverage
+.nyc_output
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
 
 # npm package files
 iobroker.*.tgz
