@@ -60,7 +60,7 @@
     "@types/sinon-chai": "^3.2.12",
     "@iobroker/eslint-config": "^2.3.4",
     "axios": "^1.7.9",
-    "chai": "^4.5.0",
+    "chai": "^6.2.2",
     "chai-as-promised": "^7.1.2",
     "eslint": "^9.39.4",
     "gulp": "^4.0.2",
