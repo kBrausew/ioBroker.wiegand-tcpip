@@ -374,12 +374,83 @@ class WiegandTcpip extends utils.Adapter {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const dataset = obj.message.dataset || obj.message;
               const preview = this.buildImportPreview(dataset);
+              this.userDb.reviewQueue = preview.reviewItems;
+              await this.persistUserDb("importPreview");
               this.sendTo(
                 obj.from,
                 obj.command,
                 {
                   error: false,
                   preview,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userImportReviewList":
+          if (obj.callback) {
+            try {
+              const summary = this.getReviewQueueSummary();
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  summary,
+                  reviews: this.userDb.reviewQueue || [],
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userImportReviewApprove":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const reviewId = (obj.message.reviewId || obj.message.id || "").toString();
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const action = (obj.message.action || "").toString();
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const userId = (obj.message.userId || "").toString();
+              const review = this.approveReviewItem(reviewId, action, userId);
+              await this.persistUserDb("reviewApprove");
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  review,
+                  summary: this.getReviewQueueSummary(),
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userImportReviewReject":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const reviewId = (obj.message.reviewId || obj.message.id || "").toString();
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const reason = (obj.message.reason || "").toString();
+              const review = this.rejectReviewItem(reviewId, reason);
+              await this.persistUserDb("reviewReject");
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  review,
+                  summary: this.getReviewQueueSummary(),
                 },
                 obj.callback,
               );
@@ -1201,6 +1272,7 @@ class WiegandTcpip extends utils.Adapter {
     return {
       schemaVersion: 1,
       updatedAt: "",
+      reviewQueue: [],
       users: {},
     };
   }
@@ -1256,6 +1328,28 @@ class WiegandTcpip extends utils.Adapter {
       "",
       undefined,
     );
+    await this.createOneState(
+      "cards",
+      "reviewQueue",
+      "Import review queue",
+      "string",
+      "json",
+      true,
+      false,
+      "[]",
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "reviewPending",
+      "Pending import review items",
+      "number",
+      "value",
+      true,
+      false,
+      0,
+      undefined,
+    );
 
     const dbState = await this.getStateAsync("cards.db");
     if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
@@ -1268,6 +1362,10 @@ class WiegandTcpip extends utils.Adapter {
         this.log.warn(`Could not parse cards.db. Resetting DB: ${err.message}`);
         this.userDb = this.createEmptyUserDb();
       }
+    }
+
+    if (!Array.isArray(this.userDb.reviewQueue)) {
+      this.userDb.reviewQueue = [];
     }
 
     await this.persistUserDb("init");
@@ -1409,6 +1507,29 @@ class WiegandTcpip extends utils.Adapter {
     return null;
   }
 
+  findUserIdByIdentityMeta(identityMeta) {
+    if (!identityMeta || typeof identityMeta !== "object") {
+      return null;
+    }
+    const externalId = (identityMeta.externalId || "").toString();
+    if (!externalId) {
+      return null;
+    }
+
+    for (const [userId, user] of Object.entries(this.userDb.users)) {
+      const userExternalId = (
+        user?.meta?.identityMeta?.externalId
+        || user?.meta?.externalId
+        || ""
+      ).toString();
+      if (userExternalId && userExternalId === externalId) {
+        return userId;
+      }
+    }
+
+    return null;
+  }
+
   async registerCredentialObservation(observation) {
     if (!observation || !observation.cardNumber || observation.cardNumber <= 0) {
       return;
@@ -1531,6 +1652,10 @@ class WiegandTcpip extends utils.Adapter {
           controllerSerial: serial,
           displayName: (entry.displayName || entry.name || "").toString(),
           credentials,
+          identityMeta: {
+            externalId: (entry.externalId || entry.userId || entry.id || "").toString(),
+            sourceSystem: (entry.sourceSystem || dataset.source || "import").toString(),
+          },
           meta: {
             source: entry.source || dataset.source || "import",
             importedAt: new Date().toISOString(),
@@ -1556,6 +1681,15 @@ class WiegandTcpip extends utils.Adapter {
   }
 
   decideImportTargetUser(record) {
+    const identityUserId = this.findUserIdByIdentityMeta(record.identityMeta);
+    if (identityUserId) {
+      return {
+        conflict: false,
+        userId: identityUserId,
+        candidates: [identityUserId],
+      };
+    }
+
     const found = new Set();
     for (const credential of record.credentials) {
       const userId = this.findUserIdByCredential(credential.type, credential.value);
@@ -1593,9 +1727,11 @@ class WiegandTcpip extends utils.Adapter {
     let usersToUpdate = 0;
     let credentialsToMerge = 0;
     const conflicts = [];
+    const reviewItems = [];
 
-    for (const record of records) {
+    for (const [index, record] of records.entries()) {
       const decision = this.decideImportTargetUser(record);
+      reviewItems.push(this.buildImportReviewItem(index, record, decision));
       if (decision.conflict) {
         conflicts.push({
           displayName: record.displayName,
@@ -1619,44 +1755,179 @@ class WiegandTcpip extends utils.Adapter {
       usersToUpdate,
       credentialsToMerge,
       conflicts,
-      canApply: conflicts.length === 0,
+      reviewItems,
+      pendingReviews: reviewItems.length,
+      canApply: false,
     };
   }
 
+  buildImportReviewItem(index, record, decision) {
+    const now = new Date().toISOString();
+    return {
+      id: `review-${Date.now()}-${index}`,
+      createdAt: now,
+      status: "pending",
+      decisionType: decision.conflict
+        ? "conflict"
+        : this.userDb.users[decision.userId]
+          ? "merge"
+          : "create",
+      suggestedUserId: decision.userId,
+      candidates: decision.candidates || [],
+      approvedAction: "",
+      approvedUserId: "",
+      record,
+    };
+  }
+
+  getReviewQueueSummary() {
+    const queue = Array.isArray(this.userDb.reviewQueue) ? this.userDb.reviewQueue : [];
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+    let applied = 0;
+    let failed = 0;
+
+    for (const item of queue) {
+      if (item.status === "pending") {
+        pending += 1;
+      } else if (item.status === "approved") {
+        approved += 1;
+      } else if (item.status === "rejected") {
+        rejected += 1;
+      } else if (item.status === "applied") {
+        applied += 1;
+      } else if (item.status === "failed") {
+        failed += 1;
+      }
+    }
+
+    return {
+      total: queue.length,
+      pending,
+      approved,
+      rejected,
+      applied,
+      failed,
+    };
+  }
+
+  findReviewItem(reviewId) {
+    return (this.userDb.reviewQueue || []).find((item) => item.id === reviewId) || null;
+  }
+
+  approveReviewItem(reviewId, action, userId) {
+    const item = this.findReviewItem(reviewId);
+    if (!item) {
+      throw new Error(`Review item not found: ${reviewId}`);
+    }
+    if (item.status !== "pending") {
+      throw new Error(`Review item is not pending: ${reviewId}`);
+    }
+
+    const normalizedAction = (action || "").toString().toLowerCase();
+    if (normalizedAction !== "create" && normalizedAction !== "merge") {
+      throw new Error('Action must be "create" or "merge"');
+    }
+
+    let resolvedUserId = "";
+    if (normalizedAction === "merge") {
+      resolvedUserId = (userId || item.suggestedUserId || "").toString();
+      if (!resolvedUserId) {
+        throw new Error("Missing userId for merge action");
+      }
+      if (item.candidates.length > 0 && !item.candidates.includes(resolvedUserId)) {
+        throw new Error(`userId ${resolvedUserId} is not part of review candidates`);
+      }
+      if (!this.userDb.users[resolvedUserId]) {
+        throw new Error(`Target user does not exist: ${resolvedUserId}`);
+      }
+    } else {
+      resolvedUserId = (item.suggestedUserId || this.makeImportUserId(item.record)).toString();
+    }
+
+    item.status = "approved";
+    item.approvedAction = normalizedAction;
+    item.approvedUserId = resolvedUserId;
+    item.approvedAt = new Date().toISOString();
+
+    return item;
+  }
+
+  rejectReviewItem(reviewId, reason) {
+    const item = this.findReviewItem(reviewId);
+    if (!item) {
+      throw new Error(`Review item not found: ${reviewId}`);
+    }
+    if (item.status !== "pending") {
+      throw new Error(`Review item is not pending: ${reviewId}`);
+    }
+
+    item.status = "rejected";
+    item.rejectedAt = new Date().toISOString();
+    item.rejectReason = (reason || "").toString();
+    return item;
+  }
+
   async applyImportDataset(dataset) {
-    const records = this.normalizeImportDataset(dataset);
-    const preview = this.buildImportPreview(dataset);
-    if (!preview.canApply) {
+    let preview = null;
+    if (!Array.isArray(this.userDb.reviewQueue) || this.userDb.reviewQueue.length === 0) {
+      preview = this.buildImportPreview(dataset);
+      this.userDb.reviewQueue = preview.reviewItems;
+      await this.persistUserDb("importPreview");
+    }
+
+    const summary = this.getReviewQueueSummary();
+    if (summary.pending > 0) {
       return {
         applied: false,
-        reason: "conflicts",
+        reason: "reviewPending",
+        reviewSummary: summary,
         preview,
       };
     }
 
     const touchedUsers = new Set();
-    for (const record of records) {
-      const decision = this.decideImportTargetUser(record);
-      if (decision.conflict || !decision.userId) {
+    const appliedReviewIds = [];
+    const failedReviewIds = [];
+    for (const reviewItem of this.userDb.reviewQueue) {
+      if (reviewItem.status !== "approved") {
         continue;
       }
 
-      const user = {
-        id: decision.userId,
-        displayName: record.displayName || decision.userId,
-        controllers: [record.controllerSerial],
-        credentials: record.credentials,
-        meta: record.meta,
-      };
-      this.upsertUser(user, "import");
-      touchedUsers.add(decision.userId);
+      try {
+        const user = {
+          id: reviewItem.approvedUserId,
+          displayName: reviewItem.record.displayName || reviewItem.approvedUserId,
+          controllers: [reviewItem.record.controllerSerial],
+          credentials: reviewItem.record.credentials,
+          meta: {
+            ...reviewItem.record.meta,
+            identityMeta: {
+              ...(reviewItem.record.identityMeta || {}),
+            },
+          },
+        };
+        this.upsertUser(user, "import");
+        touchedUsers.add(reviewItem.approvedUserId);
+        reviewItem.status = "applied";
+        reviewItem.appliedAt = new Date().toISOString();
+        appliedReviewIds.push(reviewItem.id);
+      } catch (err) {
+        reviewItem.status = "failed";
+        reviewItem.failedAt = new Date().toISOString();
+        reviewItem.error = err.message;
+        failedReviewIds.push(reviewItem.id);
+      }
     }
 
     await this.persistUserDb("import");
     return {
-      applied: true,
+      applied: failedReviewIds.length === 0,
       touchedUsers: [...touchedUsers],
-      preview,
+      reviewSummary: this.getReviewQueueSummary(),
+      appliedReviewIds,
+      failedReviewIds,
     };
   }
 
@@ -1679,6 +1950,14 @@ class WiegandTcpip extends utils.Adapter {
     await this.setStateAsync("cards.lastUpdate", {
       ack: true,
       val: this.userDb.updatedAt,
+    });
+    await this.setStateAsync("cards.reviewQueue", {
+      ack: true,
+      val: JSON.stringify(this.userDb.reviewQueue || []),
+    });
+    await this.setStateAsync("cards.reviewPending", {
+      ack: true,
+      val: this.getReviewQueueSummary().pending,
     });
   }
 

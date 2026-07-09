@@ -585,9 +585,40 @@ tests.integration(path.join(__dirname, ".."), {
           !previewResponse
           || previewResponse.error
           || !previewResponse.preview
-          || previewResponse.preview.canApply !== true
+          || previewResponse.preview.pendingReviews < 1
+          || previewResponse.preview.canApply !== false
         ) {
           throw new Error(`userImportPreview failed: ${JSON.stringify(previewResponse)}`);
+        }
+
+        const blockedApply = await sendToAsync(harness, "userImportApply", {
+          dataset: importDataset,
+        });
+
+        if (!blockedApply || blockedApply.error || !blockedApply.result || blockedApply.result.reason !== "reviewPending") {
+          throw new Error(`userImportApply should be blocked by review queue: ${JSON.stringify(blockedApply)}`);
+        }
+
+        const reviewListResponse = await sendToAsync(harness, "userImportReviewList", {});
+        if (
+          !reviewListResponse
+          || reviewListResponse.error
+          || !Array.isArray(reviewListResponse.reviews)
+          || reviewListResponse.reviews.length < 1
+        ) {
+          throw new Error(`userImportReviewList failed: ${JSON.stringify(reviewListResponse)}`);
+        }
+
+        for (const review of reviewListResponse.reviews) {
+          const action = review.decisionType === "merge" ? "merge" : "create";
+          const approveResponse = await sendToAsync(harness, "userImportReviewApprove", {
+            reviewId: review.id,
+            action,
+            userId: review.suggestedUserId,
+          });
+          if (!approveResponse || approveResponse.error || !approveResponse.review) {
+            throw new Error(`userImportReviewApprove failed: ${JSON.stringify(approveResponse)}`);
+          }
         }
 
         const applyResponse = await sendToAsync(harness, "userImportApply", {
