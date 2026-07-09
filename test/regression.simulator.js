@@ -864,6 +864,64 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`sync metadata not persisted: ${JSON.stringify(getResponse)}`);
         }
       });
+
+      it("supports controller-scoped validation and reconcile preview", async function () {
+        this.timeout(30000);
+
+        const validationUserId = "validation-user-1";
+        const upsertResponse = await sendToAsync(harness, "userUpsert", {
+          user: {
+            id: validationUserId,
+            displayName: "Validation User",
+            credentials: [
+              {
+                type: "card",
+                value: 44440001,
+                controllers: [CONTROLLER_ID, 999999],
+              },
+            ],
+          },
+        });
+
+        if (!upsertResponse || upsertResponse.error || !upsertResponse.user) {
+          throw new Error(`userUpsert failed for validation flow: ${JSON.stringify(upsertResponse)}`);
+        }
+
+        const scopedValidateKnown = await sendToAsync(harness, "userValidate", {
+          controllerIds: [CONTROLLER_ID],
+        });
+
+        if (!scopedValidateKnown || scopedValidateKnown.error || !scopedValidateKnown.report) {
+          throw new Error(`userValidate failed for known controller scope: ${JSON.stringify(scopedValidateKnown)}`);
+        }
+
+        if ((scopedValidateKnown.report.unknownControllerReferences || []).length !== 0) {
+          throw new Error(`known controller scope should have no unknown refs: ${JSON.stringify(scopedValidateKnown)}`);
+        }
+
+        const scopedReconcileUnknown = await sendToAsync(harness, "userReconcilePreview", {
+          controllerIds: [999999],
+        });
+
+        if (!scopedReconcileUnknown || scopedReconcileUnknown.error || !scopedReconcileUnknown.report) {
+          throw new Error(`userReconcilePreview failed for unknown controller scope: ${JSON.stringify(scopedReconcileUnknown)}`);
+        }
+
+        const unknownRefs = scopedReconcileUnknown.report.unknownControllerReferences || [];
+        if (unknownRefs.length < 1) {
+          throw new Error(`unknown controller scope should include unknown refs: ${JSON.stringify(scopedReconcileUnknown)}`);
+        }
+
+        const selectedControllers = scopedReconcileUnknown.report.selectedControllers || [];
+        if (!selectedControllers.includes(999999)) {
+          throw new Error(`selected controller scope missing in report: ${JSON.stringify(scopedReconcileUnknown)}`);
+        }
+
+        const suggestions = scopedReconcileUnknown.report.suggestions || {};
+        if (typeof suggestions.removeUnknownControllerRefs !== "number" || suggestions.removeUnknownControllerRefs < 1) {
+          throw new Error(`reconcile suggestions missing unknown-ref action: ${JSON.stringify(scopedReconcileUnknown)}`);
+        }
+      });
     });
   },
 });

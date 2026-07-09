@@ -505,11 +505,12 @@ class WiegandTcpip extends utils.Adapter {
         case "userValidate":
           if (obj.callback) {
             try {
+              const payload = obj.message || {};
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const background = !!obj.message.background;
               if (background) {
                 const job = this.startBackgroundJob("validateUserDb", async () => {
-                  const report = this.validateUserDb();
+                  const report = await this.buildReconcilePreview(payload);
                   return report;
                 });
                 this.sendTo(
@@ -526,7 +527,47 @@ class WiegandTcpip extends utils.Adapter {
                 break;
               }
 
-              const report = this.validateUserDb();
+              const report = await this.buildReconcilePreview(payload);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  report,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userReconcilePreview":
+          if (obj.callback) {
+            try {
+              const payload = obj.message || {};
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const background = !!obj.message.background;
+              if (background) {
+                const job = this.startBackgroundJob("reconcilePreview", async () => {
+                  const report = await this.buildReconcilePreview(payload);
+                  return report;
+                });
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    accepted: true,
+                    jobId: job.id,
+                    job,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
+              const report = await this.buildReconcilePreview(payload);
               this.sendTo(
                 obj.from,
                 obj.command,
@@ -1556,6 +1597,17 @@ class WiegandTcpip extends utils.Adapter {
       "{}",
       undefined,
     );
+    await this.createOneState(
+      "cards",
+      "lastValidation",
+      "Last validation/reconcile report",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
 
     const dbState = await this.getStateAsync("cards.db");
     if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
@@ -2186,9 +2238,53 @@ class WiegandTcpip extends utils.Adapter {
     return job;
   }
 
-  validateUserDb() {
+  normalizeValidationPayload(payload) {
+    const configuredControllerIds = this.ctrls
+      .map((controller) => parseInt(controller.serial, 10))
+      .filter((item) => !isNaN(item));
+
+    const selectedControllerIds = Array.isArray(payload?.controllerIds)
+      ? payload.controllerIds
+          .map((item) => parseInt(item, 10))
+          .filter((item) => !isNaN(item))
+      : configuredControllerIds;
+
+    return {
+      selectedControllerIds: [...new Set(selectedControllerIds)],
+      configuredControllerIds,
+    };
+  }
+
+  async buildReconcilePreview(payload) {
+    const report = this.validateUserDb(payload);
+    const suggestions = {
+      manualMergeRequired: report.duplicateCredentials.length,
+      removeUnknownControllerRefs: report.unknownControllerReferences.length,
+      assignControllers: report.credentialsWithoutControllers.length,
+      addCredentials: report.usersWithoutCredentials.length,
+    };
+
+    const response = {
+      ...report,
+      suggestions,
+    };
+
+    await this.setStateAsync("cards.lastValidation", {
+      ack: true,
+      val: JSON.stringify(response),
+    });
+
+    return response;
+  }
+
+  validateUserDb(payload) {
+    const options = this.normalizeValidationPayload(payload || {});
     const configuredControllers = new Set(
       this.ctrls.map((controller) => parseInt(controller.serial, 10)).filter((item) => !isNaN(item)),
+    );
+    const selectedControllers = new Set(options.selectedControllerIds);
+    const configuredSelection = options.selectedControllerIds.filter((controllerId) =>
+      configuredControllers.has(controllerId),
     );
 
     const unknownControllerReferences = [];
@@ -2196,6 +2292,15 @@ class WiegandTcpip extends utils.Adapter {
     const credentialsWithoutControllers = [];
     const duplicateCredentialKeys = {};
     const credentialOwner = {};
+    const perController = {};
+
+    for (const controllerId of options.selectedControllerIds) {
+      perController[controllerId] = {
+        users: new Set(),
+        credentials: 0,
+        unknownControllerReferences: 0,
+      };
+    }
 
     for (const [userId, user] of Object.entries(this.userDb.users)) {
       const credentials = Array.isArray(user.credentials) ? user.credentials : [];
@@ -2205,6 +2310,15 @@ class WiegandTcpip extends utils.Adapter {
 
       for (const credential of credentials) {
         const key = `${credential.type}:${credential.value}`;
+        const controllers = Array.isArray(credential.controllers) ? credential.controllers : [];
+        const selectedCredentialControllers = controllers
+          .map((controllerIdRaw) => parseInt(controllerIdRaw, 10))
+          .filter((controllerId) => !isNaN(controllerId) && selectedControllers.has(controllerId));
+
+        if (!selectedCredentialControllers.length && options.selectedControllerIds.length > 0) {
+          continue;
+        }
+
         if (credentialOwner[key] && credentialOwner[key] !== userId) {
           if (!duplicateCredentialKeys[key]) {
             duplicateCredentialKeys[key] = [credentialOwner[key]];
@@ -2216,8 +2330,7 @@ class WiegandTcpip extends utils.Adapter {
           credentialOwner[key] = userId;
         }
 
-        const controllers = Array.isArray(credential.controllers) ? credential.controllers : [];
-        if (!controllers.length) {
+        if (!controllers.length && configuredSelection.length > 0) {
           credentialsWithoutControllers.push({
             userId,
             credentialId: credential.id,
@@ -2225,14 +2338,37 @@ class WiegandTcpip extends utils.Adapter {
           });
         }
 
+        for (const controllerId of selectedCredentialControllers) {
+          if (!perController[controllerId]) {
+            perController[controllerId] = {
+              users: new Set(),
+              credentials: 0,
+              unknownControllerReferences: 0,
+            };
+          }
+          perController[controllerId].users.add(userId);
+          perController[controllerId].credentials += 1;
+        }
+
         for (const controllerIdRaw of controllers) {
           const controllerId = parseInt(controllerIdRaw, 10);
+          if (isNaN(controllerId) || !selectedControllers.has(controllerId)) {
+            continue;
+          }
           if (isNaN(controllerId) || !configuredControllers.has(controllerId)) {
             unknownControllerReferences.push({
               userId,
               credentialId: credential.id,
               controllerId: controllerIdRaw,
             });
+            if (!perController[controllerIdRaw]) {
+              perController[controllerIdRaw] = {
+                users: new Set(),
+                credentials: 0,
+                unknownControllerReferences: 0,
+              };
+            }
+            perController[controllerIdRaw].unknownControllerReferences += 1;
           }
         }
       }
@@ -2243,13 +2379,26 @@ class WiegandTcpip extends utils.Adapter {
       userIds: owners,
     }));
 
+    const perControllerSummary = Object.fromEntries(
+      Object.entries(perController).map(([controllerId, details]) => {
+        return [controllerId, {
+          userCount: details.users.size,
+          credentialCount: details.credentials,
+          unknownControllerReferences: details.unknownControllerReferences,
+        }];
+      }),
+    );
+
     return {
       generatedAt: new Date().toISOString(),
+      selectedControllers: options.selectedControllerIds,
+      configuredControllers: options.configuredControllerIds,
       userCount: Object.keys(this.userDb.users).length,
       duplicateCredentials,
       usersWithoutCredentials,
       credentialsWithoutControllers,
       unknownControllerReferences,
+      perController: perControllerSummary,
       ok:
         duplicateCredentials.length === 0
         && usersWithoutCredentials.length === 0
