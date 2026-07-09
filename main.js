@@ -541,6 +541,69 @@ class WiegandTcpip extends utils.Adapter {
             }
           }
           break;
+        case "userSyncPreview":
+          if (obj.callback) {
+            try {
+              const payload = obj.message || {};
+              const preview = this.buildSyncPlan(payload);
+              await this.setStateAsync("cards.lastSyncPreview", {
+                ack: true,
+                val: JSON.stringify(preview),
+              });
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  preview,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userSyncApply":
+          if (obj.callback) {
+            try {
+              const payload = obj.message || {};
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const background = !!obj.message.background;
+              if (background) {
+                const job = this.startBackgroundJob("syncApply", async () => {
+                  const result = await this.applySyncPlan(payload);
+                  return result;
+                });
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    accepted: true,
+                    jobId: job.id,
+                    job,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
+              const result = await this.applySyncPlan(payload);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  result,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
         case "userJobList":
           if (obj.callback) {
             try {
@@ -1471,6 +1534,28 @@ class WiegandTcpip extends utils.Adapter {
       "{}",
       undefined,
     );
+    await this.createOneState(
+      "cards",
+      "lastSyncPreview",
+      "Last sync preview",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "lastSyncApply",
+      "Last sync apply result",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
 
     const dbState = await this.getStateAsync("cards.db");
     if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
@@ -2171,6 +2256,149 @@ class WiegandTcpip extends utils.Adapter {
         && credentialsWithoutControllers.length === 0
         && unknownControllerReferences.length === 0,
     };
+  }
+
+  normalizeSyncPayload(payload) {
+    const modeRaw = (payload?.mode || "overwrite").toString().toLowerCase();
+    if (modeRaw !== "overwrite" && modeRaw !== "delta") {
+      throw new Error('Sync mode must be "overwrite" or "delta"');
+    }
+
+    const selectedUserIds = Array.isArray(payload?.userIds)
+      ? payload.userIds.map((item) => item.toString()).filter((item) => !!item)
+      : [];
+
+    const configuredControllers = this.ctrls
+      .map((controller) => parseInt(controller.serial, 10))
+      .filter((item) => !isNaN(item));
+
+    const selectedControllerIds = Array.isArray(payload?.controllerIds)
+      ? payload.controllerIds
+          .map((item) => parseInt(item, 10))
+          .filter((item) => !isNaN(item))
+      : configuredControllers;
+
+    const userIds = selectedUserIds.length
+      ? selectedUserIds
+      : Object.keys(this.userDb.users);
+
+    return {
+      mode: modeRaw,
+      userIds,
+      controllerIds: [...new Set(selectedControllerIds)],
+    };
+  }
+
+  buildCredentialHash(credentials) {
+    const keys = credentials
+      .map((credential) => `${credential.type}:${credential.value}`)
+      .sort();
+    return keys.join("|");
+  }
+
+  buildSyncPlan(payload) {
+    const normalized = this.normalizeSyncPayload(payload);
+    const actions = [];
+    let skippedUsers = 0;
+
+    for (const userId of normalized.userIds) {
+      const user = this.userDb.users[userId];
+      if (!user) {
+        skippedUsers += 1;
+        continue;
+      }
+
+      for (const controllerId of normalized.controllerIds) {
+        const credentials = (user.credentials || []).filter((credential) => {
+          const assigned = Array.isArray(credential.controllers) ? credential.controllers : [];
+          return assigned.includes(controllerId);
+        });
+
+        if (!credentials.length) {
+          continue;
+        }
+
+        const credentialHash = this.buildCredentialHash(credentials);
+        const lastHash = user?.meta?.syncMeta?.[controllerId]?.credentialHash || "";
+        const unchanged = normalized.mode === "delta" && lastHash === credentialHash;
+
+        actions.push({
+          userId,
+          controllerId,
+          mode: normalized.mode,
+          action: unchanged ? "skip" : "upsert",
+          credentialCount: credentials.length,
+          credentialHash,
+        });
+      }
+    }
+
+    const actionable = actions.filter((entry) => entry.action !== "skip").length;
+    const skipped = actions.length - actionable;
+
+    return {
+      generatedAt: new Date().toISOString(),
+      mode: normalized.mode,
+      selectedUsers: normalized.userIds,
+      selectedControllers: normalized.controllerIds,
+      skippedUsers,
+      totalActions: actions.length,
+      actionable,
+      skipped,
+      actions,
+    };
+  }
+
+  async applySyncPlan(payload) {
+    const plan = this.buildSyncPlan(payload);
+    const updatedUsers = new Set();
+    let appliedActions = 0;
+
+    for (const action of plan.actions) {
+      if (action.action === "skip") {
+        continue;
+      }
+
+      const user = this.userDb.users[action.userId];
+      if (!user) {
+        continue;
+      }
+
+      user.meta = {
+        ...(user.meta || {}),
+      };
+      user.meta.syncMeta = {
+        ...(user.meta.syncMeta || {}),
+        [action.controllerId]: {
+          mode: plan.mode,
+          credentialHash: action.credentialHash,
+          credentialCount: action.credentialCount,
+          lastSyncAt: new Date().toISOString(),
+        },
+      };
+      updatedUsers.add(action.userId);
+      appliedActions += 1;
+    }
+
+    await this.persistUserDb("syncApply");
+
+    const result = {
+      applied: true,
+      mode: plan.mode,
+      selectedUsers: plan.selectedUsers,
+      selectedControllers: plan.selectedControllers,
+      totalActions: plan.totalActions,
+      appliedActions,
+      skippedActions: plan.totalActions - appliedActions,
+      updatedUsers: [...updatedUsers],
+    };
+
+    await this.setStateAsync("cards.lastSyncApply", {
+      ack: true,
+      val: JSON.stringify(result),
+    });
+
+    return result;
   }
 
   async persistJobsState() {

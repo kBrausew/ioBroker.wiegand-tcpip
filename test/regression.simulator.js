@@ -779,6 +779,91 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error("background imported card user not found");
         }
       });
+
+      it("supports sync preview and background sync apply with selection", async function () {
+        this.timeout(40000);
+
+        const syncUserId = "sync-user-1";
+        const upsertResponse = await sendToAsync(harness, "userUpsert", {
+          user: {
+            id: syncUserId,
+            displayName: "Sync User",
+            credentials: [
+              {
+                type: "card",
+                value: 30030003,
+                controllers: [CONTROLLER_ID],
+              },
+              {
+                type: "pin",
+                value: "3030",
+                controllers: [CONTROLLER_ID],
+              },
+            ],
+          },
+        });
+
+        if (!upsertResponse || upsertResponse.error || !upsertResponse.user) {
+          throw new Error(`userUpsert failed for sync flow: ${JSON.stringify(upsertResponse)}`);
+        }
+
+        const previewResponse = await sendToAsync(harness, "userSyncPreview", {
+          mode: "overwrite",
+          userIds: [syncUserId],
+          controllerIds: [CONTROLLER_ID],
+        });
+
+        if (
+          !previewResponse
+          || previewResponse.error
+          || !previewResponse.preview
+          || previewResponse.preview.totalActions < 1
+          || previewResponse.preview.actionable < 1
+        ) {
+          throw new Error(`userSyncPreview failed: ${JSON.stringify(previewResponse)}`);
+        }
+
+        const applyResponse = await sendToAsync(harness, "userSyncApply", {
+          mode: "overwrite",
+          userIds: [syncUserId],
+          controllerIds: [CONTROLLER_ID],
+          background: true,
+        });
+
+        if (!applyResponse || applyResponse.error || applyResponse.accepted !== true || !applyResponse.jobId) {
+          throw new Error(`userSyncApply background did not return job acceptance: ${JSON.stringify(applyResponse)}`);
+        }
+
+        const completedJob = await waitForJobStatus(
+          harness,
+          applyResponse.jobId,
+          ["completed", "failed"],
+          25000,
+          250,
+        );
+
+        if (completedJob.status !== "completed") {
+          throw new Error(`background sync job failed: ${JSON.stringify(completedJob)}`);
+        }
+
+        const syncResult = completedJob.result;
+        if (!syncResult || syncResult.applied !== true || !Array.isArray(syncResult.updatedUsers)) {
+          throw new Error(`invalid background sync result: ${JSON.stringify(completedJob)}`);
+        }
+
+        if (!syncResult.updatedUsers.includes(syncUserId)) {
+          throw new Error(`sync user was not updated by sync apply: ${JSON.stringify(syncResult)}`);
+        }
+
+        const getResponse = await sendToAsync(harness, "userGet", {
+          userId: syncUserId,
+        });
+
+        const syncMeta = getResponse?.user?.meta?.syncMeta?.[CONTROLLER_ID];
+        if (!syncMeta || syncMeta.mode !== "overwrite" || !syncMeta.lastSyncAt) {
+          throw new Error(`sync metadata not persisted: ${JSON.stringify(getResponse)}`);
+        }
+      });
     });
   },
 });
