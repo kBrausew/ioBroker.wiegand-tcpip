@@ -404,6 +404,76 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`setip should return an object response, got: ${JSON.stringify(response)}`);
         }
       });
+
+      it("supports user management commands and event-based card merge", async function () {
+        this.timeout(40000);
+
+        const managedUserId = "qa-user-1";
+
+        const upsertResponse = await sendToAsync(harness, "userUpsert", {
+          user: {
+            id: managedUserId,
+            displayName: "QA User",
+            credentials: [
+              {
+                type: "card",
+                value: AUTH_CARD,
+                controllers: [CONTROLLER_ID],
+              },
+              {
+                type: "pin",
+                value: "1357",
+                controllers: [CONTROLLER_ID],
+              },
+            ],
+          },
+        });
+
+        if (!upsertResponse || upsertResponse.error || !upsertResponse.user) {
+          throw new Error(`userUpsert failed: ${JSON.stringify(upsertResponse)}`);
+        }
+
+        const getResponse = await sendToAsync(harness, "userGet", {
+          userId: managedUserId,
+        });
+
+        if (!getResponse || getResponse.error || !getResponse.user || getResponse.user.id !== managedUserId) {
+          throw new Error(`userGet failed: ${JSON.stringify(getResponse)}`);
+        }
+
+        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1,
+          "card-number": DENIED_CARD,
+          direction: 1,
+          PIN: 0,
+        });
+
+        await wait(1500);
+
+        const listResponse = await sendToAsync(harness, "userList", {});
+        if (!listResponse || listResponse.error || !Array.isArray(listResponse.users)) {
+          throw new Error(`userList failed: ${JSON.stringify(listResponse)}`);
+        }
+
+        const autoUser = listResponse.users.find((user) =>
+          Array.isArray(user.credentials)
+          && user.credentials.some(
+            (credential) => credential.type === "card" && credential.value === String(DENIED_CARD),
+          ),
+        );
+
+        if (!autoUser) {
+          throw new Error(`event-based credential merge failed, missing auto user for ${DENIED_CARD}`);
+        }
+
+        const deleteResponse = await sendToAsync(harness, "userDelete", {
+          userId: managedUserId,
+        });
+
+        if (!deleteResponse || deleteResponse.error || deleteResponse.deleted !== true) {
+          throw new Error(`userDelete failed: ${JSON.stringify(deleteResponse)}`);
+        }
+      });
     });
   },
 });

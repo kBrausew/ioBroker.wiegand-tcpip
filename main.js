@@ -37,6 +37,7 @@ class WiegandTcpip extends utils.Adapter {
     this.ctrls = []; // controller of this.config validated
     this.serials = {}; // serials
     this.devs = []; // uAPI devices (config)
+    this.userDb = this.createEmptyUserDb();
   }
 
   /**
@@ -44,6 +45,7 @@ class WiegandTcpip extends utils.Adapter {
    */
   async onReady() {
     const lCFG = this.createCFG();
+    await this.initUserManagement();
     this.config.settime = this.config.settime || 0;
     if (this.config.settime < 1200) {
       this.log.warn("Automatic clock setting disabled");
@@ -284,6 +286,88 @@ class WiegandTcpip extends utils.Adapter {
       };
       //const lConf = { config: new uapi.Config("config", "0.0.0.0", "192.168.178.255:60000", lBind + ":60001", 2500, [], false) };
       switch (obj.command) {
+        case "userList":
+          if (obj.callback) {
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                error: false,
+                users: Object.values(this.userDb.users),
+              },
+              obj.callback,
+            );
+          }
+          break;
+        case "userGet":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const userId = (obj.message.userId || obj.message.id || "").toString();
+              const user = this.userDb.users[userId] || null;
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  user,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userUpsert":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const rawUser = obj.message.user || obj.message;
+              const user = this.upsertUser(rawUser, "messagebox");
+              await this.persistUserDb("userUpsert");
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  user,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userDelete":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const userId = (obj.message.userId || obj.message.id || "").toString();
+              if (!userId) {
+                throw new Error("Missing userId");
+              }
+              const existed = !!this.userDb.users[userId];
+              if (existed) {
+                delete this.userDb.users[userId];
+                await this.persistUserDb("userDelete");
+              }
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  deleted: existed,
+                  userId,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
         case "search":
           if (obj.callback) {
             uapi
@@ -431,6 +515,18 @@ class WiegandTcpip extends utils.Adapter {
             });
             this.setState(`${lRoot}.lastSwipe`, { ack: true, val: lCard });
             this.setState(`${lRoot}.lastGranted`, { ack: true, val: lGranted });
+            this.registerCredentialObservation({
+              cardNumber: lCard,
+              controllerSerial: ldeviceId,
+              doorId: ldoorId,
+              granted: lGranted,
+              requestCode,
+              reasonCode,
+              reasonText,
+              directionCode,
+            }).catch((mergeErr) => {
+              this.log.warn(`Card merge update failed: ${mergeErr.message}`);
+            });
 
             this.log.debug(
               `Controller: ${ldeviceId} Door: ${ldoorId} granted: ${
@@ -1059,6 +1155,315 @@ class WiegandTcpip extends utils.Adapter {
         }
       }
     }
+  }
+
+  createEmptyUserDb() {
+    return {
+      schemaVersion: 1,
+      updatedAt: "",
+      users: {},
+    };
+  }
+
+  async initUserManagement() {
+    await this.setObjectNotExists("cards", {
+      type: "channel",
+      common: { name: "Card and user management" },
+      native: {},
+    });
+
+    await this.createOneState(
+      "cards",
+      "db",
+      "User/Credential database",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "userCount",
+      "Count of managed users",
+      "number",
+      "value",
+      true,
+      false,
+      0,
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "credentialCount",
+      "Count of managed credentials",
+      "number",
+      "value",
+      true,
+      false,
+      0,
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "lastUpdate",
+      "Last update timestamp",
+      "string",
+      "value",
+      true,
+      false,
+      "",
+      undefined,
+    );
+
+    const dbState = await this.getStateAsync("cards.db");
+    if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
+      try {
+        const parsed = JSON.parse(dbState.val);
+        if (parsed && typeof parsed === "object" && parsed.users) {
+          this.userDb = parsed;
+        }
+      } catch (err) {
+        this.log.warn(`Could not parse cards.db. Resetting DB: ${err.message}`);
+        this.userDb = this.createEmptyUserDb();
+      }
+    }
+
+    await this.persistUserDb("init");
+  }
+
+  normalizeCredential(rawCredential) {
+    const type = (rawCredential.type || "card").toString().toLowerCase();
+    const valueSource =
+      rawCredential.value != null
+        ? rawCredential.value
+        : rawCredential.card != null
+          ? rawCredential.card
+          : rawCredential.pin != null
+            ? rawCredential.pin
+            : "";
+    const value = valueSource.toString();
+    if (!value) {
+      throw new Error("Credential value is required");
+    }
+
+    const id = (rawCredential.id || `${type}:${value}`).toString();
+    const controllers = Array.isArray(rawCredential.controllers)
+      ? rawCredential.controllers
+          .map((it) => parseInt(it, 10))
+          .filter((it) => !isNaN(it))
+      : [];
+
+    return {
+      id,
+      type,
+      value,
+      label: (rawCredential.label || "").toString(),
+      controllers: [...new Set(controllers)],
+      meta: {
+        ...(rawCredential.meta || {}),
+      },
+    };
+  }
+
+  normalizeUser(rawUser) {
+    if (!rawUser || typeof rawUser !== "object") {
+      throw new Error("Missing user object");
+    }
+
+    const id = (rawUser.id || rawUser.userId || "").toString();
+    if (!id) {
+      throw new Error("Missing user id");
+    }
+
+    const credentialsRaw = Array.isArray(rawUser.credentials)
+      ? rawUser.credentials
+      : [];
+    const credentials = credentialsRaw.map((credential) =>
+      this.normalizeCredential(credential),
+    );
+
+    return {
+      id,
+      displayName: (rawUser.displayName || rawUser.name || id).toString(),
+      controllers: Array.isArray(rawUser.controllers)
+        ? rawUser.controllers
+            .map((it) => parseInt(it, 10))
+            .filter((it) => !isNaN(it))
+        : [],
+      credentials,
+      meta: {
+        ...(rawUser.meta || {}),
+      },
+    };
+  }
+
+  upsertUser(rawUser, source) {
+    const normalized = this.normalizeUser(rawUser);
+    const existing = this.userDb.users[normalized.id] || {
+      id: normalized.id,
+      displayName: normalized.displayName,
+      controllers: [],
+      credentials: [],
+      meta: {},
+    };
+
+    existing.displayName = normalized.displayName;
+    existing.meta = {
+      ...(existing.meta || {}),
+      ...(normalized.meta || {}),
+      source: source || "manual",
+      updatedAt: new Date().toISOString(),
+    };
+
+    const credentialMap = {};
+    for (const credential of existing.credentials || []) {
+      credentialMap[credential.id] = {
+        ...credential,
+        controllers: [...new Set(credential.controllers || [])],
+      };
+    }
+
+    for (const credential of normalized.credentials) {
+      if (credentialMap[credential.id]) {
+        const current = credentialMap[credential.id];
+        current.controllers = [
+          ...new Set([...(current.controllers || []), ...(credential.controllers || [])]),
+        ];
+        current.label = credential.label || current.label || "";
+        current.meta = {
+          ...(current.meta || {}),
+          ...(credential.meta || {}),
+        };
+      } else {
+        credentialMap[credential.id] = credential;
+      }
+    }
+
+    existing.credentials = Object.values(credentialMap);
+    const controllersFromCredentials = existing.credentials.flatMap(
+      (credential) => credential.controllers || [],
+    );
+    existing.controllers = [
+      ...new Set([...(normalized.controllers || []), ...controllersFromCredentials]),
+    ];
+
+    this.userDb.users[normalized.id] = existing;
+    return existing;
+  }
+
+  findUserIdByCredential(type, value) {
+    const targetType = type.toLowerCase();
+    const targetValue = value.toString();
+    for (const [userId, user] of Object.entries(this.userDb.users)) {
+      for (const credential of user.credentials || []) {
+        if (
+          credential.type === targetType &&
+          credential.value.toString() === targetValue
+        ) {
+          return userId;
+        }
+      }
+    }
+    return null;
+  }
+
+  async registerCredentialObservation(observation) {
+    if (!observation || !observation.cardNumber || observation.cardNumber <= 0) {
+      return;
+    }
+
+    const cardValue = observation.cardNumber.toString();
+    const credentialType = "card";
+    let userId = this.findUserIdByCredential(credentialType, cardValue);
+    const now = new Date().toISOString();
+
+    if (!userId) {
+      userId = `auto-card-${cardValue}`;
+      this.upsertUser(
+        {
+          id: userId,
+          displayName: `Auto user ${cardValue}`,
+          credentials: [
+            {
+              type: credentialType,
+              value: cardValue,
+              controllers: [observation.controllerSerial],
+              meta: {
+                source: "event",
+              },
+            },
+          ],
+        },
+        "event",
+      );
+    }
+
+    const user = this.userDb.users[userId];
+    if (!user) {
+      return;
+    }
+
+    const credentialId = `${credentialType}:${cardValue}`;
+    const credential = (user.credentials || []).find(
+      (item) => item.id === credentialId,
+    );
+
+    if (credential) {
+      credential.controllers = [
+        ...new Set([...(credential.controllers || []), observation.controllerSerial]),
+      ];
+      credential.meta = {
+        ...(credential.meta || {}),
+        lastSeen: now,
+        lastDoorId: observation.doorId,
+        lastGranted: observation.granted,
+        lastReasonCode: observation.reasonCode,
+        lastReasonText: observation.reasonText,
+        lastRequestCode: observation.requestCode,
+        lastDirectionCode: observation.directionCode,
+      };
+    }
+
+    user.controllers = [
+      ...new Set([...(user.controllers || []), observation.controllerSerial]),
+    ];
+    user.meta = {
+      ...(user.meta || {}),
+      lastSeen: now,
+      source: "event",
+    };
+
+    await this.persistUserDb("event");
+  }
+
+  countCredentials() {
+    return Object.values(this.userDb.users).reduce((sum, user) => {
+      return sum + (Array.isArray(user.credentials) ? user.credentials.length : 0);
+    }, 0);
+  }
+
+  async persistUserDb(source) {
+    this.userDb.updatedAt = new Date().toISOString();
+    this.userDb.lastSource = source || "unknown";
+
+    await this.setStateAsync("cards.db", {
+      ack: true,
+      val: JSON.stringify(this.userDb),
+    });
+    await this.setStateAsync("cards.userCount", {
+      ack: true,
+      val: Object.keys(this.userDb.users).length,
+    });
+    await this.setStateAsync("cards.credentialCount", {
+      ack: true,
+      val: this.countCredentials(),
+    });
+    await this.setStateAsync("cards.lastUpdate", {
+      ack: true,
+      val: this.userDb.updatedAt,
+    });
   }
 
   /** @param {string} msg */
