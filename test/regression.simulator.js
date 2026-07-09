@@ -21,8 +21,10 @@ const SIMULATOR_BIND_PORT = 60000;
 const SIMULATOR_REST_PORT = 18000;
 const SIMULATOR_REST = `http://127.0.0.1:${SIMULATOR_REST_PORT}`;
 const CONTROLLER_ID = 405419896;
+const CONTROLLER_ID_2 = 405419897;
 const AUTH_CARD = 10058400;
 const DENIED_CARD = 10059999;
+const MERGE_CARD = 10051111;
 
 /** @type {import("node:child_process").ChildProcessWithoutNullStreams | undefined} */
 let simulatorProcess;
@@ -81,17 +83,19 @@ async function startSimulator() {
 
   await waitForSimulatorReady();
 
-  try {
-    await axios.delete(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}`);
-  } catch {
-    // Ignore if controller does not exist yet.
-  }
+  for (const controllerId of [CONTROLLER_ID, CONTROLLER_ID_2]) {
+    try {
+      await axios.delete(`${SIMULATOR_REST}/uhppote/simulator/${controllerId}`);
+    } catch {
+      // Ignore if controller does not exist yet.
+    }
 
-  await axios.post(`${SIMULATOR_REST}/uhppote/simulator`, {
-    "device-id": CONTROLLER_ID,
-    "device-type": "UT0311-L04",
-    compressed: false,
-  });
+    await axios.post(`${SIMULATOR_REST}/uhppote/simulator`, {
+      "device-id": controllerId,
+      "device-type": "UT0311-L04",
+      compressed: false,
+    });
+  }
 }
 
 async function stopSimulator() {
@@ -171,6 +175,19 @@ tests.integration(path.join(__dirname, ".."), {
                 heartbeatCount: 0,
                 eventNr: 0,
               },
+              {
+                serial: CONTROLLER_ID_2,
+                deviceIp: "127.0.0.1",
+                exposedIP: "127.0.0.1",
+                exposedPort: 60099,
+                modelType: 4,
+                broadcast: false,
+                index: 2,
+                errorCount: 0,
+                run: false,
+                heartbeatCount: 0,
+                eventNr: 0,
+              },
             ],
           },
         });
@@ -180,6 +197,13 @@ tests.integration(path.join(__dirname, ".."), {
         await waitForState(
           harness,
           `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.reachable`,
+          (state) => state.val === true,
+          30000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID_2}.reachable`,
           (state) => state.val === true,
           30000,
         );
@@ -472,6 +496,56 @@ tests.integration(path.join(__dirname, ".."), {
 
         if (!deleteResponse || deleteResponse.error || deleteResponse.deleted !== true) {
           throw new Error(`userDelete failed: ${JSON.stringify(deleteResponse)}`);
+        }
+      });
+
+      it("merges card observations across multiple controllers", async function () {
+        this.timeout(40000);
+
+        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1,
+          "card-number": MERGE_CARD,
+          direction: 1,
+          PIN: 0,
+        });
+
+        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID_2}/swipe`, {
+          door: 1,
+          "card-number": MERGE_CARD,
+          direction: 1,
+          PIN: 0,
+        });
+
+        await wait(2000);
+
+        const listResponse = await sendToAsync(harness, "userList", {});
+        if (!listResponse || listResponse.error || !Array.isArray(listResponse.users)) {
+          throw new Error(`userList failed: ${JSON.stringify(listResponse)}`);
+        }
+
+        const mergedUser = listResponse.users.find((user) =>
+          Array.isArray(user.credentials)
+          && user.credentials.some(
+            (credential) => credential.type === "card" && credential.value === String(MERGE_CARD),
+          ),
+        );
+
+        if (!mergedUser) {
+          throw new Error(`missing merged user for card ${MERGE_CARD}`);
+        }
+
+        const cardCredential = mergedUser.credentials.find(
+          (credential) => credential.type === "card" && credential.value === String(MERGE_CARD),
+        );
+
+        const controllers = Array.isArray(cardCredential?.controllers)
+          ? cardCredential.controllers.map(Number)
+          : [];
+
+        if (!controllers.includes(CONTROLLER_ID) || !controllers.includes(CONTROLLER_ID_2)) {
+          throw new Error(
+            `expected merged credential controllers to include both IDs, got: ${JSON.stringify(controllers)}`,
+          );
         }
       });
     });
