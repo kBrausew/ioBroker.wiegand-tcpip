@@ -21,6 +21,7 @@
     <!-- Load our own files -->
     <link rel="stylesheet" type="text/css" href="style.css" />
     <script type="text/javascript" src="words.js"></script>
+    <script type="text/javascript" src="user-tools.js"></script>
     <script type="text/javascript" src="index_m.js"></script>
 </head>
 
@@ -41,9 +42,10 @@
 
         <div class="col s12" id="tab-area">
             <ul class="tabs blue lighten-3">
-                <li class="tab col s3 m4 l4"><a href="#tab-main" class="translate active">controller_setup</a></li>
-                <li class="tab col s3 m4 l4"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
+                <li class="tab col s3 m3 l3"><a href="#tab-main" class="translate active">controller_setup</a></li>
+                <li class="tab col s3 m3 l3"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
                 <li class="tab col s3 m3 l3"><a href="#tab-tool-cards" class="translate">tools_cards</a></li>
+                <li class="tab col s3 m3 l3"><a href="#tab-user-ops">User Ops</a></li>
             </ul>
         </div>
 
@@ -200,6 +202,61 @@
                 </div>
             </div>
         </div><!-- tab-tool /-->
+
+        <div id="tab-user-ops" class="row s12 page">
+            <p class="title">User Management And Sync</p>
+            <p class="info">Import, Review, Sync, Validate, Restore und Job-Monitoring fuer den neuen User-DB-Workflow.</p>
+
+            <div class="row card-panel ops-panel">
+                <div class="col s12 m6 l4">
+                    <a class="btn waves-effect waves-light" id="ops_user_list">Refresh Users</a>
+                    <a class="btn waves-effect waves-light" id="ops_review_list">Review Queue</a>
+                    <a class="btn waves-effect waves-light" id="ops_review_approve">Approve Pending</a>
+                </div>
+                <div class="col s12 m6 l4">
+                    <label for="ops_sync_mode">Sync Mode</label>
+                    <select id="ops_sync_mode">
+                        <option value="overwrite" selected>overwrite</option>
+                        <option value="delta">delta</option>
+                    </select>
+                </div>
+                <div class="col s12 m6 l4">
+                    <label>
+                        <input id="ops_background" type="checkbox" checked="checked" />
+                        <span>Background Run</span>
+                    </label>
+                </div>
+                <div class="input-field col s12 m6 l6">
+                    <input id="ops_user_ids" type="text" placeholder="qa-user-1,sync-user-1" />
+                    <label for="ops_user_ids">User IDs (comma separated, optional)</label>
+                </div>
+                <div class="input-field col s12 m6 l6">
+                    <input id="ops_controller_ids" type="text" placeholder="405419896,405419897" />
+                    <label for="ops_controller_ids">Controller IDs (comma separated, optional)</label>
+                </div>
+
+                <div class="col s12 action-row">
+                    <a class="btn waves-effect waves-light" id="ops_import_preview">Import Preview</a>
+                    <a class="btn waves-effect waves-light" id="ops_import_apply">Import Apply</a>
+                    <a class="btn waves-effect waves-light" id="ops_sync_preview">Sync Preview</a>
+                    <a class="btn waves-effect waves-light" id="ops_sync_apply">Sync Apply</a>
+                    <a class="btn waves-effect waves-light" id="ops_validate">Validate</a>
+                    <a class="btn waves-effect waves-light" id="ops_reconcile">Reconcile Preview</a>
+                    <a class="btn waves-effect waves-light" id="ops_restore_preview">Restore Preview</a>
+                    <a class="btn waves-effect waves-light" id="ops_restore_apply">Restore Apply</a>
+                    <a class="btn waves-effect waves-light" id="ops_job_list">Jobs</a>
+                </div>
+
+                <div class="input-field col s12">
+                    <textarea id="ops_dataset" class="materialize-textarea"></textarea>
+                    <label for="ops_dataset">Import Dataset (JSON)</label>
+                </div>
+                <div class="input-field col s12">
+                    <textarea id="ops_output" class="materialize-textarea" readonly></textarea>
+                    <label for="ops_output">Output</label>
+                </div>
+            </div>
+        </div>
     </div><!-- m adapter-container /-->
 </body>
 

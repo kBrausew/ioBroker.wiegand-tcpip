@@ -9,6 +9,7 @@
 
 var controllers = [];
 var ctrls = [];
+var userToolsPanel = null;
 
 function load(settings, onChange) {
     // example: select elements with id=key and class=value and insert value
@@ -134,6 +135,12 @@ function load(settings, onChange) {
     values2table("controllers", controllers, onChange);
     cards = settings.cards || [];
     values2table("cards", cards, onChange);
+
+    if (window.WiegandUserToolsPanel && !userToolsPanel) {
+        userToolsPanel = new window.WiegandUserToolsPanel();
+        userToolsPanel.init();
+    }
+
     onChange(false);
     // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
     if (M) M.updateTextFields();

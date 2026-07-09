@@ -93,6 +93,35 @@ body {
     overflow: hidden;
 }
 
+.ops-panel {
+    border: 1px solid #cfd8dc;
+    border-radius: 10px;
+    background: linear-gradient(160deg, #f8fbfd 0%, #eef5f8 100%);
+}
+
+.ops-panel .action-row {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.ops-panel .btn {
+    margin-right: 8px;
+}
+
+#ops_dataset,
+#ops_output {
+    min-height: 160px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+}
+
+#ops_output {
+    background-color: #0f1720;
+    color: #d4f4dd;
+    border-radius: 6px;
+    padding: 10px;
+}
+
 .adapter-body {
     height: calc(100% - 70px);
     overflow: hidden;
