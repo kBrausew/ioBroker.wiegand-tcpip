@@ -645,6 +645,63 @@ class WiegandTcpip extends utils.Adapter {
             }
           }
           break;
+        case "userRestoreResync":
+          if (obj.callback) {
+            try {
+              const payload = obj.message || {};
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const apply = !!obj.message.apply;
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const background = !!obj.message.background;
+
+              if (!apply) {
+                const preview = await this.buildRestoreResyncPlan(payload);
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    preview,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
+              if (background) {
+                const job = this.startBackgroundJob("restoreResyncApply", async () => {
+                  const result = await this.applyRestoreResync(payload);
+                  return result;
+                });
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    accepted: true,
+                    jobId: job.id,
+                    job,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
+              const result = await this.applyRestoreResync(payload);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  result,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
         case "userJobList":
           if (obj.callback) {
             try {
@@ -1608,6 +1665,17 @@ class WiegandTcpip extends utils.Adapter {
       "{}",
       undefined,
     );
+    await this.createOneState(
+      "cards",
+      "lastRestoreResync",
+      "Last restore resync result",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
 
     const dbState = await this.getStateAsync("cards.db");
     if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
@@ -2543,6 +2611,49 @@ class WiegandTcpip extends utils.Adapter {
     };
 
     await this.setStateAsync("cards.lastSyncApply", {
+      ack: true,
+      val: JSON.stringify(result),
+    });
+
+    return result;
+  }
+
+  normalizeRestoreResyncPayload(payload) {
+    return {
+      ...payload,
+      mode: "overwrite",
+    };
+  }
+
+  async buildRestoreResyncPlan(payload) {
+    const normalized = this.normalizeRestoreResyncPayload(payload || {});
+    const syncPreview = this.buildSyncPlan(normalized);
+    const validation = await this.buildReconcilePreview({
+      controllerIds: normalized.controllerIds,
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      mode: "overwrite",
+      syncPreview,
+      validation,
+      canApply: syncPreview.actionable > 0,
+    };
+  }
+
+  async applyRestoreResync(payload) {
+    const normalized = this.normalizeRestoreResyncPayload(payload || {});
+    const preview = await this.buildRestoreResyncPlan(normalized);
+    const syncResult = await this.applySyncPlan(normalized);
+
+    const result = {
+      applied: true,
+      mode: "overwrite",
+      preview,
+      syncResult,
+    };
+
+    await this.setStateAsync("cards.lastRestoreResync", {
       ack: true,
       val: JSON.stringify(result),
     });

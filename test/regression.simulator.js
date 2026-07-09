@@ -922,6 +922,53 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`reconcile suggestions missing unknown-ref action: ${JSON.stringify(scopedReconcileUnknown)}`);
         }
       });
+
+      it("supports restore-resync preview and background apply", async function () {
+        this.timeout(40000);
+
+        const previewResponse = await sendToAsync(harness, "userRestoreResync", {
+          userIds: ["sync-user-1"],
+          controllerIds: [CONTROLLER_ID],
+        });
+
+        if (
+          !previewResponse
+          || previewResponse.error
+          || !previewResponse.preview
+          || !previewResponse.preview.syncPreview
+          || previewResponse.preview.mode !== "overwrite"
+        ) {
+          throw new Error(`userRestoreResync preview failed: ${JSON.stringify(previewResponse)}`);
+        }
+
+        const applyResponse = await sendToAsync(harness, "userRestoreResync", {
+          apply: true,
+          background: true,
+          userIds: ["sync-user-1"],
+          controllerIds: [CONTROLLER_ID],
+        });
+
+        if (!applyResponse || applyResponse.error || applyResponse.accepted !== true || !applyResponse.jobId) {
+          throw new Error(`userRestoreResync background apply failed to return job: ${JSON.stringify(applyResponse)}`);
+        }
+
+        const completedJob = await waitForJobStatus(
+          harness,
+          applyResponse.jobId,
+          ["completed", "failed"],
+          25000,
+          250,
+        );
+
+        if (completedJob.status !== "completed") {
+          throw new Error(`restore-resync background job failed: ${JSON.stringify(completedJob)}`);
+        }
+
+        const result = completedJob.result;
+        if (!result || result.applied !== true || !result.syncResult || result.syncResult.mode !== "overwrite") {
+          throw new Error(`restore-resync result invalid: ${JSON.stringify(completedJob)}`);
+        }
+      });
     });
   },
 });
