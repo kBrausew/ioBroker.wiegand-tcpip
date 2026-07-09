@@ -368,6 +368,46 @@ class WiegandTcpip extends utils.Adapter {
             }
           }
           break;
+        case "userImportPreview":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const dataset = obj.message.dataset || obj.message;
+              const preview = this.buildImportPreview(dataset);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  preview,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userImportApply":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const dataset = obj.message.dataset || obj.message;
+              const result = await this.applyImportDataset(dataset);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  result,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
         case "search":
           if (obj.callback) {
             uapi
@@ -1442,6 +1482,182 @@ class WiegandTcpip extends utils.Adapter {
     return Object.values(this.userDb.users).reduce((sum, user) => {
       return sum + (Array.isArray(user.credentials) ? user.credentials.length : 0);
     }, 0);
+  }
+
+  normalizeImportDataset(dataset) {
+    if (!dataset || typeof dataset !== "object") {
+      throw new Error("Import dataset is missing");
+    }
+
+    const controllers = Array.isArray(dataset.controllers) ? dataset.controllers : [];
+    const records = [];
+    for (const controller of controllers) {
+      const serial = parseInt(controller.serial, 10);
+      if (isNaN(serial)) {
+        continue;
+      }
+      const entries = Array.isArray(controller.entries) ? controller.entries : [];
+      for (const entry of entries) {
+        if (!entry || typeof entry !== "object") {
+          continue;
+        }
+        const credentials = [];
+        if (entry.card != null && entry.card !== "") {
+          credentials.push({
+            type: "card",
+            value: entry.card,
+            controllers: [serial],
+          });
+        }
+        if (entry.pin != null && entry.pin !== "") {
+          credentials.push({
+            type: "pin",
+            value: entry.pin,
+            controllers: [serial],
+          });
+        }
+        if (entry.finger != null && entry.finger !== "") {
+          credentials.push({
+            type: "finger",
+            value: entry.finger,
+            controllers: [serial],
+          });
+        }
+        if (!credentials.length) {
+          continue;
+        }
+
+        records.push({
+          controllerSerial: serial,
+          displayName: (entry.displayName || entry.name || "").toString(),
+          credentials,
+          meta: {
+            source: entry.source || dataset.source || "import",
+            importedAt: new Date().toISOString(),
+            authority: entry.authority || "",
+          },
+        });
+      }
+    }
+
+    return records;
+  }
+
+  makeImportUserId(record) {
+    const preferred = (record.displayName || "").trim().toLowerCase();
+    if (preferred) {
+      const safe = preferred.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      if (safe) {
+        return `import-${safe}`;
+      }
+    }
+    const firstCredential = record.credentials[0];
+    return `import-${firstCredential.type}-${firstCredential.value}`;
+  }
+
+  decideImportTargetUser(record) {
+    const found = new Set();
+    for (const credential of record.credentials) {
+      const userId = this.findUserIdByCredential(credential.type, credential.value);
+      if (userId) {
+        found.add(userId);
+      }
+    }
+
+    if (found.size > 1) {
+      return {
+        conflict: true,
+        userId: null,
+        candidates: [...found],
+      };
+    }
+
+    if (found.size === 1) {
+      return {
+        conflict: false,
+        userId: [...found][0],
+        candidates: [...found],
+      };
+    }
+
+    return {
+      conflict: false,
+      userId: this.makeImportUserId(record),
+      candidates: [],
+    };
+  }
+
+  buildImportPreview(dataset) {
+    const records = this.normalizeImportDataset(dataset);
+    let usersToCreate = 0;
+    let usersToUpdate = 0;
+    let credentialsToMerge = 0;
+    const conflicts = [];
+
+    for (const record of records) {
+      const decision = this.decideImportTargetUser(record);
+      if (decision.conflict) {
+        conflicts.push({
+          displayName: record.displayName,
+          controllerSerial: record.controllerSerial,
+          candidates: decision.candidates,
+        });
+        continue;
+      }
+
+      if (this.userDb.users[decision.userId]) {
+        usersToUpdate += 1;
+      } else {
+        usersToCreate += 1;
+      }
+      credentialsToMerge += record.credentials.length;
+    }
+
+    return {
+      records: records.length,
+      usersToCreate,
+      usersToUpdate,
+      credentialsToMerge,
+      conflicts,
+      canApply: conflicts.length === 0,
+    };
+  }
+
+  async applyImportDataset(dataset) {
+    const records = this.normalizeImportDataset(dataset);
+    const preview = this.buildImportPreview(dataset);
+    if (!preview.canApply) {
+      return {
+        applied: false,
+        reason: "conflicts",
+        preview,
+      };
+    }
+
+    const touchedUsers = new Set();
+    for (const record of records) {
+      const decision = this.decideImportTargetUser(record);
+      if (decision.conflict || !decision.userId) {
+        continue;
+      }
+
+      const user = {
+        id: decision.userId,
+        displayName: record.displayName || decision.userId,
+        controllers: [record.controllerSerial],
+        credentials: record.credentials,
+        meta: record.meta,
+      };
+      this.upsertUser(user, "import");
+      touchedUsers.add(decision.userId);
+    }
+
+    await this.persistUserDb("import");
+    return {
+      applied: true,
+      touchedUsers: [...touchedUsers],
+      preview,
+    };
   }
 
   async persistUserDb(source) {

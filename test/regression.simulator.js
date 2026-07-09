@@ -548,6 +548,85 @@ tests.integration(path.join(__dirname, ".."), {
           );
         }
       });
+
+      it("supports import preview and apply across multiple controllers", async function () {
+        this.timeout(30000);
+
+        const importDataset = {
+          source: "simulator-upload",
+          controllers: [
+            {
+              serial: CONTROLLER_ID,
+              entries: [
+                {
+                  displayName: "Import User",
+                  card: 20010001,
+                  pin: "2222",
+                },
+              ],
+            },
+            {
+              serial: CONTROLLER_ID_2,
+              entries: [
+                {
+                  displayName: "Import User",
+                  card: 20010001,
+                },
+              ],
+            },
+          ],
+        };
+
+        const previewResponse = await sendToAsync(harness, "userImportPreview", {
+          dataset: importDataset,
+        });
+
+        if (
+          !previewResponse
+          || previewResponse.error
+          || !previewResponse.preview
+          || previewResponse.preview.canApply !== true
+        ) {
+          throw new Error(`userImportPreview failed: ${JSON.stringify(previewResponse)}`);
+        }
+
+        const applyResponse = await sendToAsync(harness, "userImportApply", {
+          dataset: importDataset,
+        });
+
+        if (!applyResponse || applyResponse.error || !applyResponse.result || applyResponse.result.applied !== true) {
+          throw new Error(`userImportApply failed: ${JSON.stringify(applyResponse)}`);
+        }
+
+        const listResponse = await sendToAsync(harness, "userList", {});
+        if (!listResponse || listResponse.error || !Array.isArray(listResponse.users)) {
+          throw new Error(`userList failed after import: ${JSON.stringify(listResponse)}`);
+        }
+
+        const importedUser = listResponse.users.find((user) =>
+          Array.isArray(user.credentials)
+          && user.credentials.some(
+            (credential) => credential.type === "card" && credential.value === "20010001",
+          ),
+        );
+
+        if (!importedUser) {
+          throw new Error("imported card user not found");
+        }
+
+        const importedCard = importedUser.credentials.find(
+          (credential) => credential.type === "card" && credential.value === "20010001",
+        );
+        const importedControllers = Array.isArray(importedCard?.controllers)
+          ? importedCard.controllers.map(Number)
+          : [];
+
+        if (!importedControllers.includes(CONTROLLER_ID) || !importedControllers.includes(CONTROLLER_ID_2)) {
+          throw new Error(
+            `imported credential is missing multi-controller merge: ${JSON.stringify(importedControllers)}`,
+          );
+        }
+      });
     });
   },
 });
