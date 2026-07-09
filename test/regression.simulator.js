@@ -41,6 +41,22 @@ function sendToAsync(harness, command, message) {
   });
 }
 
+async function waitForJobStatus(harness, jobId, allowedStatuses, timeoutMs = 20000, pollMs = 200) {
+  const started = Date.now();
+  const accepted = new Set(allowedStatuses);
+
+  while (Date.now() - started < timeoutMs) {
+    const response = await sendToAsync(harness, "userJobGet", { jobId });
+    const status = response?.job?.status;
+    if (status && accepted.has(status)) {
+      return response.job;
+    }
+    await wait(pollMs);
+  }
+
+  throw new Error(`Timed out waiting for job ${jobId} status: ${JSON.stringify([...accepted])}`);
+}
+
 async function waitForSimulatorReady(timeoutMs = 15000) {
   const started = Date.now();
 
@@ -656,6 +672,111 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(
             `imported credential is missing multi-controller merge: ${JSON.stringify(importedControllers)}`,
           );
+        }
+      });
+
+      it("runs import apply as background job and reports completion", async function () {
+        this.timeout(40000);
+
+        const importDataset = {
+          source: "simulator-upload",
+          controllers: [
+            {
+              serial: CONTROLLER_ID,
+              entries: [
+                {
+                  displayName: "Background Import",
+                  card: 20020002,
+                  pin: "2233",
+                },
+              ],
+            },
+            {
+              serial: CONTROLLER_ID_2,
+              entries: [
+                {
+                  displayName: "Background Import",
+                  card: 20020002,
+                },
+              ],
+            },
+          ],
+        };
+
+        const previewResponse = await sendToAsync(harness, "userImportPreview", {
+          dataset: importDataset,
+        });
+
+        if (!previewResponse || previewResponse.error || !previewResponse.preview) {
+          throw new Error(`userImportPreview failed for background flow: ${JSON.stringify(previewResponse)}`);
+        }
+
+        const reviewListResponse = await sendToAsync(harness, "userImportReviewList", {});
+        if (
+          !reviewListResponse
+          || reviewListResponse.error
+          || !Array.isArray(reviewListResponse.reviews)
+          || reviewListResponse.reviews.length < 1
+        ) {
+          throw new Error(`userImportReviewList failed for background flow: ${JSON.stringify(reviewListResponse)}`);
+        }
+
+        const backgroundReviews = reviewListResponse.reviews.filter((review) =>
+          Array.isArray(review?.record?.credentials)
+          && review.record.credentials.some((credential) => String(credential.value) === "20020002"),
+        );
+
+        if (backgroundReviews.length < 1) {
+          throw new Error(`missing review items for background import card: ${JSON.stringify(reviewListResponse)}`);
+        }
+
+        for (const review of backgroundReviews) {
+          const action = review.decisionType === "merge" ? "merge" : "create";
+          const approveResponse = await sendToAsync(harness, "userImportReviewApprove", {
+            reviewId: review.id,
+            action,
+            userId: review.suggestedUserId,
+          });
+          if (!approveResponse || approveResponse.error || !approveResponse.review) {
+            throw new Error(`userImportReviewApprove failed for background flow: ${JSON.stringify(approveResponse)}`);
+          }
+        }
+
+        const applyResponse = await sendToAsync(harness, "userImportApply", {
+          dataset: importDataset,
+          background: true,
+        });
+
+        if (!applyResponse || applyResponse.error || applyResponse.accepted !== true || !applyResponse.jobId) {
+          throw new Error(`background userImportApply did not return job acceptance: ${JSON.stringify(applyResponse)}`);
+        }
+
+        const completedJob = await waitForJobStatus(
+          harness,
+          applyResponse.jobId,
+          ["completed", "failed"],
+          25000,
+          250,
+        );
+
+        if (completedJob.status !== "completed") {
+          throw new Error(`background import job failed: ${JSON.stringify(completedJob)}`);
+        }
+
+        const listResponse = await sendToAsync(harness, "userList", {});
+        if (!listResponse || listResponse.error || !Array.isArray(listResponse.users)) {
+          throw new Error(`userList failed after background import: ${JSON.stringify(listResponse)}`);
+        }
+
+        const importedUser = listResponse.users.find((user) =>
+          Array.isArray(user.credentials)
+          && user.credentials.some(
+            (credential) => credential.type === "card" && credential.value === "20020002",
+          ),
+        );
+
+        if (!importedUser) {
+          throw new Error("background imported card user not found");
         }
       });
     });

@@ -38,6 +38,8 @@ class WiegandTcpip extends utils.Adapter {
     this.serials = {}; // serials
     this.devs = []; // uAPI devices (config)
     this.userDb = this.createEmptyUserDb();
+    this.jobs = {};
+    this.jobSequence = 0;
   }
 
   /**
@@ -464,6 +466,27 @@ class WiegandTcpip extends utils.Adapter {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const dataset = obj.message.dataset || obj.message;
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const background = !!obj.message.background;
+              if (background) {
+                const job = this.startBackgroundJob("importApply", async () => {
+                  const result = await this.applyImportDataset(dataset);
+                  return result;
+                });
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    accepted: true,
+                    jobId: job.id,
+                    job,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
               const result = await this.applyImportDataset(dataset);
               this.sendTo(
                 obj.from,
@@ -471,6 +494,82 @@ class WiegandTcpip extends utils.Adapter {
                 {
                   error: false,
                   result,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userValidate":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const background = !!obj.message.background;
+              if (background) {
+                const job = this.startBackgroundJob("validateUserDb", async () => {
+                  const report = this.validateUserDb();
+                  return report;
+                });
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    error: false,
+                    accepted: true,
+                    jobId: job.id,
+                    job,
+                  },
+                  obj.callback,
+                );
+                break;
+              }
+
+              const report = this.validateUserDb();
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  report,
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userJobList":
+          if (obj.callback) {
+            try {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  jobs: this.getJobs(),
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+            }
+          }
+          break;
+        case "userJobGet":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const jobId = (obj.message.jobId || obj.message.id || "").toString();
+              const job = this.jobs[jobId] || null;
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  job,
                 },
                 obj.callback,
               );
@@ -1350,6 +1449,28 @@ class WiegandTcpip extends utils.Adapter {
       0,
       undefined,
     );
+    await this.createOneState(
+      "cards",
+      "jobs",
+      "Background jobs",
+      "string",
+      "json",
+      true,
+      false,
+      "[]",
+      undefined,
+    );
+    await this.createOneState(
+      "cards",
+      "lastJob",
+      "Last background job",
+      "string",
+      "json",
+      true,
+      false,
+      "{}",
+      undefined,
+    );
 
     const dbState = await this.getStateAsync("cards.db");
     if (dbState && typeof dbState.val === "string" && dbState.val.trim()) {
@@ -1369,6 +1490,7 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     await this.persistUserDb("init");
+    await this.persistJobsState();
   }
 
   normalizeCredential(rawCredential) {
@@ -1929,6 +2051,138 @@ class WiegandTcpip extends utils.Adapter {
       appliedReviewIds,
       failedReviewIds,
     };
+  }
+
+  getJobs() {
+    return Object.values(this.jobs).sort((left, right) => {
+      return right.createdAt.localeCompare(left.createdAt);
+    });
+  }
+
+  startBackgroundJob(type, runner) {
+    const id = `job-${Date.now()}-${++this.jobSequence}`;
+    const job = {
+      id,
+      type,
+      status: "queued",
+      createdAt: new Date().toISOString(),
+      startedAt: "",
+      finishedAt: "",
+      result: null,
+      error: "",
+    };
+
+    this.jobs[id] = job;
+    this.persistJobsState().catch((err) => {
+      this.log.warn(`Could not persist jobs state: ${err.message}`);
+    });
+
+    Promise.resolve().then(async () => {
+      job.status = "running";
+      job.startedAt = new Date().toISOString();
+      await this.persistJobsState();
+
+      try {
+        const result = await runner();
+        job.status = "completed";
+        job.result = result;
+        job.finishedAt = new Date().toISOString();
+        this.log.info(`Background job completed: ${id} (${type})`);
+      } catch (err) {
+        job.status = "failed";
+        job.error = err.message;
+        job.finishedAt = new Date().toISOString();
+        this.log.error(`Background job failed: ${id} (${type}) ${err.message}`);
+      }
+
+      await this.persistJobsState();
+    });
+
+    return job;
+  }
+
+  validateUserDb() {
+    const configuredControllers = new Set(
+      this.ctrls.map((controller) => parseInt(controller.serial, 10)).filter((item) => !isNaN(item)),
+    );
+
+    const unknownControllerReferences = [];
+    const usersWithoutCredentials = [];
+    const credentialsWithoutControllers = [];
+    const duplicateCredentialKeys = {};
+    const credentialOwner = {};
+
+    for (const [userId, user] of Object.entries(this.userDb.users)) {
+      const credentials = Array.isArray(user.credentials) ? user.credentials : [];
+      if (!credentials.length) {
+        usersWithoutCredentials.push(userId);
+      }
+
+      for (const credential of credentials) {
+        const key = `${credential.type}:${credential.value}`;
+        if (credentialOwner[key] && credentialOwner[key] !== userId) {
+          if (!duplicateCredentialKeys[key]) {
+            duplicateCredentialKeys[key] = [credentialOwner[key]];
+          }
+          if (!duplicateCredentialKeys[key].includes(userId)) {
+            duplicateCredentialKeys[key].push(userId);
+          }
+        } else {
+          credentialOwner[key] = userId;
+        }
+
+        const controllers = Array.isArray(credential.controllers) ? credential.controllers : [];
+        if (!controllers.length) {
+          credentialsWithoutControllers.push({
+            userId,
+            credentialId: credential.id,
+            key,
+          });
+        }
+
+        for (const controllerIdRaw of controllers) {
+          const controllerId = parseInt(controllerIdRaw, 10);
+          if (isNaN(controllerId) || !configuredControllers.has(controllerId)) {
+            unknownControllerReferences.push({
+              userId,
+              credentialId: credential.id,
+              controllerId: controllerIdRaw,
+            });
+          }
+        }
+      }
+    }
+
+    const duplicateCredentials = Object.entries(duplicateCredentialKeys).map(([key, owners]) => ({
+      key,
+      userIds: owners,
+    }));
+
+    return {
+      generatedAt: new Date().toISOString(),
+      userCount: Object.keys(this.userDb.users).length,
+      duplicateCredentials,
+      usersWithoutCredentials,
+      credentialsWithoutControllers,
+      unknownControllerReferences,
+      ok:
+        duplicateCredentials.length === 0
+        && usersWithoutCredentials.length === 0
+        && credentialsWithoutControllers.length === 0
+        && unknownControllerReferences.length === 0,
+    };
+  }
+
+  async persistJobsState() {
+    const jobs = this.getJobs();
+    await this.setStateAsync("cards.jobs", {
+      ack: true,
+      val: JSON.stringify(jobs),
+    });
+    await this.setStateAsync("cards.lastJob", {
+      ack: true,
+      val: jobs.length > 0 ? JSON.stringify(jobs[0]) : "{}",
+    });
   }
 
   async persistUserDb(source) {
