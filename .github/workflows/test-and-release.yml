@@ -87,7 +87,6 @@ jobs:
         run: npm ci
 
       - name: Type check
-        continue-on-error: true
         run: npm run check
 
       - name: Lint

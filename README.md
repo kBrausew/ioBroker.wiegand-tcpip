@@ -57,6 +57,46 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 * `node:` prefix added to all built-in module imports
 * Added UHPPOTE simulator based regression tests and release preflight scripts
 
+### 0.4.7 (2024-11-05)
+* Fix for ioBroker.BOT see issues
+* Changes to new dependencies Node 22.x, Admin 5 and JS-Controler 5.0.19...
+
+### 0.4.6 (2022-03-18)
+* Documentation
+* Translations
+* Cosmetic improvements
+* Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720).
+
+### 0.4.5 (2022-03-11)
+* Bugfix: error in workflow
+
+### 0.4.4 (2022-03-11)
+* Structur Native uAPI-Framework
+* user action for setTime
+* setup docs
+
+### 0.4.3
+* setTime if device is running out
+* add per Controller the Model (1-, 2- and 4-Doors)
+* add info direction
+
+### 0.4.2 (Beta)
+* Remote network setup
+* Broadcast device communication
+* Remote device communication
+* Bug ::Found uncleared intervals:: change clearInterval to adapter.clearInterval
+* special remoteDoorOpen (in other contex change net-access-mode unmotivated to broadcast)
+* device lowlevel debug enabled (from UHPPOTE framework connect to ioBroker log)
+* add various "silly" log messages
+
+### 0.4.1-beta
+* Small blemishes fixed and translation completed
+
+### 0.4.0-alpha
+* First working package
+
+Initial release
+
 ## Release preflight (step by step)
 Use the full checklist in [docs/release-checklist.md](docs/release-checklist.md).
 Short version:
@@ -68,22 +108,8 @@ Short version:
 6. Unit tests: `npm run test:unit`
 7. Integration tests: `npm run test:integration`
 8. Regression tests: `npm run test:regression`
-9. Verify metadata files (`README.md`, `CHANGELOG.md`, `io-package.json`, `package.json`)
+9. Verify metadata files (`README.md`, `io-package.json`, `package.json`)
 10. Only release when all checks are green
-
-### 0.4.7 (2024-11-05)
-* Fix for ioBroker.BOT see issues
-* Changes to new dependencies Node 22.x, Admin 5 and JS-Controler 5.0.19...
-
-### 0.4.6 (2022-03-18)
-* Documentation
-* Translations
-* Cosmetic improvements
-* Fix for [Repository PR1720](https://github.com/ioBroker/ioBroker.repositories/pull/1720).
-
-#### [History](CHANGELOG.md)
-
-[Older changelogs can be found there](CHANGELOG_OLD.md)
 
 ## License
 GPL-3.0-only

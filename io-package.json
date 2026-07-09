@@ -5,7 +5,16 @@
     "news": {
       "1.0.0": {
         "en": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot setup",
-        "de": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot eingerichtet"
+        "de": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot eingerichtet",
+        "ru": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot eingerichtet",
+        "pt": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot configurado",
+        "nl": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot ingesteld",
+        "fr": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot configuré",
+        "it": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot configurato",
+        "es": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot configurado",
+        "pl": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot skonfigurowany",
+        "uk": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot налаштовано",
+        "zh-cn": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing，已配置 Dependabot"
       },
       "0.4.7": {
         "en": "Documentation, translations and cosmetic improvements #PR1720",
@@ -17,7 +26,7 @@
         "it": "Documentazione, traduzioni e miglioramenti estetici #PR1720",
         "es": "Documentación, traducciones y mejoras cosméticas #PR1720",
         "pl": "Dokumentacja, tłumaczenia i ulepszenia kosmetyczne #PR1720",
-        "uk": "Documentation, translations and cosmetic improvements #PR1720",
+        "uk": "Документація, переклади та косметичні покращення #PR1720",
         "zh-cn": "文档、翻译和外观改进 #PR1720"
       },
       "0.4.6": {
@@ -30,20 +39,20 @@
         "it": "Documentazione, traduzioni e miglioramenti estetici #PR1720",
         "es": "Documentación, traducciones y mejoras cosméticas #PR1720",
         "pl": "Dokumentacja, tłumaczenia i ulepszenia kosmetyczne #PR1720",
-        "uk": "Documentation, translations and cosmetic improvements #PR1720",
+        "uk": "Документація, переклади та косметичні покращення #PR1720",
         "zh-cn": "文档、翻译和外观改进 #PR1720"
       },
       "0.4.5": {
         "en": "Structur Native uAPI-Framework, user action for setTime, setup docs",
         "de": "Struktur Natives uAPI-Framework, user action for setTime, setup docs",
-        "ru": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "ru": "Структура нативного uAPI-фреймворка, действие пользователя для setTime, документация по настройке",
         "pt": "Estrutura nativa uAPI-Framework, user action for setTime, setup docs",
         "nl": "Structuur Native uAPI-framework, user action for setTime, setup docs",
-        "fr": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "fr": "Structure du framework uAPI natif, action utilisateur pour setTime, documentation de configuration",
         "it": "Struttura uAPI-Framework nativo, user action for setTime, setup docs",
         "es": "Estructura nativa uAPI-Framework, user action for setTime, setup docs",
-        "pl": "Structur Native uAPI-Framework, user action for setTime, setup docs",
-        "uk": "Structur Native uAPI-Framework, user action for setTime, setup docs",
+        "pl": "Struktura natywnego frameworka uAPI, akcja użytkownika dla setTime, dokumentacja konfiguracji",
+        "uk": "Структура нативного uAPI-фреймворку, дія користувача для setTime, документація з налаштування",
         "zh-cn": "Structur Native uAPI-Framework, user action for setTime, setup docs"
       }
     },
@@ -109,6 +118,11 @@
     "dependencies": [
       {
         "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.20"
       }
     ],
     "messagebox": true,
