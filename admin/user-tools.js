@@ -298,6 +298,9 @@
       if (M && M.updateTextFields) {
         M.updateTextFields();
       }
+      if (M && M.FormSelect && this.syncMode && this.syncMode.length > 0) {
+        M.FormSelect.init(this.syncMode[0]);
+      }
     }
 
     updateScopeLockForSyncMode() {
