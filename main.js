@@ -2566,35 +2566,179 @@ class WiegandTcpip extends utils.Adapter {
     };
   }
 
+  /**
+   * Fetch all card numbers currently stored on a controller.
+   * Returns an empty array when the controller is unreachable.
+   *
+   * @param {object} ctx
+   * @param {number} controllerId
+   * @returns {Promise<number[]>}
+   */
+  async getControllerCards(ctx, controllerId) {
+    try {
+      const response = await uapi.getCards(ctx, controllerId);
+      const count = Number(response?.cards ?? 0);
+      if (!count) {
+        return [];
+      }
+
+      const cards = [];
+      for (let index = 1; index <= count; index++) {
+        try {
+          const card = await uapi.getCardByIndex(ctx, controllerId, index);
+          const cardNr = Number(card?.card?.number ?? 0);
+          if (cardNr > 0) {
+            cards.push(cardNr);
+          }
+        } catch {
+          // Skip unreadable card slot.
+        }
+      }
+
+      return cards;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Write a single user credential to a controller via putCard.
+   *
+   * @param {object} ctx
+   * @param {number} controllerId
+   * @param {number} cardNr
+   * @param {string|number} pin
+   * @param {number} modelType  Number of doors on this controller.
+   */
+  async putCardToController(ctx, controllerId, cardNr, pin, modelType) {
+    const doors = {};
+    for (let door = 1; door <= Math.min(modelType || 4, 4); door++) {
+      doors[door] = true;
+    }
+
+    const validFrom = "2000-01-01";
+    const validTo = "2099-12-31";
+    const pinValue = pin != null && String(pin).length > 0 ? parseInt(String(pin), 10) || 0 : 0;
+
+    await uapi.putCard(ctx, controllerId, cardNr, validFrom, validTo, doors, pinValue);
+  }
+
   async applySyncPlan(payload) {
     const plan = this.buildSyncPlan(payload);
     const updatedUsers = new Set();
     let appliedActions = 0;
+    let deletedCards = 0;
 
+    const ctx = this.createCTX("syncApply", this.createCFG(), this.devs, this.log.debug);
+
+    // Group actions by controller for efficient overwrite processing.
+    const actionsByController = new Map();
     for (const action of plan.actions) {
-      if (action.action === "skip") {
-        continue;
+      if (!actionsByController.has(action.controllerId)) {
+        actionsByController.set(action.controllerId, []);
+      }
+      actionsByController.get(action.controllerId).push(action);
+    }
+
+    for (const [controllerId, actions] of actionsByController) {
+      const dev = this.ctrls.find((c) => parseInt(c.serial, 10) === controllerId);
+      const modelType = dev ? (parseInt(dev.modelType, 10) || 4) : 4;
+
+      // For overwrite: read existing cards from controller and remove orphans.
+      if (plan.mode === "overwrite") {
+        const existingCards = await this.getControllerCards(ctx, controllerId);
+
+        // Build the set of card numbers that should be on this controller after sync.
+        const targetCardNumbers = new Set();
+        for (const action of actions) {
+          if (action.action === "skip") {
+            continue;
+          }
+          const user = this.userDb.users[action.userId];
+          if (!user) {
+            continue;
+          }
+          const credentials = (user.credentials || []).filter((cred) => {
+            if (cred.type !== "card") {
+              return false;
+            }
+            const assigned = Array.isArray(cred.controllers) ? cred.controllers : [];
+            return assigned.map(Number).includes(controllerId);
+          });
+          for (const cred of credentials) {
+            const cardNr = parseInt(String(cred.value), 10);
+            if (!isNaN(cardNr) && cardNr > 0) {
+              targetCardNumbers.add(cardNr);
+            }
+          }
+        }
+
+        // Delete cards on controller that are no longer in User-DB.
+        for (const existingCard of existingCards) {
+          if (!targetCardNumbers.has(existingCard)) {
+            try {
+              await uapi.deleteCard(ctx, controllerId, existingCard);
+              deletedCards += 1;
+              this.log.debug(`syncApply: deleted orphan card ${existingCard} from controller ${controllerId}`);
+            } catch (err) {
+              this.log.warn(`syncApply: failed to delete card ${existingCard} from controller ${controllerId}: ${err.message}`);
+            }
+          }
+        }
       }
 
-      const user = this.userDb.users[action.userId];
-      if (!user) {
-        continue;
-      }
+      // Write all non-skipped actions to the controller.
+      for (const action of actions) {
+        if (action.action === "skip") {
+          continue;
+        }
 
-      user.meta = {
-        ...(user.meta || {}),
-      };
-      user.meta.syncMeta = {
-        ...(user.meta.syncMeta || {}),
-        [action.controllerId]: {
-          mode: plan.mode,
-          credentialHash: action.credentialHash,
-          credentialCount: action.credentialCount,
-          lastSyncAt: new Date().toISOString(),
-        },
-      };
-      updatedUsers.add(action.userId);
-      appliedActions += 1;
+        const user = this.userDb.users[action.userId];
+        if (!user) {
+          continue;
+        }
+
+        const credentials = (user.credentials || []).filter((cred) => {
+          const assigned = Array.isArray(cred.controllers) ? cred.controllers : [];
+          return assigned.map(Number).includes(controllerId);
+        });
+
+        for (const cred of credentials) {
+          if (cred.type !== "card") {
+            continue;
+          }
+
+          const cardNr = parseInt(String(cred.value), 10);
+          if (isNaN(cardNr) || cardNr <= 0) {
+            continue;
+          }
+
+          const pinCred = credentials.find((c) => c.type === "pin");
+          const pin = pinCred ? pinCred.value : 0;
+
+          try {
+            await this.putCardToController(ctx, controllerId, cardNr, pin, modelType);
+            this.log.debug(`syncApply: wrote card ${cardNr} to controller ${controllerId} (user ${action.userId})`);
+          } catch (err) {
+            this.log.warn(`syncApply: failed to write card ${cardNr} to controller ${controllerId}: ${err.message}`);
+          }
+        }
+
+        user.meta = {
+          ...(user.meta || {}),
+        };
+        user.meta.syncMeta = {
+          ...(user.meta.syncMeta || {}),
+          [action.controllerId]: {
+            mode: plan.mode,
+            credentialHash: action.credentialHash,
+            credentialCount: action.credentialCount,
+            lastSyncAt: new Date().toISOString(),
+          },
+        };
+        updatedUsers.add(action.userId);
+        appliedActions += 1;
+      }
     }
 
     await this.persistUserDb("syncApply");
@@ -2607,6 +2751,7 @@ class WiegandTcpip extends utils.Adapter {
       totalActions: plan.totalActions,
       appliedActions,
       skippedActions: plan.totalActions - appliedActions,
+      deletedCards,
       updatedUsers: [...updatedUsers],
     };
 
