@@ -19,7 +19,7 @@ const uapi = require("uhppoted");
 
 class WiegandTcpip extends utils.Adapter {
   /**
-   * @param {Partial<utils.AdapterOptions>} [options]
+   * @param {Partial<utils.AdapterOptions>} [options] - Adapter options
    */
   constructor(options) {
     super({
@@ -317,7 +317,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -338,7 +343,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -366,7 +376,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -388,7 +403,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -407,7 +427,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -433,7 +458,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
@@ -457,7 +487,12 @@ class WiegandTcpip extends utils.Adapter {
                 obj.callback,
               );
             } catch (err) {
-              this.sendTo(obj.from, obj.command, this.customErr(err.message), obj.callback);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
             }
           }
           break;
