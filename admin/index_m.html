@@ -46,6 +46,7 @@
                 <li class="tab col s3 m3 l3"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
                 <li class="tab col s3 m3 l3"><a href="#tab-tool-cards" class="translate">tools_cards</a></li>
                 <li class="tab col s3 m3 l3"><a href="#tab-user-ops">User Ops</a></li>
+                <li class="tab col s3 m3 l3"><a href="#tab-jobs">Jobs</a></li>
             </ul>
         </div>
 
@@ -369,6 +370,62 @@
                     <textarea id="ops_output" class="materialize-textarea" readonly></textarea>
                     <label for="ops_output">Output</label>
                 </div>
+            </div>
+        </div>
+
+        <!-- ########## Jobs Monitor /-->
+        <div id="tab-jobs" class="row s12 page">
+            <p class="title">Job Monitor</p>
+            <p class="info">Background job queue with status tracking, filtering and live updates.</p>
+
+            <div class="row card-panel ops-panel">
+                <div class="col s12 m6 l3">
+                    <label for="jobs_filter_status">Status Filter</label>
+                    <select id="jobs_filter_status">
+                        <option value="all" selected>All</option>
+                        <option value="queued">Queued</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="col s12 m6 l3">
+                    <label for="jobs_filter_type">Job Type</label>
+                    <select id="jobs_filter_type">
+                        <option value="all" selected>All Types</option>
+                        <option value="sync">Sync</option>
+                        <option value="import">Import</option>
+                        <option value="validate">Validate</option>
+                        <option value="reconcile">Reconcile</option>
+                        <option value="restore">Restore</option>
+                    </select>
+                </div>
+                <div class="col s12 m6 l3">
+                    <label>
+                        <input id="jobs_auto_refresh" type="checkbox" checked="checked" />
+                        <span>Auto Refresh (every 5s)</span>
+                    </label>
+                </div>
+                <div class="col s12 m6 l3">
+                    <a class="btn waves-effect waves-light" id="jobs_refresh">Refresh Now</a>
+                </div>
+            </div>
+
+            <div class="row ops-jobs-table-wrap">
+                <table class="striped highlight ops-jobs-table">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Started</th>
+                            <th>Finished</th>
+                            <th>Result/Error</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobs_table_body"></tbody>
+                </table>
             </div>
         </div>
     </div><!-- m adapter-container /-->

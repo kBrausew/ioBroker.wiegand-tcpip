@@ -282,6 +282,70 @@ body {
     padding: 10px;
 }
 
+.ops-jobs-table-wrap {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+.ops-jobs-table {
+    min-width: 850px;
+}
+
+.ops-jobs-table td,
+.ops-jobs-table th {
+    vertical-align: middle;
+    font-size: 12px;
+}
+
+.ops-status-badge-queued {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #b3e5fc;
+    color: #0277bd;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-running {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #ffe0b2;
+    color: #e65100;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-completed {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #c8e6c9;
+    color: #1b5e20;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-failed {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #ffcdd2;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-job-result {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 11px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .adapter-body {
     height: calc(100% - 70px);
     overflow: hidden;

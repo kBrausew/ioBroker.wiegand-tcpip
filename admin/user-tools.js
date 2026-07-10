@@ -973,4 +973,175 @@
   }
 
   window.WiegandUserToolsPanel = UserToolsPanel;
+
+  class JobMonitorPanel {
+    constructor() {
+      this.jobs = [];
+      this.autoRefreshTimer = null;
+      this.autoRefreshMs = 5000;
+    }
+
+    init() {
+      this.jobsTableBody = $("#jobs_table_body");
+      this.jobsFilterStatus = $("#jobs_filter_status");
+      this.jobsFilterType = $("#jobs_filter_type");
+      this.jobsAutoRefresh = $("#jobs_auto_refresh");
+      this.jobsRefreshBtn = $("#jobs_refresh");
+
+      this.bindActions();
+      this.updateAutoRefresh();
+
+      if (M && M.updateTextFields) {
+        M.updateTextFields();
+      }
+      if (this.jobsFilterStatus.formSelect) {
+        this.jobsFilterStatus.formSelect();
+      }
+      if (this.jobsFilterType.formSelect) {
+        this.jobsFilterType.formSelect();
+      }
+    }
+
+    bindActions() {
+      this.jobsFilterStatus.on("change", () => this.renderJobsTable());
+      this.jobsFilterType.on("change", () => this.renderJobsTable());
+      this.jobsAutoRefresh.on("change", () => this.updateAutoRefresh());
+      this.jobsRefreshBtn.on("click", () => this.refreshJobs());
+    }
+
+    updateAutoRefresh() {
+      if (this.autoRefreshTimer) {
+        clearInterval(this.autoRefreshTimer);
+        this.autoRefreshTimer = null;
+      }
+
+      const enabled = !!this.jobsAutoRefresh.prop("checked");
+      if (!enabled) {
+        return;
+      }
+
+      this.autoRefreshTimer = setInterval(() => {
+        this.silentRefreshJobs();
+      }, this.autoRefreshMs);
+    }
+
+    async silentRefreshJobs() {
+      if (document.hidden) {
+        return;
+      }
+
+      try {
+        const response = await this.send("userJobList", {});
+        if (response && Array.isArray(response.jobs)) {
+          this.jobs = response.jobs;
+          this.renderJobsTable();
+        }
+      } catch (_err) {
+        // Silent refresh intentionally ignores transient errors
+      }
+    }
+
+    async refreshJobs() {
+      try {
+        const response = await this.send("userJobList", {});
+        if (response && Array.isArray(response.jobs)) {
+          this.jobs = response.jobs;
+          this.renderJobsTable();
+        }
+      } catch (err) {
+        console.error("Failed to refresh jobs:", err);
+      }
+    }
+
+    send(command, message) {
+      return new Promise((resolve) => {
+        sendTo(null, command, message || {}, (response) => {
+          resolve(response);
+        });
+      });
+    }
+
+    getFilteredJobs() {
+      const statusFilter = String(this.jobsFilterStatus.val() || "all").toLowerCase();
+      const typeFilter = String(this.jobsFilterType.val() || "all").toLowerCase();
+
+      return this.jobs.filter((job) => {
+        if (!job) {
+          return false;
+        }
+
+        const status = String(job.status || "").toLowerCase();
+        const type = String(job.type || "").toLowerCase();
+
+        if (statusFilter !== "all" && status !== statusFilter) {
+          return false;
+        }
+
+        if (typeFilter !== "all" && type !== typeFilter) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    getStatusBadgeClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (s === "queued") return "ops-status-badge-queued";
+      if (s === "running") return "ops-status-badge-running";
+      if (s === "completed") return "ops-status-badge-completed";
+      if (s === "failed") return "ops-status-badge-failed";
+      return "ops-muted";
+    }
+
+    renderJobsTable() {
+      if (!this.jobsTableBody || this.jobsTableBody.length === 0) {
+        return;
+      }
+
+      const filteredJobs = this.getFilteredJobs();
+
+      this.jobsTableBody.empty();
+      if (filteredJobs.length === 0) {
+        this.jobsTableBody.append(
+          '<tr><td colspan="7" class="ops-muted">No jobs found.</td></tr>',
+        );
+        return;
+      }
+
+      for (const job of filteredJobs) {
+        const jobId = escapeHtml(String(job?.id || "-"));
+        const type = escapeHtml(String(job?.type || "-"));
+        const status = String(job?.status || "-");
+        const statusBadgeClass = this.getStatusBadgeClass(status);
+        const statusText = escapeHtml(status.charAt(0).toUpperCase() + status.slice(1));
+        const createdAt = escapeHtml(String(job?.createdAt || "-"));
+        const startedAt = escapeHtml(String(job?.startedAt || "-"));
+        const finishedAt = escapeHtml(String(job?.finishedAt || "-"));
+
+        let resultText = "-";
+        if (status === "completed" && job?.result) {
+          resultText = escapeHtml(typeof job.result === "string" ? job.result : JSON.stringify(job.result).substring(0, 80));
+        } else if (status === "failed" && job?.error) {
+          resultText = escapeHtml(String(job.error).substring(0, 80));
+        }
+
+        const rowHtml = `
+          <tr>
+            <td>${jobId}</td>
+            <td>${type}</td>
+            <td><span class="${statusBadgeClass}">${statusText}</span></td>
+            <td class="ops-job-result" title="${createdAt}">${createdAt.substring(0, 19)}</td>
+            <td class="ops-job-result" title="${startedAt}">${startedAt.substring(0, 19)}</td>
+            <td class="ops-job-result" title="${finishedAt}">${finishedAt.substring(0, 19)}</td>
+            <td class="ops-job-result" title="${resultText}">${resultText}</td>
+          </tr>
+        `;
+
+        this.jobsTableBody.append(rowHtml);
+      }
+    }
+  }
+
+  window.WiegandJobMonitorPanel = JobMonitorPanel;
 })();
