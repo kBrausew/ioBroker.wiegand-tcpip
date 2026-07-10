@@ -248,6 +248,20 @@
       this.reviewAutoRefresh.on("change", () => {
         this.configureAutoRefresh();
       });
+
+      this.reviewTableBody.on("click", ".ops-row-approve", (event) => {
+        const reviewId = String($(event.currentTarget).data("review-id") || "");
+        if (reviewId) {
+          this.runRowApprove(reviewId);
+        }
+      });
+
+      this.reviewTableBody.on("click", ".ops-row-reject", (event) => {
+        const reviewId = String($(event.currentTarget).data("review-id") || "");
+        if (reviewId) {
+          this.runRowReject(reviewId);
+        }
+      });
     }
 
     updateAutoRefreshInterval() {
@@ -507,10 +521,14 @@
           `<option value="reject"${existing.action === "reject" ? " selected" : ""}>reject</option>`,
         ].join("");
 
+        const quickButtons = isPending
+          ? `<a class="btn btn-small waves-effect waves-light ops-row-approve" data-review-id="${escapeHtml(reviewId)}" title="Approve">&#10003;</a>
+             <a class="btn btn-small waves-effect waves-light red ops-row-reject" data-review-id="${escapeHtml(reviewId)}" title="Reject">&#10007;</a>`
+          : `<span class="ops-muted">${escapeHtml(status)}</span>`;
+
         const rowHtml = `
-          <tr>
+          <tr data-review-id="${escapeHtml(reviewId)}">
             <td>${escapeHtml(reviewId || "-")}</td>
-            <td>${escapeHtml(status)}</td>
             <td>${escapeHtml(decisionType)}</td>
             <td>${escapeHtml(suggestedUserId)}</td>
             <td class="ops-review-credentials">${escapeHtml(credentialsSummary)}</td>
@@ -529,10 +547,73 @@
                 ${disabledAttr}
               />
             </td>
+            <td class="ops-row-actions">${quickButtons}</td>
           </tr>
         `;
 
         this.reviewTableBody.append(rowHtml);
+      }
+    }
+
+    async runRowApprove(reviewId) {
+      if (this.state.busy) {
+        return;
+      }
+
+      const review = this.reviewRows.find((item) => String(item?.id || "") === reviewId);
+      if (!review) {
+        return;
+      }
+
+      const decision = this.resolveDecisionForReview(review, this.reviewDecisions[reviewId] || {});
+      const payload = { reviewId, action: decision.action };
+      if (decision.userId) {
+        payload.userId = decision.userId;
+      }
+
+      this.setBusy(true);
+      this.setState({ lastCommand: "userImportReviewApprove", lastStatus: "running", lastUpdatedAt: nowIso() });
+
+      try {
+        const response = await this.send("userImportReviewApprove", payload);
+        const hasError = !!response?.error;
+        await this.fetchReviewList();
+        this.showResult(`userImportReviewApprove [${reviewId}]`, response);
+        this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
+      } catch (err) {
+        this.showResult(`userImportReviewApprove [${reviewId}] (client error)`, {
+          error: err && err.message ? err.message : String(err),
+        });
+        this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
+      } finally {
+        this.setBusy(false);
+      }
+    }
+
+    async runRowReject(reviewId) {
+      if (this.state.busy) {
+        return;
+      }
+
+      this.setBusy(true);
+      this.setState({ lastCommand: "userImportReviewReject", lastStatus: "running", lastUpdatedAt: nowIso() });
+
+      try {
+        const response = await this.send("userImportReviewReject", {
+          reviewId,
+          reason: "admin-ui-row-reject",
+        });
+        const hasError = !!response?.error;
+        await this.fetchReviewList();
+        this.showResult(`userImportReviewReject [${reviewId}]`, response);
+        this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
+      } catch (err) {
+        this.showResult(`userImportReviewReject [${reviewId}] (client error)`, {
+          error: err && err.message ? err.message : String(err),
+        });
+        this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
+      } finally {
+        this.setBusy(false);
       }
     }
 

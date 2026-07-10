@@ -247,6 +247,27 @@ body {
     font-style: italic;
 }
 
+.ops-row-actions {
+    white-space: nowrap;
+}
+
+.ops-row-approve {
+    background-color: #43a047 !important;
+    padding: 2px 8px !important;
+    margin-right: 4px !important;
+    height: auto !important;
+    line-height: 1.6 !important;
+    font-size: 13px !important;
+}
+
+.ops-row-reject {
+    padding: 2px 8px !important;
+    margin-right: 0 !important;
+    height: auto !important;
+    line-height: 1.6 !important;
+    font-size: 13px !important;
+}
+
 #ops_dataset,
 #ops_output {
     min-height: 160px;
