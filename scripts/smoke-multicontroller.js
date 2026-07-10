@@ -4,8 +4,18 @@ const { spawn, spawnSync } = require("node:child_process");
 const axios = require("axios");
 
 const ADAPTER_ROOT = path.join(__dirname, "..");
-const SIMULATOR_EXE = path.join(ADAPTER_ROOT, ".tools", "uhppote-simulator", "uhppote-simulator.exe");
-const SIMULATOR_DEVICES_DIR = path.join(ADAPTER_ROOT, ".tools", "uhppote-simulator", "devices");
+const SIMULATOR_EXE = path.join(
+  ADAPTER_ROOT,
+  ".tools",
+  "uhppote-simulator",
+  "uhppote-simulator.exe",
+);
+const SIMULATOR_DEVICES_DIR = path.join(
+  ADAPTER_ROOT,
+  ".tools",
+  "uhppote-simulator",
+  "devices",
+);
 const SIMULATOR_BIND_PORT = 60000;
 const SIMULATOR_REST_PORT = 18000;
 const SIMULATOR_BASE = `http://127.0.0.1:${SIMULATOR_REST_PORT}/uhppote/simulator`;
@@ -48,7 +58,9 @@ async function waitForHttp(url, timeoutMs) {
 async function seedSimulatorData() {
   for (const controllerId of CONTROLLERS) {
     try {
-      await axios.delete(`${SIMULATOR_BASE}/${controllerId}`, { timeout: 2000 });
+      await axios.delete(`${SIMULATOR_BASE}/${controllerId}`, {
+        timeout: 2000,
+      });
     } catch {
       // Ignore missing controller.
     }
@@ -101,15 +113,21 @@ function killProcessTreeWindows(pid) {
 
 async function run() {
   if (!fs.existsSync(SIMULATOR_EXE)) {
-    throw new Error(`Simulator missing at ${SIMULATOR_EXE}. Run: npm run simulator:setup`);
+    throw new Error(
+      `Simulator missing at ${SIMULATOR_EXE}. Run: npm run simulator:setup`,
+    );
   }
 
   if (!fs.existsSync(path.join(ADAPTER_ROOT, "io-package.json"))) {
-    throw new Error("Run smoke test in adapter root repository (io-package.json missing).");
+    throw new Error(
+      "Run smoke test in adapter root repository (io-package.json missing).",
+    );
   }
 
   if (!fs.existsSync(PROFILE_DIR)) {
-    throw new Error("Dev-server profile .dev-server/default missing. Run once: npx @iobroker/dev-server setup");
+    throw new Error(
+      "Dev-server profile .dev-server/default missing. Run once: npx @iobroker/dev-server setup",
+    );
   }
 
   fs.mkdirSync(SIMULATOR_DEVICES_DIR, { recursive: true });
@@ -142,7 +160,9 @@ async function run() {
 
   const body = String(adminResponse.data || "");
   if (!body.includes("ioBroker") && !body.includes("admin")) {
-    throw new Error(`Admin URL is reachable but unexpected response body from ${ADMIN_URL}`);
+    throw new Error(
+      `Admin URL is reachable but unexpected response body from ${ADMIN_URL}`,
+    );
   }
 
   console.log("Smoke test passed.");

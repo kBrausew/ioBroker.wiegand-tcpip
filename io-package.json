@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "wiegand-tcpip",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "news": {
+      "1.0.1": {
+        "en": "NPM Publishing hotfix",
+        "de": "NPM Publishing Hotfix"
+      },
       "1.0.0": {
         "en": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot setup",
         "de": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot eingerichtet",
@@ -16,8 +20,6 @@
         "uk": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot налаштовано",
         "zh-cn": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing，已配置 Dependabot"
       },
-      "0.4.7": {
-        "en": "Documentation, translations and cosmetic improvements #PR1720",
         "de": "Dokumentation, Übersetzungen und kosmetische Verbesserungen #PR1720",
         "ru": "Документация, переводы и косметические улучшения #PR1720",
         "pt": "Documentação, traduções e melhorias estéticas #PR1720",

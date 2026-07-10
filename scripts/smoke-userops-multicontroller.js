@@ -26,7 +26,9 @@ function runCommand(command, args) {
         resolve();
         return;
       }
-      reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
+      reject(
+        new Error(`${command} ${args.join(" ")} exited with code ${code}`),
+      );
     });
   });
 }
