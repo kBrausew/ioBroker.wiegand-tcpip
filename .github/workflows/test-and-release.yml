@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22.x, 24.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: ioBroker/testing-action-adapter@v1
@@ -90,6 +90,7 @@ jobs:
   # Then uncomment the following block:
 
   # Deploys the final package to NPM
+  # DISABLED: Manual npm publishing via command line
   deploy:
     permissions:
       contents: write
@@ -98,6 +99,7 @@ jobs:
 
     # Trigger this step only when a commit on any branch is tagged with a version number
     if: |
+      false &&
       contains(github.event.head_commit.message, '[skip ci]') == false &&
       github.event_name == 'push' &&
       startsWith(github.ref, 'refs/tags/v')
