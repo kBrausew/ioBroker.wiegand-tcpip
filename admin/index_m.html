@@ -207,6 +207,18 @@
             <p class="title">User Management And Sync</p>
             <p class="info">Import, Review, Sync, Validate, Restore und Job-Monitoring fuer den neuen User-DB-Workflow.</p>
 
+            <div class="row" style="margin-bottom: 16px;">
+                <div class="col s12">
+                    <label>
+                        <input id="ops_mode_toggle" type="checkbox" />
+                        <span style="font-weight: 700; color: #0f3f53;">Power User Mode</span>
+                    </label>
+                    <div style="font-size: 12px; color: #546e7a; margin-left: 24px;">
+                        <span id="ops_mode_label">Basic Mode: Review Queue, Quick Actions, Sync Overwrite (Controller-only)</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="row ops-summary-row">
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
@@ -248,7 +260,7 @@
                     <label for="ops_sync_mode">Sync Mode</label>
                     <select id="ops_sync_mode">
                         <option value="overwrite" selected>overwrite</option>
-                        <option value="delta">delta</option>
+                        <option value="delta" class="ops-power-only" style="display: none;">delta</option>
                     </select>
                 </div>
                 <div class="col s12 m6 l4">
@@ -258,8 +270,8 @@
                     </label>
                 </div>
                 <div class="input-field col s12 m6 l6">
-                    <input id="ops_user_ids" type="text" placeholder="qa-user-1,sync-user-1" />
-                    <label for="ops_user_ids">User IDs (comma separated, optional)</label>
+                    <input id="ops_user_ids" type="text" placeholder="qa-user-1,sync-user-1" class="ops-power-only" style="display: none;" />
+                    <label for="ops_user_ids" class="ops-power-only" style="display: none;">User IDs (comma separated, optional)</label>
                 </div>
                 <div class="input-field col s12 m6 l6">
                     <input id="ops_controller_ids" type="text" placeholder="405419896,405419897" />
@@ -267,15 +279,15 @@
                 </div>
 
                 <div class="col s12 action-row">
-                    <a class="btn waves-effect waves-light" id="ops_import_preview">Import Preview</a>
-                    <a class="btn waves-effect waves-light" id="ops_import_apply">Import Apply</a>
-                    <a class="btn waves-effect waves-light" id="ops_sync_preview">Sync Preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_import_preview" style="display: none;">Import Preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_import_apply" style="display: none;">Import Apply</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_sync_preview" style="display: none;">Sync Preview</a>
                     <a class="btn waves-effect waves-light" id="ops_sync_apply">Sync Apply</a>
-                    <a class="btn waves-effect waves-light" id="ops_validate">Validate</a>
-                    <a class="btn waves-effect waves-light" id="ops_reconcile">Reconcile Preview</a>
-                    <a class="btn waves-effect waves-light" id="ops_restore_preview">Restore Preview</a>
-                    <a class="btn waves-effect waves-light" id="ops_restore_apply">Restore Apply</a>
-                    <a class="btn waves-effect waves-light" id="ops_job_list">Jobs</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_validate" style="display: none;">Validate</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_reconcile" style="display: none;">Reconcile Preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_restore_preview" style="display: none;">Restore Preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_restore_apply" style="display: none;">Restore Apply</a>
+                    <a class="btn waves-effect waves-light ops-power-only" id="ops_job_list" style="display: none;">Jobs</a>
                 </div>
 
                 <div class="col s12">

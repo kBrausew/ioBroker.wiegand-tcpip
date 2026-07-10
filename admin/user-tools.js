@@ -143,6 +143,8 @@
       this.reviewDecisions = {};
       this.autoRefreshTimer = null;
       this.autoRefreshMs = 5000;
+      this.powerUserMode = false;
+      this.powerUserMode = false;
     }
 
     init() {
@@ -166,10 +168,18 @@
       this.reviewFilterText = $("#ops_review_filter_text");
       this.reviewAutoRefresh = $("#ops_review_auto_refresh");
       this.reviewRefreshSeconds = $("#ops_review_refresh_seconds");
+      this.modeToggle = $("#ops_mode_toggle");
+      this.modeLabel = $("#ops_mode_label");
+      this.modeToggle = $("#ops_mode_toggle");
+      this.modeLabel = $("#ops_mode_label");
 
       if (!this.opsDataset.val()) {
         this.opsDataset.val(pretty(this.datasetTemplate));
       }
+
+      const savedPowerMode = localStorage.getItem(\"ops-power-user-mode\");
+      this.powerUserMode = savedPowerMode === \"true\";
+      this.modeToggle.prop(\"checked\", this.powerUserMode);
 
       this.bindActions();
       this.renderState();
@@ -249,6 +259,14 @@
         this.configureAutoRefresh();
       });
 
+      this.modeToggle.on("change", () => {
+        this.powerUserMode = !!this.modeToggle.prop("checked");        localStorage.setItem(\"ops-power-user-mode\", String(this.powerUserMode));        this.updatePowerUserVisibility();
+      });
+
+      this.syncMode.on("change", () => {
+        this.updateScopeLockForSyncMode();
+      });
+
       this.reviewTableBody.on("click", ".ops-row-approve", (event) => {
         const reviewId = String($(event.currentTarget).data("review-id") || "");
         if (reviewId) {
@@ -264,7 +282,42 @@
       });
     }
 
-    updateAutoRefreshInterval() {
+    updatePowerUserVisibility() {
+      const powerElements = $(".ops-power-only");
+      if (this.powerUserMode) {
+        powerElements.show();
+        if (this.modeLabel && this.modeLabel.length > 0) {
+          this.modeLabel.text("Power Mode: All features enabled");
+        }
+      } else {
+        powerElements.hide();
+        if (this.modeLabel && this.modeLabel.length > 0) {
+          this.modeLabel.text("Basic Mode: Review Queue, Quick Actions, Sync Overwrite (Controller-only)");
+        }
+      }
+      if (M && M.updateTextFields) {
+        M.updateTextFields();
+      }
+    }
+
+    updateScopeLockForSyncMode() {
+      const mode = String(this.syncMode.val() || "overwrite").toLowerCase();
+      const userIdInput = this.userIds;
+      const userIdLabel = $("label[for='ops_user_ids']");
+
+      if (mode === "overwrite") {
+        userIdInput.prop("disabled", true).val("").css({ opacity: 0.5 });
+        userIdLabel.css({ opacity: 0.5, textDecoration: "line-through" }).attr("title", "User IDs disabled for Overwrite mode");
+      } else {
+        userIdInput.prop("disabled", false).css({ opacity: 1 });
+        userIdLabel.css({ opacity: 1, textDecoration: "none" }).removeAttr("title");
+      }
+      if (M && M.updateTextFields) {
+        M.updateTextFields();
+      }
+    }
+
+
       const seconds = parseInt(String(this.reviewRefreshSeconds.val() || "5"), 10);
       this.autoRefreshMs = isNaN(seconds) || seconds < 1 ? 5000 : seconds * 1000;
     }
@@ -379,6 +432,9 @@
       if (this.autoRefreshAtValue && this.autoRefreshAtValue.length > 0) {
         this.autoRefreshAtValue.text(String(this.state.lastAutoRefreshAt || "-"));
       }
+
+      this.updatePowerUserVisibility();
+      this.updateScopeLockForSyncMode();
     }
 
     showResult(title, data) {
