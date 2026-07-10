@@ -305,7 +305,11 @@ class WiegandTcpip extends utils.Adapter {
           if (obj.callback) {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
-              const userId = (obj.message.userId || obj.message.id || "").toString();
+              const userId = (
+                obj.message.userId ||
+                obj.message.id ||
+                ""
+              ).toString();
               const user = this.userDb.users[userId] || null;
               this.sendTo(
                 obj.from,
@@ -356,7 +360,11 @@ class WiegandTcpip extends utils.Adapter {
           if (obj.callback) {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
-              const userId = (obj.message.userId || obj.message.id || "").toString();
+              const userId = (
+                obj.message.userId ||
+                obj.message.id ||
+                ""
+              ).toString();
               if (!userId) {
                 throw new Error("Missing userId");
               }
@@ -440,7 +448,11 @@ class WiegandTcpip extends utils.Adapter {
           if (obj.callback) {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
-              const reviewId = (obj.message.reviewId || obj.message.id || "").toString();
+              const reviewId = (
+                obj.message.reviewId ||
+                obj.message.id ||
+                ""
+              ).toString();
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const action = (obj.message.action || "").toString();
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
@@ -471,7 +483,11 @@ class WiegandTcpip extends utils.Adapter {
           if (obj.callback) {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
-              const reviewId = (obj.message.reviewId || obj.message.id || "").toString();
+              const reviewId = (
+                obj.message.reviewId ||
+                obj.message.id ||
+                ""
+              ).toString();
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const reason = (obj.message.reason || "").toString();
               const review = this.rejectReviewItem(reviewId, reason);
@@ -549,10 +565,13 @@ class WiegandTcpip extends utils.Adapter {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const background = !!obj.message.background;
               if (background) {
-                const job = this.startBackgroundJob("validateUserDb", async () => {
-                  const report = await this.buildReconcilePreview(payload);
-                  return report;
-                });
+                const job = this.startBackgroundJob(
+                  "validateUserDb",
+                  async () => {
+                    const report = await this.buildReconcilePreview(payload);
+                    return report;
+                  },
+                );
                 this.sendTo(
                   obj.from,
                   obj.command,
@@ -594,10 +613,13 @@ class WiegandTcpip extends utils.Adapter {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
               const background = !!obj.message.background;
               if (background) {
-                const job = this.startBackgroundJob("reconcilePreview", async () => {
-                  const report = await this.buildReconcilePreview(payload);
-                  return report;
-                });
+                const job = this.startBackgroundJob(
+                  "reconcilePreview",
+                  async () => {
+                    const report = await this.buildReconcilePreview(payload);
+                    return report;
+                  },
+                );
                 this.sendTo(
                   obj.from,
                   obj.command,
@@ -729,10 +751,13 @@ class WiegandTcpip extends utils.Adapter {
               }
 
               if (background) {
-                const job = this.startBackgroundJob("restoreResyncApply", async () => {
-                  const result = await this.applyRestoreResync(payload);
-                  return result;
-                });
+                const job = this.startBackgroundJob(
+                  "restoreResyncApply",
+                  async () => {
+                    const result = await this.applyRestoreResync(payload);
+                    return result;
+                  },
+                );
                 this.sendTo(
                   obj.from,
                   obj.command,
@@ -793,7 +818,11 @@ class WiegandTcpip extends utils.Adapter {
           if (obj.callback) {
             try {
               // @ts-expect-error -- ioBroker adapter-core JS/TS interop
-              const jobId = (obj.message.jobId || obj.message.id || "").toString();
+              const jobId = (
+                obj.message.jobId ||
+                obj.message.id ||
+                ""
+              ).toString();
               const job = this.jobs[jobId] || null;
               this.sendTo(
                 obj.from,
@@ -1869,7 +1898,10 @@ class WiegandTcpip extends utils.Adapter {
       if (credentialMap[credential.id]) {
         const current = credentialMap[credential.id];
         current.controllers = [
-          ...new Set([...(current.controllers || []), ...(credential.controllers || [])]),
+          ...new Set([
+            ...(current.controllers || []),
+            ...(credential.controllers || []),
+          ]),
         ];
         current.label = credential.label || current.label || "";
         current.meta = {
@@ -1886,7 +1918,10 @@ class WiegandTcpip extends utils.Adapter {
       (credential) => credential.controllers || [],
     );
     existing.controllers = [
-      ...new Set([...(normalized.controllers || []), ...controllersFromCredentials]),
+      ...new Set([
+        ...(normalized.controllers || []),
+        ...controllersFromCredentials,
+      ]),
     ];
 
     this.userDb.users[normalized.id] = existing;
@@ -1920,9 +1955,9 @@ class WiegandTcpip extends utils.Adapter {
 
     for (const [userId, user] of Object.entries(this.userDb.users)) {
       const userExternalId = (
-        user?.meta?.identityMeta?.externalId
-        || user?.meta?.externalId
-        || ""
+        user?.meta?.identityMeta?.externalId ||
+        user?.meta?.externalId ||
+        ""
       ).toString();
       if (userExternalId && userExternalId === externalId) {
         return userId;
@@ -1933,7 +1968,11 @@ class WiegandTcpip extends utils.Adapter {
   }
 
   async registerCredentialObservation(observation) {
-    if (!observation || !observation.cardNumber || observation.cardNumber <= 0) {
+    if (
+      !observation ||
+      !observation.cardNumber ||
+      observation.cardNumber <= 0
+    ) {
       return;
     }
 
@@ -1975,7 +2014,10 @@ class WiegandTcpip extends utils.Adapter {
 
     if (credential) {
       credential.controllers = [
-        ...new Set([...(credential.controllers || []), observation.controllerSerial]),
+        ...new Set([
+          ...(credential.controllers || []),
+          observation.controllerSerial,
+        ]),
       ];
       credential.meta = {
         ...(credential.meta || {}),
@@ -2003,7 +2045,9 @@ class WiegandTcpip extends utils.Adapter {
 
   countCredentials() {
     return Object.values(this.userDb.users).reduce((sum, user) => {
-      return sum + (Array.isArray(user.credentials) ? user.credentials.length : 0);
+      return (
+        sum + (Array.isArray(user.credentials) ? user.credentials.length : 0)
+      );
     }, 0);
   }
 
@@ -2012,14 +2056,18 @@ class WiegandTcpip extends utils.Adapter {
       throw new Error("Import dataset is missing");
     }
 
-    const controllers = Array.isArray(dataset.controllers) ? dataset.controllers : [];
+    const controllers = Array.isArray(dataset.controllers)
+      ? dataset.controllers
+      : [];
     const records = [];
     for (const controller of controllers) {
       const serial = parseInt(controller.serial, 10);
       if (isNaN(serial)) {
         continue;
       }
-      const entries = Array.isArray(controller.entries) ? controller.entries : [];
+      const entries = Array.isArray(controller.entries)
+        ? controller.entries
+        : [];
       for (const entry of entries) {
         if (!entry || typeof entry !== "object") {
           continue;
@@ -2055,8 +2103,17 @@ class WiegandTcpip extends utils.Adapter {
           displayName: (entry.displayName || entry.name || "").toString(),
           credentials,
           identityMeta: {
-            externalId: (entry.externalId || entry.userId || entry.id || "").toString(),
-            sourceSystem: (entry.sourceSystem || dataset.source || "import").toString(),
+            externalId: (
+              entry.externalId ||
+              entry.userId ||
+              entry.id ||
+              ""
+            ).toString(),
+            sourceSystem: (
+              entry.sourceSystem ||
+              dataset.source ||
+              "import"
+            ).toString(),
           },
           meta: {
             source: entry.source || dataset.source || "import",
@@ -2073,7 +2130,9 @@ class WiegandTcpip extends utils.Adapter {
   makeImportUserId(record) {
     const preferred = (record.displayName || "").trim().toLowerCase();
     if (preferred) {
-      const safe = preferred.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const safe = preferred
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
       if (safe) {
         return `import-${safe}`;
       }
@@ -2094,7 +2153,10 @@ class WiegandTcpip extends utils.Adapter {
 
     const found = new Set();
     for (const credential of record.credentials) {
-      const userId = this.findUserIdByCredential(credential.type, credential.value);
+      const userId = this.findUserIdByCredential(
+        credential.type,
+        credential.value,
+      );
       if (userId) {
         found.add(userId);
       }
@@ -2183,7 +2245,9 @@ class WiegandTcpip extends utils.Adapter {
   }
 
   getReviewQueueSummary() {
-    const queue = Array.isArray(this.userDb.reviewQueue) ? this.userDb.reviewQueue : [];
+    const queue = Array.isArray(this.userDb.reviewQueue)
+      ? this.userDb.reviewQueue
+      : [];
     let pending = 0;
     let approved = 0;
     let rejected = 0;
@@ -2215,7 +2279,10 @@ class WiegandTcpip extends utils.Adapter {
   }
 
   findReviewItem(reviewId) {
-    return (this.userDb.reviewQueue || []).find((item) => item.id === reviewId) || null;
+    return (
+      (this.userDb.reviewQueue || []).find((item) => item.id === reviewId) ||
+      null
+    );
   }
 
   approveReviewItem(reviewId, action, userId) {
@@ -2238,14 +2305,21 @@ class WiegandTcpip extends utils.Adapter {
       if (!resolvedUserId) {
         throw new Error("Missing userId for merge action");
       }
-      if (item.candidates.length > 0 && !item.candidates.includes(resolvedUserId)) {
-        throw new Error(`userId ${resolvedUserId} is not part of review candidates`);
+      if (
+        item.candidates.length > 0 &&
+        !item.candidates.includes(resolvedUserId)
+      ) {
+        throw new Error(
+          `userId ${resolvedUserId} is not part of review candidates`,
+        );
       }
       if (!this.userDb.users[resolvedUserId]) {
         throw new Error(`Target user does not exist: ${resolvedUserId}`);
       }
     } else {
-      resolvedUserId = (item.suggestedUserId || this.makeImportUserId(item.record)).toString();
+      resolvedUserId = (
+        item.suggestedUserId || this.makeImportUserId(item.record)
+      ).toString();
     }
 
     item.status = "approved";
@@ -2273,7 +2347,10 @@ class WiegandTcpip extends utils.Adapter {
 
   async applyImportDataset(dataset) {
     let preview = null;
-    if (!Array.isArray(this.userDb.reviewQueue) || this.userDb.reviewQueue.length === 0) {
+    if (
+      !Array.isArray(this.userDb.reviewQueue) ||
+      this.userDb.reviewQueue.length === 0
+    ) {
       preview = this.buildImportPreview(dataset);
       this.userDb.reviewQueue = preview.reviewItems;
       await this.persistUserDb("importPreview");
@@ -2300,7 +2377,8 @@ class WiegandTcpip extends utils.Adapter {
       try {
         const user = {
           id: reviewItem.approvedUserId,
-          displayName: reviewItem.record.displayName || reviewItem.approvedUserId,
+          displayName:
+            reviewItem.record.displayName || reviewItem.approvedUserId,
           controllers: [reviewItem.record.controllerSerial],
           credentials: reviewItem.record.credentials,
           meta: {
@@ -2423,11 +2501,13 @@ class WiegandTcpip extends utils.Adapter {
   validateUserDb(payload) {
     const options = this.normalizeValidationPayload(payload || {});
     const configuredControllers = new Set(
-      this.ctrls.map((controller) => parseInt(controller.serial, 10)).filter((item) => !isNaN(item)),
+      this.ctrls
+        .map((controller) => parseInt(controller.serial, 10))
+        .filter((item) => !isNaN(item)),
     );
     const selectedControllers = new Set(options.selectedControllerIds);
-    const configuredSelection = options.selectedControllerIds.filter((controllerId) =>
-      configuredControllers.has(controllerId),
+    const configuredSelection = options.selectedControllerIds.filter(
+      (controllerId) => configuredControllers.has(controllerId),
     );
 
     const unknownControllerReferences = [];
@@ -2446,19 +2526,29 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     for (const [userId, user] of Object.entries(this.userDb.users)) {
-      const credentials = Array.isArray(user.credentials) ? user.credentials : [];
+      const credentials = Array.isArray(user.credentials)
+        ? user.credentials
+        : [];
       if (!credentials.length) {
         usersWithoutCredentials.push(userId);
       }
 
       for (const credential of credentials) {
         const key = `${credential.type}:${credential.value}`;
-        const controllers = Array.isArray(credential.controllers) ? credential.controllers : [];
+        const controllers = Array.isArray(credential.controllers)
+          ? credential.controllers
+          : [];
         const selectedCredentialControllers = controllers
           .map((controllerIdRaw) => parseInt(controllerIdRaw, 10))
-          .filter((controllerId) => !isNaN(controllerId) && selectedControllers.has(controllerId));
+          .filter(
+            (controllerId) =>
+              !isNaN(controllerId) && selectedControllers.has(controllerId),
+          );
 
-        if (!selectedCredentialControllers.length && options.selectedControllerIds.length > 0) {
+        if (
+          !selectedCredentialControllers.length &&
+          options.selectedControllerIds.length > 0
+        ) {
           continue;
         }
 
@@ -2517,18 +2607,23 @@ class WiegandTcpip extends utils.Adapter {
       }
     }
 
-    const duplicateCredentials = Object.entries(duplicateCredentialKeys).map(([key, owners]) => ({
-      key,
-      userIds: owners,
-    }));
+    const duplicateCredentials = Object.entries(duplicateCredentialKeys).map(
+      ([key, owners]) => ({
+        key,
+        userIds: owners,
+      }),
+    );
 
     const perControllerSummary = Object.fromEntries(
       Object.entries(perController).map(([controllerId, details]) => {
-        return [controllerId, {
-          userCount: details.users.size,
-          credentialCount: details.credentials,
-          unknownControllerReferences: details.unknownControllerReferences,
-        }];
+        return [
+          controllerId,
+          {
+            userCount: details.users.size,
+            credentialCount: details.credentials,
+            unknownControllerReferences: details.unknownControllerReferences,
+          },
+        ];
       }),
     );
 
@@ -2543,10 +2638,10 @@ class WiegandTcpip extends utils.Adapter {
       unknownControllerReferences,
       perController: perControllerSummary,
       ok:
-        duplicateCredentials.length === 0
-        && usersWithoutCredentials.length === 0
-        && credentialsWithoutControllers.length === 0
-        && unknownControllerReferences.length === 0,
+        duplicateCredentials.length === 0 &&
+        usersWithoutCredentials.length === 0 &&
+        credentialsWithoutControllers.length === 0 &&
+        unknownControllerReferences.length === 0,
     };
   }
 
@@ -2602,7 +2697,9 @@ class WiegandTcpip extends utils.Adapter {
 
       for (const controllerId of normalized.controllerIds) {
         const credentials = (user.credentials || []).filter((credential) => {
-          const assigned = Array.isArray(credential.controllers) ? credential.controllers : [];
+          const assigned = Array.isArray(credential.controllers)
+            ? credential.controllers
+            : [];
           return assigned.includes(controllerId);
         });
 
@@ -2611,8 +2708,10 @@ class WiegandTcpip extends utils.Adapter {
         }
 
         const credentialHash = this.buildCredentialHash(credentials);
-        const lastHash = user?.meta?.syncMeta?.[controllerId]?.credentialHash || "";
-        const unchanged = normalized.mode === "delta" && lastHash === credentialHash;
+        const lastHash =
+          user?.meta?.syncMeta?.[controllerId]?.credentialHash || "";
+        const unchanged =
+          normalized.mode === "delta" && lastHash === credentialHash;
 
         actions.push({
           userId,
@@ -2625,7 +2724,9 @@ class WiegandTcpip extends utils.Adapter {
       }
     }
 
-    const actionable = actions.filter((entry) => entry.action !== "skip").length;
+    const actionable = actions.filter(
+      (entry) => entry.action !== "skip",
+    ).length;
     const skipped = actions.length - actionable;
 
     return {
@@ -2693,9 +2794,20 @@ class WiegandTcpip extends utils.Adapter {
 
     const validFrom = "2000-01-01";
     const validTo = "2099-12-31";
-    const pinValue = pin != null && String(pin).length > 0 ? parseInt(String(pin), 10) || 0 : 0;
+    const pinValue =
+      pin != null && String(pin).length > 0
+        ? parseInt(String(pin), 10) || 0
+        : 0;
 
-    await uapi.putCard(ctx, controllerId, cardNr, validFrom, validTo, doors, pinValue);
+    await uapi.putCard(
+      ctx,
+      controllerId,
+      cardNr,
+      validFrom,
+      validTo,
+      doors,
+      pinValue,
+    );
   }
 
   async applySyncPlan(payload) {
@@ -2704,7 +2816,12 @@ class WiegandTcpip extends utils.Adapter {
     let appliedActions = 0;
     let deletedCards = 0;
 
-    const ctx = this.createCTX("syncApply", this.createCFG(), this.devs, this.log.debug);
+    const ctx = this.createCTX(
+      "syncApply",
+      this.createCFG(),
+      this.devs,
+      this.log.debug,
+    );
 
     // Group actions by controller for efficient overwrite processing.
     const actionsByController = new Map();
@@ -2716,8 +2833,10 @@ class WiegandTcpip extends utils.Adapter {
     }
 
     for (const [controllerId, actions] of actionsByController) {
-      const dev = this.ctrls.find((c) => parseInt(c.serial, 10) === controllerId);
-      const modelType = dev ? (parseInt(dev.modelType, 10) || 4) : 4;
+      const dev = this.ctrls.find(
+        (c) => parseInt(c.serial, 10) === controllerId,
+      );
+      const modelType = dev ? parseInt(dev.modelType, 10) || 4 : 4;
 
       // For overwrite: read existing cards from controller and remove orphans.
       if (plan.mode === "overwrite") {
@@ -2737,7 +2856,9 @@ class WiegandTcpip extends utils.Adapter {
             if (cred.type !== "card") {
               return false;
             }
-            const assigned = Array.isArray(cred.controllers) ? cred.controllers : [];
+            const assigned = Array.isArray(cred.controllers)
+              ? cred.controllers
+              : [];
             return assigned.map(Number).includes(controllerId);
           });
           for (const cred of credentials) {
@@ -2754,9 +2875,13 @@ class WiegandTcpip extends utils.Adapter {
             try {
               await uapi.deleteCard(ctx, controllerId, existingCard);
               deletedCards += 1;
-              this.log.debug(`syncApply: deleted orphan card ${existingCard} from controller ${controllerId}`);
+              this.log.debug(
+                `syncApply: deleted orphan card ${existingCard} from controller ${controllerId}`,
+              );
             } catch (err) {
-              this.log.warn(`syncApply: failed to delete card ${existingCard} from controller ${controllerId}: ${err.message}`);
+              this.log.warn(
+                `syncApply: failed to delete card ${existingCard} from controller ${controllerId}: ${err.message}`,
+              );
             }
           }
         }
@@ -2774,7 +2899,9 @@ class WiegandTcpip extends utils.Adapter {
         }
 
         const credentials = (user.credentials || []).filter((cred) => {
-          const assigned = Array.isArray(cred.controllers) ? cred.controllers : [];
+          const assigned = Array.isArray(cred.controllers)
+            ? cred.controllers
+            : [];
           return assigned.map(Number).includes(controllerId);
         });
 
@@ -2792,10 +2919,20 @@ class WiegandTcpip extends utils.Adapter {
           const pin = pinCred ? pinCred.value : 0;
 
           try {
-            await this.putCardToController(ctx, controllerId, cardNr, pin, modelType);
-            this.log.debug(`syncApply: wrote card ${cardNr} to controller ${controllerId} (user ${action.userId})`);
+            await this.putCardToController(
+              ctx,
+              controllerId,
+              cardNr,
+              pin,
+              modelType,
+            );
+            this.log.debug(
+              `syncApply: wrote card ${cardNr} to controller ${controllerId} (user ${action.userId})`,
+            );
           } catch (err) {
-            this.log.warn(`syncApply: failed to write card ${cardNr} to controller ${controllerId}: ${err.message}`);
+            this.log.warn(
+              `syncApply: failed to write card ${cardNr} to controller ${controllerId}: ${err.message}`,
+            );
           }
         }
 
