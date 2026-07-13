@@ -1,0 +1,41 @@
+name: Repo Checker (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_path:
+        description: "Relative repo path, e.g. /kBrausew/ioBroker.wiegand-tcpip"
+        required: true
+        default: "/kBrausew/ioBroker.wiegand-tcpip"
+      branch:
+        description: "Branch to check"
+        required: false
+        default: "master"
+      debug:
+        description: "Enable repochecker debug output"
+        required: false
+        default: "false"
+
+jobs:
+  repochecker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run repochecker
+        shell: bash
+        run: |
+          set -o pipefail
+          REPO_URL="https://github.com${{ github.event.inputs.repo_path }}"
+          echo "Checking ${REPO_URL} branch '${{ github.event.inputs.branch }}'"
+          EXTRA=""
+          if [[ "${{ github.event.inputs.debug }}" == "true" ]]; then
+            EXTRA="--debug"
+          fi
+          npx @iobroker/repochecker "${REPO_URL}" "${{ github.event.inputs.branch }}" ${EXTRA} | tee repochecker.log
+
+      - name: Upload repochecker log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repochecker-log
+          path: repochecker.log
