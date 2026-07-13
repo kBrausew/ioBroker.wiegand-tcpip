@@ -1,5 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const net = require("node:net");
+const dgram = require("node:dgram");
 const { spawn } = require("node:child_process");
 const axios = require("axios");
 const { tests } = require("@iobroker/testing");
@@ -17,9 +19,9 @@ const SIMULATOR_DEVICES_DIR = path.join(
   "uhppote-simulator",
   "devices",
 );
-const SIMULATOR_BIND_PORT = 60000;
-const SIMULATOR_REST_PORT = 18000;
-const SIMULATOR_REST = `http://127.0.0.1:${SIMULATOR_REST_PORT}`;
+let simulatorBindPort = Number(process.env.UHPPOTE_SIMULATOR_BIND_PORT || 60000);
+let simulatorRestPort = Number(process.env.UHPPOTE_SIMULATOR_REST_PORT || 18000);
+let adapterEventPort = Number(process.env.UHPPOTE_ADAPTER_EVENT_PORT || 60099);
 const CONTROLLER_ID = 405419896;
 const CONTROLLER_ID_2 = 405419897;
 const AUTH_CARD = 10058400;
@@ -28,9 +30,81 @@ const MERGE_CARD = 10051111;
 
 /** @type {import("node:child_process").ChildProcessWithoutNullStreams | undefined} */
 let simulatorProcess;
+/** @type {string | undefined} */
+let simulatorExitMessage;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getSimulatorRestBase() {
+  return `http://127.0.0.1:${simulatorRestPort}`;
+}
+
+function canListenOnPort(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once("error", () => {
+      resolve(false);
+    });
+
+    server.listen(port, "127.0.0.1", () => {
+      server.close(() => resolve(true));
+    });
+  });
+}
+
+function canBindUdpPort(port) {
+  return new Promise((resolve) => {
+    const socket = dgram.createSocket("udp4");
+
+    socket.once("error", () => {
+      try {
+        socket.close();
+      } catch {
+        // ignore
+      }
+      resolve(false);
+    });
+
+    socket.bind({ address: "127.0.0.1", port, exclusive: true }, () => {
+      socket.close(() => resolve(true));
+    });
+  });
+}
+
+async function reserveFreePort(preferred) {
+  if (preferred > 0 && Number.isFinite(preferred) && (await canListenOnPort(preferred))) {
+    return preferred;
+  }
+
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : 0;
+      server.close(() => resolve(port));
+    });
+  });
+}
+
+async function ensureSimulatorPorts() {
+  if (!(await canBindUdpPort(simulatorBindPort))) {
+    simulatorBindPort = await reserveFreePort(0);
+  }
+
+  if (!(await canBindUdpPort(adapterEventPort))) {
+    adapterEventPort = await reserveFreePort(0);
+  }
+
+  simulatorRestPort = await reserveFreePort(simulatorRestPort);
+
+  if (simulatorBindPort === simulatorRestPort) {
+    simulatorRestPort = await reserveFreePort(0);
+  }
 }
 
 function sendToAsync(harness, command, message) {
@@ -57,22 +131,35 @@ async function waitForJobStatus(harness, jobId, allowedStatuses, timeoutMs = 200
   throw new Error(`Timed out waiting for job ${jobId} status: ${JSON.stringify([...accepted])}`);
 }
 
-async function waitForSimulatorReady(timeoutMs = 15000) {
+async function waitForSimulatorReady(timeoutMs = Number(process.env.UHPPOTE_SIMULATOR_READY_TIMEOUT_MS || 45000)) {
   const started = Date.now();
+  const simulatorRest = getSimulatorRestBase();
 
   while (Date.now() - started < timeoutMs) {
+    if (!simulatorProcess || simulatorProcess.exitCode !== null) {
+      throw new Error(
+        `UHPPOTE simulator process exited before readiness check completed${simulatorExitMessage ? `: ${simulatorExitMessage}` : ""}.`,
+      );
+    }
+
     try {
-      await axios.get(`${SIMULATOR_REST}/uhppote/simulator`, { timeout: 1000 });
+      await axios.get(`${simulatorRest}/uhppote/simulator`, { timeout: 1000 });
       return;
     } catch {
-      await wait(250);
+      await wait(500);
     }
   }
 
-  throw new Error("UHPPOTE simulator REST endpoint did not become ready in time.");
+  throw new Error(
+    `UHPPOTE simulator REST endpoint did not become ready within ${timeoutMs}ms${simulatorExitMessage ? ` (${simulatorExitMessage})` : ""}.`,
+  );
 }
 
 async function startSimulator() {
+  simulatorExitMessage = undefined;
+  await ensureSimulatorPorts();
+  const simulatorRest = getSimulatorRestBase();
+
   if (!fs.existsSync(SIMULATOR_EXE)) {
     throw new Error(
       `UHPPOTE simulator is missing at ${SIMULATOR_EXE}. Download and extract the Windows binary into .tools/uhppote-simulator first.`,
@@ -85,9 +172,9 @@ async function startSimulator() {
     SIMULATOR_EXE,
     [
       "--bind",
-      `127.0.0.1:${SIMULATOR_BIND_PORT}`,
+      `127.0.0.1:${simulatorBindPort}`,
       "--rest",
-      `127.0.0.1:${SIMULATOR_REST_PORT}`,
+      `127.0.0.1:${simulatorRestPort}`,
       "--devices",
       SIMULATOR_DEVICES_DIR,
     ],
@@ -97,16 +184,24 @@ async function startSimulator() {
     },
   );
 
+  simulatorProcess.once("error", (err) => {
+    simulatorExitMessage = `spawn error: ${err.message}`;
+  });
+
+  simulatorProcess.once("exit", (code, signal) => {
+    simulatorExitMessage = `exit code=${code ?? "null"}, signal=${signal ?? "null"}`;
+  });
+
   await waitForSimulatorReady();
 
   for (const controllerId of [CONTROLLER_ID, CONTROLLER_ID_2]) {
     try {
-      await axios.delete(`${SIMULATOR_REST}/uhppote/simulator/${controllerId}`);
+      await axios.delete(`${simulatorRest}/uhppote/simulator/${controllerId}`);
     } catch {
       // Ignore if controller does not exist yet.
     }
 
-    await axios.post(`${SIMULATOR_REST}/uhppote/simulator`, {
+    await axios.post(`${simulatorRest}/uhppote/simulator`, {
       "device-id": controllerId,
       "device-type": "UT0311-L04",
       compressed: false,
@@ -155,7 +250,7 @@ tests.integration(path.join(__dirname, ".."), {
       let harness;
 
       before(async function () {
-        this.timeout(30000);
+        this.timeout(90000);
         harness = getHarness();
         await startSimulator();
       });
@@ -171,8 +266,8 @@ tests.integration(path.join(__dirname, ".."), {
         await harness.changeAdapterConfig("wiegand-tcpip", {
           native: {
             bind: "127.0.0.1",
-            port: SIMULATOR_BIND_PORT,
-            r_port: 60099,
+            port: simulatorBindPort,
+            r_port: adapterEventPort,
             timeout: 2500,
             heartbeat: 3000,
             settime: 60000,
@@ -182,7 +277,7 @@ tests.integration(path.join(__dirname, ".."), {
                 serial: CONTROLLER_ID,
                 deviceIp: "127.0.0.1",
                 exposedIP: "127.0.0.1",
-                exposedPort: 60099,
+                exposedPort: adapterEventPort,
                 modelType: 4,
                 broadcast: false,
                 index: 1,
@@ -195,7 +290,7 @@ tests.integration(path.join(__dirname, ".."), {
                 serial: CONTROLLER_ID_2,
                 deviceIp: "127.0.0.1",
                 exposedIP: "127.0.0.1",
-                exposedPort: 60099,
+                exposedPort: adapterEventPort,
                 modelType: 4,
                 broadcast: false,
                 index: 2,
@@ -239,7 +334,7 @@ tests.integration(path.join(__dirname, ".."), {
         );
 
         await axios.put(
-          `${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/cards/${AUTH_CARD}`,
+          `${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/cards/${AUTH_CARD}`,
           {
             "start-date": "2026-01-01",
             "end-date": "2027-12-31",
@@ -248,7 +343,7 @@ tests.integration(path.join(__dirname, ".."), {
           },
         );
 
-        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
           door: 1,
           "card-number": AUTH_CARD,
           direction: 1,
@@ -322,7 +417,7 @@ tests.integration(path.join(__dirname, ".."), {
       it("marks unauthorized swipe events as denied", async function () {
         this.timeout(30000);
 
-        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
           door: 1,
           "card-number": DENIED_CARD,
           direction: 1,
@@ -481,7 +576,7 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`userGet failed: ${JSON.stringify(getResponse)}`);
         }
 
-        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
           door: 1,
           "card-number": DENIED_CARD,
           direction: 1,
@@ -518,14 +613,14 @@ tests.integration(path.join(__dirname, ".."), {
       it("merges card observations across multiple controllers", async function () {
         this.timeout(40000);
 
-        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
           door: 1,
           "card-number": MERGE_CARD,
           direction: 1,
           PIN: 0,
         });
 
-        await axios.post(`${SIMULATOR_REST}/uhppote/simulator/${CONTROLLER_ID_2}/swipe`, {
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID_2}/swipe`, {
           door: 1,
           "card-number": MERGE_CARD,
           direction: 1,
