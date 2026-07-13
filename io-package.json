@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "wiegand-tcpip",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "news": {
+      "2.0.0": {
+        "en": "Feature release: user management foundation and event card merge",
+        "de": "Feature-Release: User-Management-Grundlagen und Event-Card-Merge"
+      },
       "1.0.0": {
         "en": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot setup",
         "de": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot eingerichtet",
@@ -26,7 +30,7 @@
         "it": "Documentazione, traduzioni e miglioramenti estetici #PR1720",
         "es": "Documentación, traducciones y mejoras cosméticas #PR1720",
         "pl": "Dokumentacja, tłumaczenia i ulepszenia kosmetyczne #PR1720",
-        "uk": "Документація, переклади та косметичні покращення #PR1720",
+        "uk": "Documentation, translations and cosmetic improvements #PR1720",
         "zh-cn": "文档、翻译和外观改进 #PR1720"
       },
       "0.4.6": {

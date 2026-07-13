@@ -93,6 +93,259 @@ body {
     overflow: hidden;
 }
 
+.ops-panel {
+    border: 1px solid #cfd8dc;
+    border-radius: 10px;
+    background: linear-gradient(160deg, #f8fbfd 0%, #eef5f8 100%);
+}
+
+.ops-summary-row {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.ops-summary-card {
+    border: 1px solid #d9e6ec;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 10px 12px;
+    min-height: 110px;
+}
+
+.ops-summary-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #607d8b;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+
+.ops-summary-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: #0d3442;
+    margin-bottom: 10px;
+}
+
+.ops-summary-meta {
+    font-size: 12px;
+    color: #3f5561;
+    word-break: break-word;
+}
+
+.ops-status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+.ops-status-idle {
+    background: #eceff1;
+    color: #455a64;
+}
+
+.ops-status-running {
+    background: #fff3e0;
+    color: #bf360c;
+}
+
+.ops-status-ok {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.ops-status-error {
+    background: #ffebee;
+    color: #b71c1c;
+}
+
+.ops-panel .action-row {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.ops-panel .btn {
+    margin-right: 8px;
+}
+
+.ops-review-panel {
+    border: 1px solid #d6e2e9;
+    border-radius: 8px;
+    background-color: #fdfefe;
+    padding: 10px;
+    margin: 8px 0 12px 0;
+}
+
+.ops-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ops-review-title {
+    font-weight: 700;
+    color: #0f3f53;
+}
+
+.ops-review-controls .btn {
+    margin-right: 6px;
+}
+
+.ops-review-meta {
+    font-size: 12px;
+    color: #546e7a;
+    margin: 6px 0 8px 0;
+}
+
+.ops-review-filter-row {
+    margin-top: 2px;
+    margin-bottom: 0;
+}
+
+.ops-review-filter-row .input-field {
+    margin-top: 0;
+}
+
+.ops-review-refresh-toggle {
+    padding-top: 22px;
+}
+
+.ops-review-table-wrap {
+    overflow-x: auto;
+}
+
+.ops-review-table {
+    min-width: 980px;
+}
+
+.ops-review-table td,
+.ops-review-table th {
+    vertical-align: top;
+    font-size: 12px;
+}
+
+.ops-review-decision,
+.ops-review-userid {
+    min-width: 130px;
+}
+
+.ops-review-credentials {
+    font-family: Consolas, "Courier New", monospace;
+    white-space: nowrap;
+}
+
+.ops-muted {
+    color: #90a4ae;
+    font-style: italic;
+}
+
+.ops-row-actions {
+    white-space: nowrap;
+}
+
+.ops-row-approve {
+    background-color: #43a047 !important;
+    padding: 2px 8px !important;
+    margin-right: 4px !important;
+    height: auto !important;
+    line-height: 1.6 !important;
+    font-size: 13px !important;
+}
+
+.ops-row-reject {
+    padding: 2px 8px !important;
+    margin-right: 0 !important;
+    height: auto !important;
+    line-height: 1.6 !important;
+    font-size: 13px !important;
+}
+
+#ops_dataset,
+#ops_output {
+    min-height: 160px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+}
+
+#ops_output {
+    background-color: #0f1720;
+    color: #d4f4dd;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.ops-jobs-table-wrap {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+.ops-jobs-table {
+    min-width: 850px;
+}
+
+.ops-jobs-table td,
+.ops-jobs-table th {
+    vertical-align: middle;
+    font-size: 12px;
+}
+
+.ops-status-badge-queued {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #b3e5fc;
+    color: #0277bd;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-running {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #ffe0b2;
+    color: #e65100;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-completed {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #c8e6c9;
+    color: #1b5e20;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-status-badge-failed {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #ffcdd2;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ops-job-result {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 11px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .adapter-body {
     height: calc(100% - 70px);
     overflow: hidden;
@@ -119,5 +372,18 @@ body {
 @media (max-width: 601px) {
     .m .dropdown-menu {
         position: fixed;
+    }
+
+    .ops-summary-card {
+        min-height: auto;
+    }
+
+    .ops-review-controls .btn {
+        width: 100%;
+    }
+
+    .ops-review-refresh-toggle {
+        padding-top: 0;
+        margin-bottom: 10px;
     }
 }
