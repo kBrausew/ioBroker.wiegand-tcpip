@@ -3,11 +3,14 @@ name: Test and Release
 # Run this workflow on version tags and manually
 on:
   push:
+    branches:
+      - "master"
     tags:
       # normal versions
       - "v[0-9]+.[0-9]+.[0-9]+"
       # pre-releases
       - "v[0-9]+.[0-9]+.[0-9]+-**"
+  pull_request: {}
   workflow_dispatch:
     inputs:
       full_os:
