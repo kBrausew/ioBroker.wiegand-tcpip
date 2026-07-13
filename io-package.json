@@ -1,11 +1,11 @@
 {
   "common": {
     "name": "wiegand-tcpip",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "news": {
-      "1.0.1": {
-        "en": "NPM Publishing hotfix",
-        "de": "NPM Publishing Hotfix"
+      "2.0.0": {
+        "en": "Feature release: user management foundation and event card merge",
+        "de": "Feature-Release: User-Management-Grundlagen und Event-Card-Merge"
       },
       "1.0.0": {
         "en": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot setup",
