@@ -1,6 +1,7 @@
 name: Test and Release
 
-# Run this workflow on version tags and manually
+# Run this job on all pushes and pull requests
+# as well as tags with a semantic version
 on:
   push:
     branches:
@@ -11,12 +12,7 @@ on:
       # pre-releases
       - "v[0-9]+.[0-9]+.[0-9]+-**"
   pull_request: {}
-  workflow_dispatch:
-    inputs:
-      full_os:
-        description: "Run all OS adapter tests (linux, windows, macos)"
-        required: false
-        default: "false"
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +21,7 @@ concurrency:
 jobs:
   # Performs quick checks before the expensive test runs
   check-and-lint:
-    if: contains(github.event.head_commit.message || '', '[skip ci]') == false
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
     runs-on: ubuntu-latest
 
@@ -40,7 +36,7 @@ jobs:
   # Runs adapter tests on all supported node versions and OSes
   adapter-tests:
     needs: [check-and-lint]
-    if: contains(github.event.head_commit.message || '', '[skip ci]') == false
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -49,11 +45,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - if: |
-          matrix.os == 'ubuntu-latest' ||
-          startsWith(github.ref, 'refs/tags/v') ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.full_os == 'true')
-        uses: ioBroker/testing-action-adapter@v1
+      - uses: ioBroker/testing-action-adapter@v1
         with:
           node-version: ${{ matrix.node-version }}
           os: ${{ matrix.os }}
@@ -63,7 +55,7 @@ jobs:
   # Runs additional project-level checks automatically
   project-checks:
     needs: [check-and-lint]
-    if: contains(github.event.head_commit.message || '', '[skip ci]') == false
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
     runs-on: ubuntu-latest
 
@@ -108,7 +100,7 @@ jobs:
     # Trigger this step only when a commit on any branch is tagged with a version number
     if: |
       false &&
-      contains(github.event.head_commit.message || '', '[skip ci]') == false &&
+      contains(github.event.head_commit.message, '[skip ci]') == false &&
       github.event_name == 'push' &&
       startsWith(github.ref, 'refs/tags/v')
 
