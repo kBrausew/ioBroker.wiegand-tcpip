@@ -180,6 +180,8 @@
         },
         syncResult: null,
         syncJobStatus: null, // 'running', 'queued', 'completed', or null
+        importPreview: null,
+        restorePreview: null,
         jobs: {
           total: 0,
           running: 0,
@@ -212,6 +214,10 @@
       this.autoRefreshAtValue = $("#ops_auto_refresh_at");
       this.syncResultValue = $("#ops_sync_result");
       this.syncResultModeValue = $("#ops_sync_result_mode");
+      this.importPreviewSummaryValue = $("#ops_import_preview_summary");
+      this.importPreviewConflictsValue = $("#ops_import_preview_conflicts");
+      this.restorePreviewSummaryValue = $("#ops_restore_preview_summary");
+      this.restorePreviewCanApplyValue = $("#ops_restore_preview_can_apply");
       this.reviewTableBody = $("#ops_review_table_body");
       this.reviewPendingTable = $("#ops_review_pending_table");
       this.reviewClearDoneBtn = $("#ops_review_clear_done");
@@ -602,6 +608,31 @@
         }
       }
 
+      if (this.importPreviewSummaryValue && this.importPreviewSummaryValue.length > 0) {
+        const ip = this.state.importPreview;
+        if (ip) {
+          this.importPreviewSummaryValue.text(
+            `${ip.records || 0} records / +${ip.usersToCreate || 0} / ~${ip.usersToUpdate || 0} / cred:${ip.credentialsToMerge || 0}`,
+          );
+          if (this.importPreviewConflictsValue && this.importPreviewConflictsValue.length > 0) {
+            this.importPreviewConflictsValue.text(String(Array.isArray(ip.conflicts) ? ip.conflicts.length : 0));
+          }
+        }
+      }
+
+      if (this.restorePreviewSummaryValue && this.restorePreviewSummaryValue.length > 0) {
+        const rp = this.state.restorePreview;
+        if (rp && rp.syncPreview) {
+          const sp = rp.syncPreview;
+          this.restorePreviewSummaryValue.text(
+            `actions:${sp.actionable || 0} / skip:${sp.skipped || 0}`,
+          );
+          if (this.restorePreviewCanApplyValue && this.restorePreviewCanApplyValue.length > 0) {
+            this.restorePreviewCanApplyValue.text(rp.canApply ? "yes" : "no");
+          }
+        }
+      }
+
       this.updatePowerUserVisibility();
       this.updateScopeLockForSyncMode();
     }
@@ -687,6 +718,20 @@
         const sr = response?.preview || response?.result || response;
         if (sr && typeof sr.appliedActions === "number") {
           this.setState({ syncResult: sr });
+        }
+      }
+
+      if (command === "userImportPreview") {
+        const p = response?.preview;
+        if (p && typeof p.records === "number") {
+          this.setState({ importPreview: p });
+        }
+      }
+
+      if (command === "userRestoreResync") {
+        const p = response?.preview;
+        if (p && p.syncPreview) {
+          this.setState({ restorePreview: p });
         }
       }
 
