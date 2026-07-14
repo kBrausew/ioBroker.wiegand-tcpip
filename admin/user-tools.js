@@ -1367,6 +1367,43 @@
       return "ops-muted";
     }
 
+    formatJobResult(job) {
+      const status = String(job?.status || "").toLowerCase();
+      const type = String(job?.type || "").toLowerCase();
+
+      if (status === "failed") {
+        return escapeHtml(String(job?.error || "failed").substring(0, 100));
+      }
+
+      if (status === "completed" && job?.result) {
+        const r = job.result;
+        if (type === "usersync" && typeof r.appliedActions === "number") {
+          return `W:${r.appliedActions} / D:${r.deletedCards || 0} / S:${r.skippedActions || 0}`;
+        }
+        if (type === "userimport" && typeof r.applied === "number") {
+          return `applied:${r.applied}${r.skipped != null ? ` / skipped:${r.skipped}` : ""}`;
+        }
+        const raw = typeof r === "string" ? r : JSON.stringify(r);
+        return escapeHtml(raw.substring(0, 100));
+      }
+
+      return "-";
+    }
+
+    formatDuration(startedAt, finishedAt) {
+      if (!startedAt || !finishedAt) return "";
+      const ms = new Date(finishedAt) - new Date(startedAt);
+      if (isNaN(ms) || ms < 0) return "";
+      const s = Math.round(ms / 1000);
+      return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m${s % 60}s`;
+    }
+
+    shortId(id) {
+      if (!id) return "-";
+      const parts = String(id).split("-");
+      return parts.length >= 2 ? parts.slice(-2).join("-") : String(id).substring(0, 12);
+    }
+
     renderJobsTable() {
       if (!this.jobsTableBody || this.jobsTableBody.length === 0) {
         return;
@@ -1383,30 +1420,28 @@
       }
 
       for (const job of filteredJobs) {
-        const jobId = escapeHtml(String(job?.id || "-"));
+        const jobId = String(job?.id || "-");
+        const shortJobId = escapeHtml(this.shortId(jobId));
         const type = escapeHtml(String(job?.type || "-"));
         const status = String(job?.status || "-");
         const statusBadgeClass = this.getStatusBadgeClass(status);
         const statusText = escapeHtml(status.charAt(0).toUpperCase() + status.slice(1));
-        const createdAt = escapeHtml(String(job?.createdAt || "-"));
-        const startedAt = escapeHtml(String(job?.startedAt || "-"));
-        const finishedAt = escapeHtml(String(job?.finishedAt || "-"));
+        const createdAt = String(job?.createdAt || "-");
+        const startedAt = String(job?.startedAt || "-");
+        const finishedAt = String(job?.finishedAt || "-");
+        const duration = this.formatDuration(startedAt, finishedAt);
+        const resultText = this.formatJobResult(job);
 
-        let resultText = "-";
-        if (status === "completed" && job?.result) {
-          resultText = escapeHtml(typeof job.result === "string" ? job.result : JSON.stringify(job.result).substring(0, 80));
-        } else if (status === "failed" && job?.error) {
-          resultText = escapeHtml(String(job.error).substring(0, 80));
-        }
+        const finishedDisplay = finishedAt === "-" ? "-" : escapeHtml(finishedAt.substring(0, 19)) + (duration ? ` <span class="ops-muted">(${escapeHtml(duration)})</span>` : "");
 
         const rowHtml = `
           <tr>
-            <td>${jobId}</td>
+            <td title="${escapeHtml(jobId)}">${shortJobId}</td>
             <td>${type}</td>
             <td><span class="${statusBadgeClass}">${statusText}</span></td>
-            <td class="ops-job-result" title="${createdAt}">${createdAt.substring(0, 19)}</td>
-            <td class="ops-job-result" title="${startedAt}">${startedAt.substring(0, 19)}</td>
-            <td class="ops-job-result" title="${finishedAt}">${finishedAt.substring(0, 19)}</td>
+            <td class="ops-job-result" title="${escapeHtml(createdAt)}">${escapeHtml(createdAt.substring(0, 19))}</td>
+            <td class="ops-job-result" title="${escapeHtml(startedAt)}">${escapeHtml(startedAt.substring(0, 19))}</td>
+            <td class="ops-job-result">${finishedDisplay}</td>
             <td class="ops-job-result" title="${resultText}">${resultText}</td>
           </tr>
         `;
