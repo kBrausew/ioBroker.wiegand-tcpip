@@ -181,5 +181,75 @@ Lange Operationen laufen als Hintergrundaufträge. Überwachung über:
 
 ## States Reference / State-Referenz
 
-> *To be documented.*  
-> *Noch zu dokumentieren.*
+The adapter organizes states into three main hierarchies: adapter info, controller devices, and card management.
+
+Der Adapter organisiert Zustände in drei Haupthierarchien: Adapter-Info, Controller-Geräte und Kartenverwaltung.
+
+### Adapter Information / Adapter-Information
+
+| State | Type | Description | Beschreibung |
+|---|---|---|---|
+| `info.connection` | boolean | Connection status to any controller | Verbindungsstatus zu mindestens einem Controller |
+
+### Controllers / Controller
+
+**Path:** `wiegand-tcpip.<instance>.controllers.<serial>.*`
+
+For each configured controller, states are created automatically. Replace `<serial>` with the device serial number.
+
+Für jeden konfigurierten Controller werden Zustände automatisch erstellt. `<serial>` ist die Geräte-Seriennummer.
+
+| State | Type | Description | Beschreibung |
+|---|---|---|---|
+| `eventNr` | number | Last event sequence number | Letzte Event-Nummer |
+| `reachable` | boolean | Device reachable (true = online) | Gerät erreichbar (true = online) |
+
+**Door Access States** (one per configured door):
+
+| State | Type | Description | Beschreibung |
+|---|---|---|---|
+| `doors.<doorNr>.unlocked` | boolean | Door unlocked (1=yes, 0=no) | Tür entsperrt (1=ja, 0=nein) |
+| `doors.<doorNr>.unauthorized` | boolean | Unauthorized access attempt | Nicht autorisierter Zutrittversuch |
+| `doors.<doorNr>.directionCode` | number | Direction: 0=In, 1=Out, 2=Reverse | Richtung: 0=Ein, 1=Aus, 2=Revers |
+| `doors.<doorNr>.directionText` | string | Human-readable direction | Lesbare Richtung |
+| `doors.<doorNr>.requestCode` | number | Request code (door button, etc.) | Anfragecode |
+| `doors.<doorNr>.requestText` | string | Human-readable request | Lesbare Anfrage |
+
+**Last Event States** (most recent access):
+
+| State | Type | Description | Beschreibung |
+|---|---|---|---|
+| `doors.<doorNr>.lastEventTime` | string | ISO8601 timestamp | ISO8601-Zeitstempel |
+| `doors.<doorNr>.lastCard` | string | Card number (hex) | Kartennummer (hex) |
+| `doors.<doorNr>.lastPin` | string | PIN (if used) | PIN (falls verwendet) |
+| `doors.<doorNr>.lastAction` | string | Grant/Deny | Gewährt/Verweigert |
+
+### Card & User Management / Kartenverwaltung & Benutzerverwaltung
+
+**Path:** `wiegand-tcpip.<instance>.cards.*`
+
+| State | Type | Description | Beschreibung |
+|---|---|---|---|
+| `cards.db` | string (JSON) | User/credential database snapshot | Benutzer-/Anmeldedatenbank-Snapshot |
+| `cards.userCount` | number | Total managed users | Gesamtzahl verwalteter Benutzer |
+| `cards.credentialCount` | number | Total managed credentials (cards + PINs) | Gesamtzahl verwalteter Anmeldedaten |
+| `cards.lastUpdate` | string | Last database modification time | Letzte Änderung der Datenbank |
+| `cards.reviewQueue` | string (JSON) | Pending import reviews | Ausstehende Importüberprüfungen |
+| `cards.reviewPending` | number | Count of items in review | Anzahl Überprüfungselemente |
+| `cards.jobs` | string (JSON) | All background jobs (active + completed) | Alle Hintergrund-Jobs |
+| `cards.lastJob` | string (JSON) | Most recent job summary | Letztes Job-Zusammenfassung |
+| `cards.lastSyncPreview` | string (JSON) | Sync preview result (no changes yet) | Sync-Vorschau (keine Änderungen) |
+| `cards.lastSyncApply` | string (JSON) | Last sync apply result (actual writes) | Letztes Sync-Ergebnis (tatsächliche Änderungen) |
+| `cards.lastValidation` | string (JSON) | Validation/reconcile report | Validierungs-/Abgleichbericht |
+
+**JSON Format Examples:**
+
+- **cards.db**: `{ users: [...], credentials: [...], syncLog: [...] }`
+- **cards.jobs**: Array of job objects with { id, type, status, result, startTime, endTime }
+- **cards.reviewQueue**: Array of { id, type, action, cardNr, pinValue, candidates, etc. }
+
+Beispiele für JSON-Formate:
+
+- **cards.db**: `{ users: [...], credentials: [...], syncLog: [...] }`
+- **cards.jobs**: Array von Job-Objekten mit { id, type, status, result, startTime, endTime }
+- **cards.reviewQueue**: Array von { id, type, action, cardNr, pinValue, candidates, ... }
