@@ -106,6 +106,44 @@
     return summary;
   }
 
+  /**
+   * Extract sync result from completed/finished userSync background job.
+   * Also tracks if any userSync job is currently running.
+   * Returns object: { result, jobStatus } or null if no job data found.
+   * jobStatus can be: 'running', 'queued', 'completed', 'failed', null
+   */
+  function extractSyncResultFromJobs(jobListResponse) {
+    const jobs = Array.isArray(jobListResponse?.jobs) ? jobListResponse.jobs : [];
+    let result = null;
+    let jobStatus = null;
+
+    // Scan for most recent userSync job
+    for (const job of jobs) {
+      const type = String(job?.type || "").toLowerCase();
+      const status = String(job?.status || "").toLowerCase();
+
+      if (type === "usersync") {
+        // Track running/queued status (highest priority)
+        if ((status === "running" || status === "queued") && !jobStatus) {
+          jobStatus = status;
+        }
+
+        // Extract result from completed/finished job
+        if (
+          !result &&
+          (status === "completed" || status === "finished") &&
+          job?.result &&
+          typeof job.result.appliedActions === "number"
+        ) {
+          result = job.result;
+          jobStatus = "completed";
+        }
+      }
+    }
+
+    return result || jobStatus ? { result, jobStatus } : null;
+  }
+
   class UserToolsPanel {
     constructor() {
       this.datasetTemplate = {
@@ -141,6 +179,7 @@
           failed: 0,
         },
         syncResult: null,
+        syncJobStatus: null, // 'running', 'queued', 'completed', or null
         jobs: {
           total: 0,
           running: 0,
@@ -536,12 +575,27 @@
 
       if (this.syncResultValue && this.syncResultValue.length > 0) {
         const sr = this.state.syncResult;
-        if (sr) {
+        const jobStatus = String(this.state.syncJobStatus || "").toLowerCase();
+
+        // Show running status if job is in progress
+        if (jobStatus === "running" || jobStatus === "queued") {
+          this.syncResultValue.text(`${jobStatus.charAt(0).toUpperCase() + jobStatus.slice(1)}...`);
+          if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
+            this.syncResultModeValue.text("(background job)");
+          }
+        } else if (sr) {
+          // Show completed result metrics
           this.syncResultValue.text(
             `W:${sr.appliedActions || 0} / D:${sr.deletedCards || 0} / S:${sr.skippedActions || 0}`,
           );
           if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
             this.syncResultModeValue.text(String(sr.mode || "-"));
+          }
+        } else {
+          // No job result yet
+          this.syncResultValue.text("-");
+          if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
+            this.syncResultModeValue.text("-");
           }
         }
       }
@@ -636,6 +690,16 @@
 
       if (command === "userJobList") {
         this.setJobsState(summarizeJobs(response));
+
+        // Check for completed/running userSync job result
+        const jobData = extractSyncResultFromJobs(response);
+        if (jobData) {
+          if (jobData.result) {
+            this.setState({ syncResult: jobData.result, syncJobStatus: "completed" });
+          } else if (jobData.jobStatus) {
+            this.setState({ syncJobStatus: jobData.jobStatus });
+          }
+        }
       }
     }
 
