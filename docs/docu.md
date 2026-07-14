@@ -17,15 +17,60 @@
 
 ## Configuration / Konfiguration
 
-> *To be documented.*  
-> *Noch zu dokumentieren.*
+All settings are found in the adapter's configuration page in ioBroker admin.
+
+Alle Einstellungen befinden sich auf der Konfigurationsseite des Adapters in der ioBroker-Admin-UI.
+
+### Network Setup / Netzwerk-Setup
+
+| Field | Description | Beschreibung |
+|---|---|---|
+| `bind` | Network interface to listen on | Netzwerkschnittstelle |
+| `port` | UDP listen port (adapter → controller) | UDP-Empfangsport |
+| `r_port` | Remote port on controller side | Remote-Port am Controller |
+| `timeout` | Request timeout in ms (min 1000) | Anfrage-Timeout in ms |
+| `heartbeat` | Heartbeat interval in ms | Heartbeat-Intervall in ms |
+| `settime` | Auto clock-sync interval in ms (min 1200) | Uhrzeit-Sync-Intervall in ms |
+| `debugLL` | Enable low-level UDP debug logging | Low-Level-Debug-Log aktivieren |
+
+### Controllers
+
+Add one entry per physical access controller. Each controller needs:
+- **Serial number** — printed on the device
+- **Network mode** — Broadcast (auto-discover) or Dedicated (fixed IP)
+- For Dedicated mode: device IP, adapter-exposed host address + port
+
+Für jeden physischen Zutrittskontroller einen Eintrag hinzufügen. Benötigt:
+- **Seriennummer** — auf dem Gerät aufgedruckt
+- **Netzwerkmodus** — Broadcast (automatisch) oder Dedicated (feste IP)
+- Bei Dedicated: Geräte-IP, exponierte Host-Adresse + Port
 
 ---
 
 ## Operation / Betrieb
 
-> *To be documented.*  
-> *Noch zu dokumentieren.*
+### Starting the adapter / Adapter starten
+
+After configuration, start the adapter via the ioBroker admin instances page. The adapter connects to all configured controllers on startup.
+
+Nach der Konfiguration den Adapter über die ioBroker-Admin-Instanzenseite starten. Beim Start verbindet sich der Adapter mit allen konfigurierten Controllern.
+
+### Card swipe events / Kartenereignisse
+
+When a card is presented to a reader, the adapter receives the event and:
+1. Updates `cards.<serial>.lastEvent` state with event details
+2. Increments `cards.<serial>.eventCount`
+3. If User Management is active: matches card to UserDB, may create a review queue entry for unknown cards
+
+### Door control / Türsteuerung
+
+Set `cards.<serial>.door<N>.remoteOpen` to `true` (ack=false) to trigger a remote door open. The adapter sends the command to the controller and resets the state.
+
+`cards.<serial>.door<N>.remoteOpen` auf `true` (ack=false) setzen, um eine Fernöffnung auszulösen.
+
+### Time synchronization / Zeitsynchronisation
+
+The adapter automatically syncs the controller clock at the interval configured in `settime`. Can also be triggered manually via the `setip` messagebox command.
 
 ---
 
@@ -108,8 +153,29 @@ Visible in the panel header (some power-only):
 
 ## Monitoring / Überwachung
 
-> *To be documented.*  
-> *Noch zu dokumentieren.*
+### Connection state / Verbindungsstatus
+
+`info.connection` — `true` if at least one controller is reachable, `false` otherwise.
+
+`info.connection` — `true` wenn mindestens ein Controller erreichbar ist.
+
+### ioBroker log
+
+- **Info**: controller connected/disconnected, sync applied, job completed
+- **Debug**: individual card events, state changes
+- **Silly** (Low Level Debug enabled): raw UDP frames
+
+### Background jobs / Hintergrundaufträge
+
+Long-running operations (sync, import apply, validate, restore-resync) run as background jobs. Monitor via:
+- **Job Monitor tab** in the User Ops panel (admin UI)
+- `cards.jobs` state — JSON array of all jobs
+- `cards.lastJob` state — most recent job object
+
+Lange Operationen laufen als Hintergrundaufträge. Überwachung über:
+- **Job-Monitor-Tab** im User-Ops-Panel
+- State `cards.jobs` — JSON-Array aller Jobs
+- State `cards.lastJob` — aktuellster Job
 
 ---
 
