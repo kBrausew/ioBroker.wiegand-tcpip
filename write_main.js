@@ -1,4 +1,6 @@
-"use strict";
+const fs = require('fs');
+
+const code = `"use strict";
 
 /**
  * ioBroker Wiegand-TCPIP Adapter
@@ -46,7 +48,7 @@ class WiegandTcpip extends utils.Adapter {
       }
       this.log.info("Adapter ready");
     } catch (err) {
-      this.log.error(`Failed to initialize: ${err.message}`);
+      this.log.error(\`Failed to initialize: \${err.message}\`);
       this.restart();
     }
   }
@@ -74,7 +76,7 @@ class WiegandTcpip extends utils.Adapter {
     ];
 
     for (const [id, name, type, role, defaultVal] of states) {
-      await this.setObjectNotExists(`cards.${id}`, {
+      await this.setObjectNotExists(\`cards.\${id}\`, {
         type: "state",
         common: {
           name,
@@ -96,7 +98,7 @@ class WiegandTcpip extends utils.Adapter {
           this.app.userDb = parsed;
         }
       } catch (err) {
-        this.log.warn(`Could not parse cards.db. Resetting DB: ${err.message}`);
+        this.log.warn(\`Could not parse cards.db. Resetting DB: \${err.message}\`);
         this.app.userDb = this.persist.createEmptyUserDb();
       }
     }
@@ -111,14 +113,14 @@ class WiegandTcpip extends utils.Adapter {
 
   async onStateChange(id, state) {
     if (!state) {
-      this.log.debug(`state ${id} deleted`);
+      this.log.debug(\`state \${id} deleted\`);
       return;
     }
 
     try {
       this.app.handleRemoteOpen(id, state);
     } catch (err) {
-      this.log.error(`State change handler error: ${err.message}`);
+      this.log.error(\`State change handler error: \${err.message}\`);
     }
   }
 
@@ -130,7 +132,7 @@ class WiegandTcpip extends utils.Adapter {
         this.log.debug("CleanUp: Listener Close");
       }
     } catch (err) {
-      this.log.debug(`Listener close error: ${err.message}`);
+      this.log.debug(\`Listener close error: \${err.message}\`);
     }
 
     try {
@@ -140,7 +142,7 @@ class WiegandTcpip extends utils.Adapter {
         this.log.debug("CleanUp: Clear interval");
       }
     } catch (err) {
-      this.log.debug(`Heartbeat clear error: ${err.message}`);
+      this.log.debug(\`Heartbeat clear error: \${err.message}\`);
     }
 
     callback();
@@ -150,7 +152,7 @@ class WiegandTcpip extends utils.Adapter {
     try {
       await this.presentation.handle(obj);
     } catch (err) {
-      this.log.error(`Message handler error: ${err.message}`);
+      this.log.error(\`Message handler error: \${err.message}\`);
       if (obj.callback) {
         this.sendTo(
           obj.from,
@@ -168,3 +170,7 @@ if (require.main !== module) {
 } else {
   new WiegandTcpip();
 }
+`;
+
+fs.writeFileSync("main.js", code, "utf8");
+console.log("✓ main.js written successfully");
