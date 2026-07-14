@@ -182,6 +182,7 @@
         syncJobStatus: null, // 'running', 'queued', 'completed', or null
         importPreview: null,
         restorePreview: null,
+        validateReport: null,
         jobs: {
           total: 0,
           running: 0,
@@ -218,6 +219,8 @@
       this.importPreviewConflictsValue = $("#ops_import_preview_conflicts");
       this.restorePreviewSummaryValue = $("#ops_restore_preview_summary");
       this.restorePreviewCanApplyValue = $("#ops_restore_preview_can_apply");
+      this.validateReportSummaryValue = $("#ops_validate_report_summary");
+      this.validateReportSuggestionsValue = $("#ops_validate_report_suggestions");
       this.reviewTableBody = $("#ops_review_table_body");
       this.reviewPendingTable = $("#ops_review_pending_table");
       this.reviewClearDoneBtn = $("#ops_review_clear_done");
@@ -633,6 +636,22 @@
         }
       }
 
+      if (this.validateReportSummaryValue && this.validateReportSummaryValue.length > 0) {
+        const vr = this.state.validateReport;
+        if (vr) {
+          const dups = Array.isArray(vr.duplicateCredentials) ? vr.duplicateCredentials.length : 0;
+          const unknown = Array.isArray(vr.unknownControllerReferences) ? vr.unknownControllerReferences.length : 0;
+          const noCred = Array.isArray(vr.usersWithoutCredentials) ? vr.usersWithoutCredentials.length : 0;
+          const noCtrl = Array.isArray(vr.credentialsWithoutControllers) ? vr.credentialsWithoutControllers.length : 0;
+          this.validateReportSummaryValue.text(`dups:${dups} / unknown:${unknown} / noCred:${noCred} / noCtrl:${noCtrl}`);
+          if (this.validateReportSuggestionsValue && this.validateReportSuggestionsValue.length > 0) {
+            const s = vr.suggestions || {};
+            const issues = dups + unknown + noCred + noCtrl;
+            this.validateReportSuggestionsValue.text(issues === 0 ? "No issues found" : `${issues} issue${issues !== 1 ? "s" : ""}`);
+          }
+        }
+      }
+
       this.updatePowerUserVisibility();
       this.updateScopeLockForSyncMode();
     }
@@ -732,6 +751,13 @@
         const p = response?.preview;
         if (p && p.syncPreview) {
           this.setState({ restorePreview: p });
+        }
+      }
+
+      if (command === "userValidate" || command === "userReconcilePreview") {
+        const r = response?.report;
+        if (r && r.suggestions) {
+          this.setState({ validateReport: r });
         }
       }
 
