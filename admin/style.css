@@ -291,6 +291,31 @@ body {
     font-style: italic;
 }
 
+.ops-candidates {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.ops-candidate-chip {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.ops-candidate-chip:hover {
+    background: #bbdefb;
+    border-color: #1565c0;
+}
+
 #ops_dataset,
 #ops_output {
     min-height: 160px;

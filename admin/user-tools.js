@@ -258,6 +258,25 @@
         });
       });
 
+      this.reviewTableBody.on("click", ".ops-candidate-chip", (event) => {
+        const element = $(event.currentTarget);
+        const reviewId = String(element.data("review-id") || "");
+        const candidate = String(element.data("candidate") || "");
+        if (!reviewId || !candidate) {
+          return;
+        }
+        const input = this.reviewTableBody.find(`.ops-review-userid[data-review-id="${reviewId}"]`);
+        if (input.length > 0 && !input.prop("disabled")) {
+          input.val(candidate);
+          const current = this.reviewDecisions[reviewId] || {};
+          this.reviewDecisions[reviewId] = Object.assign({}, current, { userId: candidate, action: "merge" });
+          const select = this.reviewTableBody.find(`.ops-review-decision[data-review-id="${reviewId}"]`);
+          if (select.length > 0) {
+            select.val("merge");
+          }
+        }
+      });
+
       this.reviewFilterStatus.on("change", () => this.renderReviewTable());
       this.reviewFilterType.on("change", () => this.renderReviewTable());
       this.reviewFilterText.on("input", () => this.renderReviewTable());
@@ -687,6 +706,20 @@
 
         const isPending = status === "pending";
         const disabledAttr = isPending ? "" : ' disabled="disabled"';
+
+        const candidates = Array.isArray(review?.candidates) ? review.candidates : [];
+        const datalistId = `ops-candidates-${escapeHtml(reviewId)}`;
+        const datalistHtml = candidates.length > 0
+          ? `<datalist id="${datalistId}">${candidates.map((c) => `<option value="${escapeHtml(String(c || ""))}"></option>`).join("")}</datalist>`
+          : "";
+        const candidateChips = candidates.length > 0
+          ? candidates.map((c) =>
+            `<span class="ops-candidate-chip" data-review-id="${escapeHtml(reviewId)}" data-candidate="${escapeHtml(String(c || ""))}" title="Use as merge target">${escapeHtml(String(c || ""))}</span>`,
+          ).join(" ")
+          : "";
+        const suggestedCell = candidateChips
+          ? `${escapeHtml(suggestedUserId)}<div class="ops-candidates">${candidateChips}</div>`
+          : escapeHtml(suggestedUserId);
         const options = [
           `<option value="auto"${existing.action === "auto" ? " selected" : ""}>auto</option>`,
           `<option value="create"${existing.action === "create" ? " selected" : ""}>create</option>`,
@@ -719,7 +752,7 @@
           <tr data-review-id="${escapeHtml(reviewId)}">
             <td>${escapeHtml(reviewId || "-")}</td>
             <td>${escapeHtml(decisionType)}</td>
-            <td>${escapeHtml(suggestedUserId)}</td>
+            <td>${suggestedCell}</td>
             <td class="ops-review-credentials">${escapeHtml(credentialsSummary)}</td>
             <td>
               <select class="ops-review-decision" data-review-id="${escapeHtml(reviewId)}"${disabledAttr}>
@@ -727,12 +760,14 @@
               </select>
             </td>
             <td>
+              ${datalistHtml}
               <input
                 class="ops-review-userid"
                 data-review-id="${escapeHtml(reviewId)}"
                 type="text"
+                list="${datalistId}"
                 value="${escapeHtml(existing.userId || "")}"
-                placeholder="optional for merge"
+                placeholder="${candidates.length > 0 ? "pick or type user id" : "optional for merge"}"
                 ${disabledAttr}
               />
             </td>
