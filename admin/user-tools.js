@@ -218,6 +218,7 @@
       this.reviewFilterStatus = $("#ops_review_filter_status");
       this.reviewFilterType = $("#ops_review_filter_type");
       this.reviewFilterText = $("#ops_review_filter_text");
+      this.reviewFilterCandidates = $("#ops_review_filter_candidates");
       this.reviewAutoRefresh = $("#ops_review_auto_refresh");
       this.reviewRefreshSeconds = $("#ops_review_refresh_seconds");
       this.modeToggle = $("#ops_mode_toggle");
@@ -319,6 +320,7 @@
       this.reviewFilterStatus.on("change", () => this.renderReviewTable());
       this.reviewFilterType.on("change", () => this.renderReviewTable());
       this.reviewFilterText.on("input", () => this.renderReviewTable());
+      this.reviewFilterCandidates.on("change", () => this.renderReviewTable());
 
       this.reviewRefreshSeconds.on("change", () => {
         this.updateAutoRefreshInterval();
@@ -707,6 +709,7 @@
       const statusFilter = String(this.reviewFilterStatus.val() || "all").toLowerCase();
       const typeFilter = String(this.reviewFilterType.val() || "all").toLowerCase();
       const textFilter = String(this.reviewFilterText.val() || "").trim().toLowerCase();
+      const candidatesOnly = this.reviewFilterCandidates && this.reviewFilterCandidates.prop("checked");
 
       return this.reviewRows.filter((review) => {
         if (!review) {
@@ -728,6 +731,13 @@
 
         if (textFilter.length > 0 && !reviewId.includes(textFilter) && !suggestedUserId.includes(textFilter)) {
           return false;
+        }
+
+        if (candidatesOnly) {
+          const candidates = review.candidates || review.matchCandidates || [];
+          if (!Array.isArray(candidates) || candidates.length === 0) {
+            return false;
+          }
         }
 
         return true;
