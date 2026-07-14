@@ -268,6 +268,29 @@ body {
     font-size: 13px !important;
 }
 
+.ops-row-result {
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.ops-result-ok {
+    color: #388e3c;
+    font-weight: 600;
+}
+
+.ops-result-approved {
+    color: #1565c0;
+}
+
+.ops-result-rejected {
+    color: #c62828;
+}
+
+.ops-result-failed {
+    color: #e65100;
+    font-style: italic;
+}
+
 #ops_dataset,
 #ops_output {
     min-height: 160px;

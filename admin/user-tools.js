@@ -677,6 +677,22 @@
              <a class="btn btn-small waves-effect waves-light red ops-row-reject" data-review-id="${escapeHtml(reviewId)}" title="Reject">&#10007;</a>`
           : `<span class="ops-muted">${escapeHtml(status)}</span>`;
 
+        const approvedUserId = String(review?.approvedUserId || "");
+        const appliedAt = String(review?.appliedAt || review?.rejectedAt || "");
+        const itemError = String(review?.error || "");
+        let resultCell = "";
+        if (status === "applied") {
+          resultCell = `<span class="ops-result-ok" title="Applied at ${escapeHtml(appliedAt)}">&#10003; ${escapeHtml(approvedUserId)}</span>`;
+        } else if (status === "approved") {
+          resultCell = `<span class="ops-result-approved" title="Approved, pending apply">&#8987; ${escapeHtml(approvedUserId)}</span>`;
+        } else if (status === "rejected") {
+          resultCell = `<span class="ops-result-rejected" title="Rejected at ${escapeHtml(appliedAt)}">&#10007;</span>`;
+        } else if (status === "failed") {
+          resultCell = `<span class="ops-result-failed" title="${escapeHtml(itemError)}">&#9888; ${escapeHtml(itemError.substring(0, 40))}</span>`;
+        } else {
+          resultCell = "-";
+        }
+
         const rowHtml = `
           <tr data-review-id="${escapeHtml(reviewId)}">
             <td>${escapeHtml(reviewId || "-")}</td>
@@ -699,6 +715,7 @@
               />
             </td>
             <td class="ops-row-actions">${quickButtons}</td>
+            <td class="ops-row-result">${resultCell}</td>
           </tr>
         `;
 
