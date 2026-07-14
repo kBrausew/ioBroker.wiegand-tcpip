@@ -97,62 +97,12 @@ Safety-relevant protective mechanisms are to be implemented independently in the
 
 Initial release
 
-## Release preflight (step by step)
-Use the full checklist in [docs/release-checklist.md](docs/release-checklist.md).
-Short version:
-1. Install dependencies: `npm ci`
-2. Setup simulator: `npm run simulator:setup`
-3. Typecheck: `npm run check`
-4. Lint: `npm run lint`
-5. JS + package tests: `npm test`
-6. Unit tests: `npm run test:unit`
-7. Integration tests: `npm run test:integration`
-8. Regression tests: `npm run test:regression`
-9. Verify metadata files (`README.md`, `io-package.json`, `package.json`)
-10. Only release when all checks are green
+## Development Notes
 
-## Multi-controller smoke + dev lab scripts
-Use this workflow to simulate multi-controller operation with seeded cards/swipes and verify ioBroker admin availability.
-
-Quickstart:
-```bash
-npm ci
-npm run smoke:setup
-npm run smoke:multicontroller
-```
-
-Manual setup (equivalent to `smoke:setup`):
-```bash
-npm run simulator:setup
-npx @iobroker/dev-server setup
-```
-
-Start/Stop overview:
-```bash
-# one-shot smoke run (start -> verify -> stop automatically)
-npm run smoke:multicontroller
-
-# user-ops multicontroller smoke (runs full simulator regression for stable user-ops coverage)
-npm run smoke:userops
-
-# persistent dev lab
-npm run devlab:start
-# open http://127.0.0.1:8081
-npm run devlab:stop
-
-# stop alias
-npm run smoke:stop
-```
-
-Behavior notes:
-1. `smoke:multicontroller` stops itself automatically.
-2. `devlab:start` keeps services running until `devlab:stop` (or `smoke:stop`).
-3. If a process survives due to permissions, rerun stop command in elevated PowerShell.
-
-What is seeded by start/smoke scripts:
-1. Two simulated controllers (`405419896`, `405419897`)
-2. Test cards + swipe events for merge/deny/grant scenarios
-3. Reachability check for the admin endpoint
+- [Release Preflight (step by step)](docs/release-preflight.md)
+- [Multi-controller smoke + dev lab scripts](docs/devlab.md)
+- [Release Checklist](docs/release-checklist.md)
+- [Beta Checklist](docs/beta-checklist.md)
 
 ## License
 GPL-3.0-only
