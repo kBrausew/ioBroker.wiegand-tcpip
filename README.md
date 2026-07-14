@@ -99,10 +99,7 @@ Initial release
 
 ## Development Notes
 
-- [Release Preflight (step by step)](docs/release-preflight.md)
-- [Multi-controller smoke + dev lab scripts](docs/devlab.md)
-- [Release Checklist](docs/release-checklist.md)
-- [Beta Checklist](docs/beta-checklist.md)
+See [docs/development.md](docs/development.md) for dev lab, release preflight, and full release checklist.
 
 ## License
 GPL-3.0-only
