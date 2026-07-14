@@ -140,6 +140,7 @@
           applied: 0,
           failed: 0,
         },
+        syncResult: null,
         jobs: {
           total: 0,
           running: 0,
@@ -170,6 +171,8 @@
       this.jobsSummaryValue = $("#ops_jobs_summary");
       this.reviewBreakdownValue = $("#ops_review_breakdown");
       this.autoRefreshAtValue = $("#ops_auto_refresh_at");
+      this.syncResultValue = $("#ops_sync_result");
+      this.syncResultModeValue = $("#ops_sync_result_mode");
       this.reviewTableBody = $("#ops_review_table_body");
       this.reviewPendingTable = $("#ops_review_pending_table");
       this.reviewClearDoneBtn = $("#ops_review_clear_done");
@@ -512,6 +515,18 @@
         this.autoRefreshAtValue.text(String(this.state.lastAutoRefreshAt || "-"));
       }
 
+      if (this.syncResultValue && this.syncResultValue.length > 0) {
+        const sr = this.state.syncResult;
+        if (sr) {
+          this.syncResultValue.text(
+            `W:${sr.appliedActions || 0} / D:${sr.deletedCards || 0} / S:${sr.skippedActions || 0}`,
+          );
+          if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
+            this.syncResultModeValue.text(String(sr.mode || "-"));
+          }
+        }
+      }
+
       this.updatePowerUserVisibility();
       this.updateScopeLockForSyncMode();
     }
@@ -591,6 +606,13 @@
 
       if (command === "userImportApply") {
         this.setReviewSummary(response?.result?.reviewSummary, this.reviewRows);
+      }
+
+      if (command === "userSyncApply") {
+        const sr = response?.preview || response?.result || response;
+        if (sr && typeof sr.appliedActions === "number") {
+          this.setState({ syncResult: sr });
+        }
       }
 
       if (command === "userJobList") {
