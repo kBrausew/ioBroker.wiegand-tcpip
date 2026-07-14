@@ -10,6 +10,7 @@
     "#ops_review_approve",
     "#ops_review_refresh_table",
     "#ops_review_apply_selected",
+    "#ops_review_clear_done",
     "#ops_sync_preview",
     "#ops_sync_apply",
     "#ops_validate",
@@ -171,6 +172,7 @@
       this.autoRefreshAtValue = $("#ops_auto_refresh_at");
       this.reviewTableBody = $("#ops_review_table_body");
       this.reviewPendingTable = $("#ops_review_pending_table");
+      this.reviewClearDoneBtn = $("#ops_review_clear_done");
       this.reviewFilterStatus = $("#ops_review_filter_status");
       this.reviewFilterType = $("#ops_review_filter_type");
       this.reviewFilterText = $("#ops_review_filter_text");
@@ -223,6 +225,7 @@
       $("#ops_job_list").on("click", () => this.runJobList());
       $("#ops_review_refresh_table").on("click", () => this.runReviewTableRefresh());
       $("#ops_review_apply_selected").on("click", () => this.runReviewApplySelected());
+      $("#ops_review_clear_done").on("click", () => this.runReviewClearDone());
 
       this.reviewTableBody.on("change", ".ops-review-decision", (event) => {
         const element = $(event.currentTarget);
@@ -928,6 +931,38 @@
 
     async runReviewTableRefresh() {
       return this.runReviewList();
+    }
+
+    async runReviewClearDone() {
+      if (this.state.busy) {
+        return;
+      }
+
+      this.setBusy(true);
+      this.setState({ lastCommand: "userImportReviewClear", lastStatus: "running", lastUpdatedAt: nowIso() });
+
+      try {
+        const response = await this.send("userImportReviewClear", { keepPending: true });
+        const hasError = !!response?.error;
+
+        if (!hasError) {
+          this.updateMetricsFromResponse("userImportReviewList", {
+            summary: response?.summary,
+            reviews: this.reviewRows.filter((item) => item && item.status === "pending"),
+          });
+          await this.fetchReviewList();
+        }
+
+        this.showResult("userImportReviewClear", response);
+        this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
+      } catch (err) {
+        this.showResult("userImportReviewClear (client error)", {
+          error: err && err.message ? err.message : String(err),
+        });
+        this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
+      } finally {
+        this.setBusy(false);
+      }
     }
 
     async runReviewApplySelected() {

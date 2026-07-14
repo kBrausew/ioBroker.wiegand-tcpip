@@ -558,6 +558,33 @@ class WiegandTcpip extends utils.Adapter {
             }
           }
           break;
+        case "userImportReviewClear":
+          if (obj.callback) {
+            try {
+              // @ts-expect-error -- ioBroker adapter-core JS/TS interop
+              const keepPending = obj.message.keepPending !== false;
+              const cleared = this.clearReviewQueue({ keepPending });
+              await this.persistUserDb("reviewClear");
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  error: false,
+                  cleared,
+                  summary: this.getReviewQueueSummary(),
+                },
+                obj.callback,
+              );
+            } catch (err) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                this.customErr(err.message),
+                obj.callback,
+              );
+            }
+          }
+          break;
         case "userValidate":
           if (obj.callback) {
             try {
@@ -2328,6 +2355,24 @@ class WiegandTcpip extends utils.Adapter {
     item.approvedAt = new Date().toISOString();
 
     return item;
+  }
+
+  clearReviewQueue({ keepPending = true } = {}) {
+    const queue = Array.isArray(this.userDb.reviewQueue) ? this.userDb.reviewQueue : [];
+    const terminalStatuses = new Set(["applied", "rejected", "failed"]);
+    const toRemove = queue.filter((item) => terminalStatuses.has(item.status));
+
+    if (keepPending) {
+      this.userDb.reviewQueue = queue.filter((item) => !terminalStatuses.has(item.status));
+    } else {
+      this.userDb.reviewQueue = [];
+    }
+
+    return {
+      removedCount: toRemove.length,
+      removedIds: toRemove.map((item) => item.id),
+      remaining: this.userDb.reviewQueue.length,
+    };
   }
 
   rejectReviewItem(reviewId, reason) {

@@ -792,6 +792,28 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`userImportApply reviewSummary invalid: ${JSON.stringify(applyResponse)}`);
         }
 
+        const clearResponse = await sendToAsync(harness, "userImportReviewClear", { keepPending: true });
+        if (
+          !clearResponse
+          || clearResponse.error
+          || typeof clearResponse.cleared !== "object"
+          || typeof clearResponse.cleared.removedCount !== "number"
+          || clearResponse.cleared.removedCount < 1
+          || clearResponse.cleared.remaining !== 0
+        ) {
+          throw new Error(`userImportReviewClear failed: ${JSON.stringify(clearResponse)}`);
+        }
+
+        const emptyListResponse = await sendToAsync(harness, "userImportReviewList", {});
+        if (
+          !emptyListResponse
+          || emptyListResponse.error
+          || !Array.isArray(emptyListResponse.reviews)
+          || emptyListResponse.reviews.length !== 0
+        ) {
+          throw new Error(`queue not empty after clear: ${JSON.stringify(emptyListResponse)}`);
+        }
+
         const listResponse = await sendToAsync(harness, "userList", {});
         if (!listResponse || listResponse.error || !Array.isArray(listResponse.users)) {
           throw new Error(`userList failed after import: ${JSON.stringify(listResponse)}`);
