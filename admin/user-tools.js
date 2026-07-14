@@ -131,6 +131,14 @@
         lastUpdatedAt: "-",
         lastAutoRefreshAt: "-",
         pendingReviews: 0,
+        reviewSummary: {
+          total: 0,
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          applied: 0,
+          failed: 0,
+        },
         jobs: {
           total: 0,
           running: 0,
@@ -143,7 +151,6 @@
       this.reviewDecisions = {};
       this.autoRefreshTimer = null;
       this.autoRefreshMs = 5000;
-      this.powerUserMode = false;
       this.powerUserMode = false;
     }
 
@@ -160,6 +167,7 @@
       this.pendingReviewsValue = $("#ops_pending_reviews");
       this.jobsRunningValue = $("#ops_jobs_running");
       this.jobsSummaryValue = $("#ops_jobs_summary");
+      this.reviewBreakdownValue = $("#ops_review_breakdown");
       this.autoRefreshAtValue = $("#ops_auto_refresh_at");
       this.reviewTableBody = $("#ops_review_table_body");
       this.reviewPendingTable = $("#ops_review_pending_table");
@@ -170,16 +178,14 @@
       this.reviewRefreshSeconds = $("#ops_review_refresh_seconds");
       this.modeToggle = $("#ops_mode_toggle");
       this.modeLabel = $("#ops_mode_label");
-      this.modeToggle = $("#ops_mode_toggle");
-      this.modeLabel = $("#ops_mode_label");
 
       if (!this.opsDataset.val()) {
         this.opsDataset.val(pretty(this.datasetTemplate));
       }
 
-      const savedPowerMode = localStorage.getItem(\"ops-power-user-mode\");
-      this.powerUserMode = savedPowerMode === \"true\";
-      this.modeToggle.prop(\"checked\", this.powerUserMode);
+      const savedPowerMode = localStorage.getItem("ops-power-user-mode");
+      this.powerUserMode = savedPowerMode === "true";
+      this.modeToggle.prop("checked", this.powerUserMode);
 
       this.bindActions();
       this.renderState();
@@ -260,7 +266,9 @@
       });
 
       this.modeToggle.on("change", () => {
-        this.powerUserMode = !!this.modeToggle.prop("checked");        localStorage.setItem(\"ops-power-user-mode\", String(this.powerUserMode));        this.updatePowerUserVisibility();
+        this.powerUserMode = !!this.modeToggle.prop("checked");
+        localStorage.setItem("ops-power-user-mode", String(this.powerUserMode));
+        this.updatePowerUserVisibility();
       });
 
       this.syncMode.on("change", () => {
@@ -348,10 +356,7 @@
       }
 
       try {
-        const reviewResponse = await this.send("userImportReviewList", {});
-        this.updateMetricsFromResponse("userImportReviewList", reviewResponse);
-        const reviews = Array.isArray(reviewResponse?.reviews) ? reviewResponse.reviews : [];
-        this.reviewRows = reviews;
+        await this.fetchReviewList();
         this.renderReviewTable();
 
         const jobResponse = await this.send("userJobList", {});
@@ -385,6 +390,68 @@
       this.renderState();
     }
 
+    normalizeReviewSummary(summary, fallbackReviews) {
+      const fromSummary = summary && typeof summary === "object" ? summary : null;
+      const reviews = Array.isArray(fallbackReviews) ? fallbackReviews : [];
+
+      if (!fromSummary) {
+        let pending = 0;
+        let approved = 0;
+        let rejected = 0;
+        let applied = 0;
+        let failed = 0;
+
+        for (const review of reviews) {
+          const status = String(review?.status || "").toLowerCase();
+          if (status === "pending") {
+            pending += 1;
+          } else if (status === "approved") {
+            approved += 1;
+          } else if (status === "rejected") {
+            rejected += 1;
+          } else if (status === "applied") {
+            applied += 1;
+          } else if (status === "failed") {
+            failed += 1;
+          }
+        }
+
+        return {
+          total: reviews.length,
+          pending,
+          approved,
+          rejected,
+          applied,
+          failed,
+        };
+      }
+
+      const normalized = {
+        total: Number(fromSummary.total || 0),
+        pending: Number(fromSummary.pending || 0),
+        approved: Number(fromSummary.approved || 0),
+        rejected: Number(fromSummary.rejected || 0),
+        applied: Number(fromSummary.applied || 0),
+        failed: Number(fromSummary.failed || 0),
+      };
+
+      for (const key of Object.keys(normalized)) {
+        if (isNaN(normalized[key])) {
+          normalized[key] = 0;
+        }
+      }
+
+      return normalized;
+    }
+
+    setReviewSummary(summary, fallbackReviews) {
+      const normalized = this.normalizeReviewSummary(summary, fallbackReviews);
+      this.setState({
+        pendingReviews: normalized.pending,
+        reviewSummary: normalized,
+      });
+    }
+
     renderState() {
       if (this.statusBadge && this.statusBadge.length > 0) {
         this.statusBadge.removeClass("ops-status-idle ops-status-running ops-status-ok ops-status-error");
@@ -416,6 +483,12 @@
 
       if (this.pendingReviewsValue && this.pendingReviewsValue.length > 0) {
         this.pendingReviewsValue.text(String(this.state.pendingReviews || 0));
+      }
+
+      if (this.reviewBreakdownValue && this.reviewBreakdownValue.length > 0) {
+        const reviewSummary = this.state.reviewSummary || {};
+        const breakdown = `A:${reviewSummary.approved || 0} / R:${reviewSummary.rejected || 0} / P:${reviewSummary.applied || 0} / F:${reviewSummary.failed || 0}`;
+        this.reviewBreakdownValue.text(breakdown);
       }
 
       if (this.reviewPendingTable && this.reviewPendingTable.length > 0) {
@@ -490,14 +563,31 @@
       if (command === "userImportPreview") {
         const pending = Number(response?.preview?.pendingReviews || 0);
         if (!isNaN(pending)) {
-          this.setState({ pendingReviews: pending });
+          this.setReviewSummary(
+            {
+              total: pending,
+              pending,
+              approved: 0,
+              rejected: 0,
+              applied: 0,
+              failed: 0,
+            },
+            [],
+          );
         }
       }
 
       if (command === "userImportReviewList") {
         const reviews = Array.isArray(response?.reviews) ? response.reviews : [];
-        const pending = reviews.filter((item) => item && item.status === "pending").length;
-        this.setState({ pendingReviews: pending });
+        this.setReviewSummary(response?.summary, reviews);
+      }
+
+      if (command === "userImportReviewApprove" || command === "userImportReviewReject") {
+        this.setReviewSummary(response?.summary, this.reviewRows);
+      }
+
+      if (command === "userImportApply") {
+        this.setReviewSummary(response?.result?.reviewSummary, this.reviewRows);
       }
 
       if (command === "userJobList") {
@@ -541,8 +631,7 @@
         this.reviewRows = reviews;
       }
 
-      const pendingRows = this.reviewRows.filter((item) => item && item.status === "pending");
-      this.setState({ pendingReviews: pendingRows.length });
+      this.setReviewSummary(this.state.reviewSummary, this.reviewRows);
 
       const visibleRows = this.getFilteredReviews();
 
@@ -678,6 +767,7 @@
 
     async fetchReviewList() {
       const response = await this.send("userImportReviewList", {});
+      this.updateMetricsFromResponse("userImportReviewList", response);
       const reviews = Array.isArray(response?.reviews) ? response.reviews : [];
       this.reviewRows = reviews;
       this.renderReviewTable();
@@ -813,8 +903,8 @@
         }
 
         const allOk = approved.every((entry) => !entry?.response?.error);
+        await this.fetchReviewList();
         this.setState({
-          pendingReviews: 0,
           lastStatus: allOk ? "ok" : "error",
           lastUpdatedAt: nowIso(),
         });

@@ -745,6 +745,14 @@ tests.integration(path.join(__dirname, ".."), {
           throw new Error(`userImportReviewList failed: ${JSON.stringify(reviewListResponse)}`);
         }
 
+        if (
+          !reviewListResponse.summary
+          || Number(reviewListResponse.summary.pending || 0) < 1
+          || Number(reviewListResponse.summary.total || 0) < 1
+        ) {
+          throw new Error(`userImportReviewList summary invalid: ${JSON.stringify(reviewListResponse)}`);
+        }
+
         for (const review of reviewListResponse.reviews) {
           const action = review.decisionType === "merge" ? "merge" : "create";
           const approveResponse = await sendToAsync(harness, "userImportReviewApprove", {
@@ -757,12 +765,31 @@ tests.integration(path.join(__dirname, ".."), {
           }
         }
 
+        const postApproveReviewList = await sendToAsync(harness, "userImportReviewList", {});
+        if (
+          !postApproveReviewList
+          || postApproveReviewList.error
+          || !postApproveReviewList.summary
+          || Number(postApproveReviewList.summary.pending || 0) !== 0
+          || Number(postApproveReviewList.summary.approved || 0) < 1
+        ) {
+          throw new Error(`review summary after approvals is invalid: ${JSON.stringify(postApproveReviewList)}`);
+        }
+
         const applyResponse = await sendToAsync(harness, "userImportApply", {
           dataset: importDataset,
         });
 
         if (!applyResponse || applyResponse.error || !applyResponse.result || applyResponse.result.applied !== true) {
           throw new Error(`userImportApply failed: ${JSON.stringify(applyResponse)}`);
+        }
+
+        if (
+          !applyResponse.result.reviewSummary
+          || Number(applyResponse.result.reviewSummary.pending || 0) !== 0
+          || Number(applyResponse.result.reviewSummary.applied || 0) < 1
+        ) {
+          throw new Error(`userImportApply reviewSummary invalid: ${JSON.stringify(applyResponse)}`);
         }
 
         const listResponse = await sendToAsync(harness, "userList", {});
