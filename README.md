@@ -17,7 +17,9 @@ Wiegand Door Access Controller Shenzhen Weigeng Industrial
 
 ## Setup the adapter
 [Setup Help](docs/setup.md)
-[Release Checklist](docs/release-checklist.md)
+
+## Documentation
+[Configuration, Operation & Monitoring](docs/docu.md)
 
 ## **Dependencies**
 | Component | Version |
