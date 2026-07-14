@@ -1331,6 +1331,10 @@
       this.jobsFilterType = $("#jobs_filter_type");
       this.jobsAutoRefresh = $("#jobs_auto_refresh");
       this.jobsRefreshBtn = $("#jobs_refresh");
+      this.jobsDetailPanel = $("#jobs_detail_panel");
+      this.jobsDetailTitle = $("#jobs_detail_title");
+      this.jobsDetailContent = $("#jobs_detail_content");
+      this.jobsDetailClose = $("#jobs_detail_close");
 
       this.bindActions();
       this.updateAutoRefresh();
@@ -1351,6 +1355,13 @@
       this.jobsFilterType.on("change", () => this.renderJobsTable());
       this.jobsAutoRefresh.on("change", () => this.updateAutoRefresh());
       this.jobsRefreshBtn.on("click", () => this.refreshJobs());
+      this.jobsDetailClose.on("click", () => this.hideJobDetail());
+      this.jobsTableBody.on("click", "tr", (event) => {
+        const jobId = $(event.currentTarget).data("job-id");
+        if (jobId) {
+          this.fetchAndShowJobDetail(String(jobId));
+        }
+      });
     }
 
     updateAutoRefresh() {
@@ -1506,7 +1517,7 @@
         const finishedDisplay = finishedAt === "-" ? "-" : escapeHtml(finishedAt.substring(0, 19)) + (duration ? ` <span class="ops-muted">(${escapeHtml(duration)})</span>` : "");
 
         const rowHtml = `
-          <tr>
+          <tr data-job-id="${escapeHtml(jobId)}" title="Click for details">
             <td title="${escapeHtml(jobId)}">${shortJobId}</td>
             <td>${type}</td>
             <td><span class="${statusBadgeClass}">${statusText}</span></td>
@@ -1518,6 +1529,41 @@
         `;
 
         this.jobsTableBody.append(rowHtml);
+      }
+    }
+
+    async fetchAndShowJobDetail(jobId) {
+      try {
+        const response = await this.send("userJobGet", { jobId });
+        const job = response?.job;
+        if (!job) {
+          return;
+        }
+
+        const title = `${this.shortId(job.id)} — ${job.type || "?"} [${job.status || "?"}]`;
+        const content = JSON.stringify(job, null, 2);
+        this.showJobDetail(title, content);
+      } catch (_err) {
+        // Ignore transient fetch errors for detail view
+      }
+    }
+
+    showJobDetail(title, content) {
+      if (!this.jobsDetailPanel || this.jobsDetailPanel.length === 0) {
+        return;
+      }
+      if (this.jobsDetailTitle && this.jobsDetailTitle.length > 0) {
+        this.jobsDetailTitle.text(title);
+      }
+      if (this.jobsDetailContent && this.jobsDetailContent.length > 0) {
+        this.jobsDetailContent.text(content);
+      }
+      this.jobsDetailPanel.show();
+    }
+
+    hideJobDetail() {
+      if (this.jobsDetailPanel && this.jobsDetailPanel.length > 0) {
+        this.jobsDetailPanel.hide();
       }
     }
   }

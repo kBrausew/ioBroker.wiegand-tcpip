@@ -394,6 +394,56 @@ body {
     white-space: nowrap;
 }
 
+.ops-jobs-table tbody tr {
+    cursor: pointer;
+}
+
+.ops-jobs-table tbody tr:hover td {
+    background-color: #e3f2fd;
+}
+
+.ops-jobs-detail-panel {
+    margin-top: 12px;
+    border: 1px solid #b0bec5;
+    border-radius: 6px;
+    background: #f9fafb;
+    padding: 10px 14px;
+}
+
+.ops-jobs-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.ops-jobs-detail-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #0f3f53;
+}
+
+.ops-jobs-detail-close {
+    font-size: 13px;
+    color: #546e7a;
+    cursor: pointer;
+    padding: 0 6px;
+}
+
+.ops-jobs-detail-content {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 11px;
+    background: #0f1720;
+    color: #d4f4dd;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
 .adapter-body {
     height: calc(100% - 70px);
     overflow: hidden;
