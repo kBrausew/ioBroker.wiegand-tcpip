@@ -51,7 +51,41 @@ npm run smoke:stop
 
 ---
 
-## Release preflight (short version)
+## Test coverage overview
+
+### `smoke:multicontroller`
+- Admin URL reachable (http://127.0.0.1:8081)
+- Simulator REST reachable
+- Two controllers seeded (405419896, 405419897)
+- Test cards + swipe events seeded
+- Self-terminating after pass/fail
+
+### `smoke:userops`
+- Wrapper: runs full regression suite via simulator
+- Covers all user-ops messagebox flows end-to-end
+
+### `test:regression` (14 tests, ~60s, requires simulator)
+- Adapter connects; simulated swipe processed
+- Unauthorized swipe → denied
+- remoteOpen state → event counter update
+- Messagebox: search + invalid command
+- Self-generated remoteOpen ignored
+- setip messagebox callback
+- User management CRUD + event-based card merge
+- Card merge across two controllers
+- Import preview + apply (multi-controller)
+- Import apply as background job
+- Sync preview + background sync apply with selection
+- Controller-scoped validation + reconcile preview
+- Restore-resync preview + background apply
+
+### `test:integration`
+- ioBroker adapter-core harness start/stop (placeholder, no adapter-specific cases yet)
+
+### `test:unit`
+- ioBroker adapter-core unit harness (structural checks via `@iobroker/testing`)
+
+---
 
 1. Install dependencies: `npm ci`
 2. Setup simulator: `npm run simulator:setup`
