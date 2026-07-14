@@ -175,3 +175,46 @@ Ensure only intended files are included.
 3. Create or update PR to master.
 4. Merge after CI and review are green.
 5. Tag release version.
+
+---
+
+## npm publishing (manual)
+
+> Automated deploy job is disabled. Use this process.
+
+### Prerequisites
+- Node.js 22+
+- npm account with publish permissions
+- All tests green
+
+### Steps
+
+```bash
+# 1. Tests + quality
+npm run test:regression
+npm run lint
+npm run check
+
+# 2. Verify version (must match in both files)
+grep '"version"' package.json io-package.json
+
+# 3. Login
+npm login
+
+# 4. Publish
+npm publish --access public
+# with 2FA: npm publish --access public --otp <6-digit-code>
+
+# 5. Verify
+npm view iobroker.wiegand-tcpip@<version>
+```
+
+### Troubleshooting
+
+- **403 already published** → bump version in `package.json` + `io-package.json`
+- **401 unauthorized** → `npm logout` then `npm login`
+
+### After publishing
+
+1. `io-package.json` news section aktualisieren
+2. adapter-check in ioBroker.repositories PR läuft automatisch durch
