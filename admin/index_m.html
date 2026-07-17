@@ -46,7 +46,7 @@
                 <li class="tab col s2 m2 l2"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
                 <li class="tab col s2 m2 l2"><a href="#tab-user-db" class="translate">tab_user_db</a></li>
                 <li class="tab col s2 m2 l2"><a href="#tab-controller-migration" class="translate">tab_controller_migration</a></li>
-                <li class="tab col s2 m2 l2"><a href="#tab-jobs" class="translate">tab_jobs</a></li>
+                <li class="tab col s2 m2 l2" style="display: none;"><a href="#tab-jobs" class="translate">tab_jobs</a></li><!-- V3: Jobs monitor deferred -->
             </ul>
         </div>
 
@@ -169,246 +169,197 @@
         </div><!-- tab-tool /-->
 
         <div id="tab-user-db" class="row s12 page">
-            <p class="title translate">tab_user_db_title</p>
-            <p class="info translate">tab_user_db_info</p>
+            <p class="title translate">card_management_title</p>
+            <p class="info translate">card_management_info</p>
 
-            <div class="row card-panel ops-panel">
-                <div class="input-field col s12 m6 l3">
-                    <input id="db_user_id" type="text" placeholder="db_placeholder_user_id" />
-                    <label for="db_user_id" class="active translate">db_user_id_label</label>
+            <!-- Card Filter Row -->
+            <div class="row card-panel" style="margin-bottom: 16px;">
+                <div class="input-field col s12 m4 l4">
+                    <input id="card_filter_text" type="text" placeholder="card_filter_user_or_number" />
+                    <label for="card_filter_text" class="translate">card_filter_search</label>
                 </div>
-                <div class="input-field col s12 m6 l3">
-                    <input id="db_user_display" type="text" placeholder="db_placeholder_display_name" />
-                    <label for="db_user_display" class="active translate">db_user_display_label</label>
+                <div class="input-field col s12 m4 l4">
+                    <select id="card_filter_controller">
+                        <option value="">card_filter_all_controllers</option>
+                    </select>
+                    <label for="card_filter_controller" class="translate">card_filter_controller</label>
                 </div>
-                <div class="input-field col s12 m6 l3">
-                    <input id="db_card_number" type="number" placeholder="10058400" />
-                    <label for="db_card_number" class="active translate">db_card_number_label</label>
+                <div class="col s12 m4 l4" style="padding-top: 12px;">
+                    <a class="btn waves-effect waves-light translate" id="card_refresh_table">card_action_refresh</a>
                 </div>
-                <div class="input-field col s12 m6 l3">
-                    <input id="db_card_pin" type="text" placeholder="1357" />
-                    <label for="db_card_pin" class="active translate">db_card_pin_label</label>
-                </div>
-                <div class="input-field col s12 m6 l6">
-                    <input id="db_controller_ids" type="text" placeholder="405419896,405419897" />
-                    <label for="db_controller_ids" class="active translate">db_controller_ids_label</label>
-                </div>
-                <div class="col s12 action-row">
-                    <a class="btn waves-effect waves-light translate" id="db_user_list">db_action_list_users</a>
-                    <a class="btn waves-effect waves-light translate" id="db_user_get">db_action_get_user</a>
-                    <a class="btn waves-effect waves-light translate" id="db_user_upsert">db_action_save_user_card</a>
-                    <a class="btn waves-effect waves-light red darken-1 translate" id="db_user_delete">db_action_delete_user</a>
-                </div>
+            </div>
+
+            <!-- Card Table -->
+            <div class="row card-panel">
                 <div class="input-field col s12">
-                    <textarea id="db_output" class="materialize-textarea" readonly></textarea>
-                    <label for="db_output" class="translate">db_output_label</label>
+                    <div class="card-table-wrap" style="overflow-x: auto;">
+                        <table class="striped highlight card-table">
+                            <thead>
+                                <tr>
+                                    <th class="translate">card_table_cardnumber</th>
+                                    <th class="translate">card_table_username</th>
+                                    <th class="translate">card_table_pin</th>
+                                    <th class="translate">card_table_controllers</th>
+                                    <th class="translate">card_table_actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="card_table_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Edit/Add Form -->
+            <div class="row card-panel ops-panel">
+                <p class="col s12 translate">card_form_title</p>
+                <div class="input-field col s12 m6 l3">
+                    <input id="card_form_number" type="number" placeholder="10058400" readonly />
+                    <label for="card_form_number" class="active translate">card_form_number_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="card_form_username" type="text" placeholder="john_doe" />
+                    <label for="card_form_username" class="translate">card_form_username_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="card_form_pin" type="text" placeholder="1357" />
+                    <label for="card_form_pin" class="translate">card_form_pin_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="card_form_status" type="text" value="active" readonly />
+                    <label for="card_form_status" class="active translate">card_form_status_label</label>
+                </div>
+
+                <div class="col s12">
+                    <p class="translate">card_form_controllers_label</p>
+                    <div id="card_form_controller_checkboxes" class="row"></div>
+                </div>
+
+                <div class="col s12 action-row">
+                    <a class="btn waves-effect waves-light translate" id="card_action_save">card_action_save</a>
+                    <a class="btn waves-effect waves-light red darken-1 translate" id="card_action_delete">card_action_delete</a>
+                    <a class="btn waves-effect waves-light grey translate" id="card_action_cancel">card_action_cancel</a>
+                </div>
+
+                <div class="input-field col s12">
+                    <textarea id="card_output" class="materialize-textarea" readonly></textarea>
+                    <label for="card_output" class="translate">card_output_label</label>
                 </div>
             </div>
         </div>
 
         <div id="tab-controller-migration" class="row s12 page">
-            <p class="title translate">tab_controller_migration_title</p>
-            <p class="info translate">tab_controller_migration_info</p>
+            <p class="title translate">migration_title</p>
+            <p class="info translate">migration_info</p>
 
-            <div class="row" style="margin-bottom: 16px;">
+            <!-- Migration Read Section -->
+            <div class="row card-panel" style="margin-bottom: 16px;">
                 <div class="col s12">
-                    <label>
-                        <input id="ops_mode_toggle" type="checkbox" />
-                        <span style="font-weight: 700; color: #0f3f53;" class="translate">ops_power_user_mode</span>
-                    </label>
-                    <div style="font-size: 12px; color: #546e7a; margin-left: 24px;">
-                        <span id="ops_mode_label" class="translate">ops_basic_mode_desc</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row ops-summary-row">
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card">
-                        <div class="ops-summary-label translate">ops_status</div>
-                        <div id="ops_status_badge" class="ops-status-badge ops-status-idle translate">ops_state_idle</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_last_command</span>: <span id="ops_last_command">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card">
-                        <div class="ops-summary-label translate">ops_pending_reviews</div>
-                        <div class="ops-summary-value" id="ops_pending_reviews">0</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_review_breakdown</span>: <span id="ops_review_breakdown">0/0/0/0</span></div>
-                        <div class="ops-summary-meta"><span class="translate">ops_updated</span>: <span id="ops_last_updated">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card">
-                        <div class="ops-summary-label translate">ops_running_jobs</div>
-                        <div class="ops-summary-value" id="ops_jobs_running">0</div>
-                        <div class="ops-summary-meta translate">ops_from_last_job_list</div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card">
-                        <div class="ops-summary-label translate">ops_job_summary</div>
-                        <div class="ops-summary-meta translate" id="ops_jobs_summary">ops_jobs_summary_initial</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_auto_refresh</span>: <span id="ops_auto_refresh_at">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card">
-                        <div class="ops-summary-label translate">ops_last_sync_result</div>
-                        <div class="ops-summary-meta" id="ops_sync_result">-</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_mode</span>: <span id="ops_sync_result_mode">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label translate">ops_last_import_preview</div>
-                        <div class="ops-summary-meta" id="ops_import_preview_summary">-</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_conflicts</span>: <span id="ops_import_preview_conflicts">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label translate">ops_last_restore_preview</div>
-                        <div class="ops-summary-meta" id="ops_restore_preview_summary">-</div>
-                        <div class="ops-summary-meta"><span class="translate">ops_can_apply</span>: <span id="ops_restore_preview_can_apply">-</span></div>
-                    </div>
-                </div>
-                <div class="col s12 m6 l3">
-                    <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label translate">ops_last_validate_report</div>
-                        <div class="ops-summary-meta" id="ops_validate_report_summary">-</div>
-                        <div class="ops-summary-meta" id="ops_validate_report_suggestions">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row card-panel ops-panel">
-                <div class="col s12 m6 l4">
-                    <a class="btn waves-effect waves-light translate" id="ops_user_list">ops_refresh_users</a>
-                    <a class="btn waves-effect waves-light translate" id="ops_review_list">ops_review_queue</a>
-                    <a class="btn waves-effect waves-light translate" id="ops_review_approve">ops_approve_pending</a>
-                </div>
-                <div class="col s12 m6 l4">
-                    <label for="ops_sync_mode" class="translate">ops_sync_mode</label>
-                    <select id="ops_sync_mode">
-                        <option value="overwrite" selected class="translate">ops_sync_mode_overwrite</option>
-                        <option value="delta" class="ops-power-only translate" style="display: none;">ops_sync_mode_delta</option>
-                    </select>
+                    <p style="font-weight: 700;" class="translate">migration_read_title</p>
                 </div>
                 <div class="col s12 m6 l4">
                     <label>
-                        <input id="ops_background" type="checkbox" />
-                        <span class="translate">ops_background_run</span>
+                        <input id="migration_read_mode_all" type="radio" name="migration_read_mode" value="all" />
+                        <span class="translate">migration_read_all_controllers</span>
                     </label>
                 </div>
-                <div class="input-field col s12 m6 l6">
-                    <input id="ops_user_ids" type="text" placeholder="ops_placeholder_user_ids" class="ops-power-only" style="display: none;" />
-                    <label for="ops_user_ids" class="ops-power-only translate" style="display: none;">ops_user_ids_optional</label>
+                <div class="col s12 m6 l4">
+                    <label>
+                        <input id="migration_read_mode_selected" type="radio" name="migration_read_mode" value="selected" />
+                        <span class="translate">migration_read_selected_controllers</span>
+                    </label>
                 </div>
-                <div class="input-field col s12 m6 l6">
-                    <input id="ops_controller_ids" type="text" placeholder="405419896,405419897" />
-                    <label for="ops_controller_ids" class="translate">ops_controller_ids_optional</label>
+                <div class="input-field col s12 m6 l4">
+                    <input id="migration_controller_ids" type="text" placeholder="405419896,405419897" />
+                    <label for="migration_controller_ids" class="translate">migration_controller_ids_label</label>
                 </div>
-
                 <div class="col s12 action-row">
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_import_preview" style="display: none;">ops_import_preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_import_apply" style="display: none;">ops_import_apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_sync_preview" style="display: none;">ops_sync_preview</a>
-                    <a class="btn waves-effect waves-light translate" id="ops_sync_apply">ops_sync_apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_validate" style="display: none;">ops_validate</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_reconcile" style="display: none;">ops_reconcile_preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_restore_preview" style="display: none;">ops_restore_preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_restore_apply" style="display: none;">ops_restore_apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_job_list" style="display: none;">ops_jobs</a>
+                    <a class="btn waves-effect waves-light translate" id="migration_read_apply">migration_read_apply</a>
                 </div>
+            </div>
+
+            <!-- Migration Tabs: Phase 1 & Phase 2 -->
+            <div class="row">
+                <div class="col s12">
+                    <ul class="tabs" style="background: #e8f5e9; border-bottom: 2px solid #4caf50;">
+                        <li class="tab col s6 m3 l2"><a href="#migration_phase1" class="translate">migration_phase1_tab</a></li>
+                        <li class="tab col s6 m3 l2"><a href="#migration_phase2" class="translate">migration_phase2_tab</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Migration Phase 1: Auto-Import -->
+            <div id="migration_phase1" class="row card-panel" style="margin-top: 16px;">
+                <p class="col s12 translate">migration_phase1_title</p>
+                <p class="col s12 translate" style="font-size: 12px; color: #666;">migration_phase1_desc</p>
 
                 <div class="col s12">
-                    <div class="ops-review-panel">
-                        <div class="ops-review-header">
-                            <div class="ops-review-title translate">ops_review_queue_table</div>
-                            <div class="ops-review-controls">
-                                <a class="btn waves-effect waves-light translate" id="ops_review_refresh_table">ops_reload_reviews</a>
-                                <a class="btn waves-effect waves-light translate" id="ops_review_apply_selected">ops_apply_decisions</a>
-                                <a class="btn waves-effect waves-light orange darken-2 translate" id="ops_review_clear_done">ops_clear_done</a>
-                            </div>
-                        </div>
-                        <div class="ops-review-meta"><span class="translate">ops_pending_in_table</span>: <span id="ops_review_pending_table">0</span></div>
-                        <div class="row ops-review-filter-row">
-                            <div class="input-field col s12 m4 l3">
-                                <select id="ops_review_filter_status">
-                                    <option value="all" selected class="translate">ops_all_statuses</option>
-                                    <option value="pending" class="translate">ops_status_pending</option>
-                                    <option value="approved" class="translate">ops_status_approved</option>
-                                    <option value="rejected" class="translate">ops_status_rejected</option>
-                                    <option value="applied" class="translate">ops_status_applied</option>
-                                    <option value="failed" class="translate">ops_status_failed</option>
-                                </select>
-                                <label for="ops_review_filter_status" class="translate">ops_filter_status</label>
-                            </div>
-                            <div class="input-field col s12 m4 l3">
-                                <select id="ops_review_filter_type">
-                                    <option value="all" selected class="translate">ops_all_types</option>
-                                    <option value="merge" class="translate">ops_type_merge</option>
-                                    <option value="create" class="translate">ops_type_create</option>
-                                    <option value="conflict" class="translate">ops_type_conflict</option>
-                                    <option value="changed" class="translate">ops_type_changed</option>
-                                    <option value="new" class="translate">ops_type_new</option>
-                                </select>
-                                <label for="ops_review_filter_type" class="translate">ops_filter_type</label>
-                            </div>
-                            <div class="input-field col s12 m4 l3">
-                                <input id="ops_review_filter_text" type="text" placeholder="ops_placeholder_review_filter" />
-                                <label for="ops_review_filter_text" class="translate">ops_filter_text</label>
-                            </div>
-                            <div class="input-field col s12 m6 l2">
-                                <select id="ops_review_refresh_seconds">
-                                    <option value="3" class="translate">ops_refresh_interval_3s</option>
-                                    <option value="5" selected class="translate">ops_refresh_interval_5s</option>
-                                    <option value="10" class="translate">ops_refresh_interval_10s</option>
-                                </select>
-                                <label for="ops_review_refresh_seconds" class="translate">ops_auto_refresh_label</label>
-                            </div>
-                            <div class="col s12 m6 l1 ops-review-refresh-toggle">
-                                <label>
-                                    <input id="ops_review_auto_refresh" type="checkbox" />
-                                    <span class="translate">ops_auto_label</span>
-                                </label>
-                            </div>
-                            <div class="col s12 m6 l2 ops-review-refresh-toggle">
-                                <label>
-                                    <input id="ops_review_filter_candidates" type="checkbox" />
-                                    <span class="translate">ops_candidates_only</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="ops-review-table-wrap">
-                            <table class="striped highlight ops-review-table">
-                                <thead>
-                                    <tr>
-                                        <th class="translate">ops_review_id</th>
-                                        <th class="translate">ops_type</th>
-                                        <th class="translate">ops_suggested_user</th>
-                                        <th class="translate">ops_credentials</th>
-                                        <th class="translate">ops_decision</th>
-                                        <th class="translate">ops_target_user_optional</th>
-                                        <th class="translate">ops_actions</th>
-                                        <th class="translate">ops_result</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ops_review_table_body"></tbody>
-                            </table>
-                        </div>
+                    <div class="card-table-wrap" style="overflow-x: auto;">
+                        <table class="striped highlight" id="migration_phase1_table">
+                            <thead>
+                                <tr>
+                                    <th class="translate">migration_phase1_cardnumber</th>
+                                    <th class="translate">migration_phase1_controllers</th>
+                                    <th class="translate">migration_phase1_status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="migration_phase1_body"></tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="input-field col s12">
-                    <textarea id="ops_dataset" class="materialize-textarea"></textarea>
-                    <label for="ops_dataset" class="translate">ops_import_dataset_json</label>
+                <div class="col s12 action-row" style="margin-top: 16px;">
+                    <a class="btn waves-effect waves-light green translate" id="migration_phase1_confirm">migration_phase1_confirm</a>
+                    <a class="btn waves-effect waves-light grey translate" id="migration_phase1_cancel">migration_cancel</a>
                 </div>
-                <div class="input-field col s12">
-                    <textarea id="ops_output" class="materialize-textarea" readonly></textarea>
-                    <label for="ops_output" class="translate">ops_output</label>
+            </div>
+
+            <!-- Migration Phase 2: Username Assignment -->
+            <div id="migration_phase2" class="row card-panel" style="margin-top: 16px;">
+                <p class="col s12 translate">migration_phase2_title</p>
+                <p class="col s12 translate" style="font-size: 12px; color: #666;">migration_phase2_desc</p>
+
+                <div class="col s12">
+                    <div class="card-table-wrap" style="overflow-x: auto;">
+                        <table class="striped highlight" id="migration_phase2_table">
+                            <thead>
+                                <tr>
+                                    <th class="translate">migration_phase2_cardnumber</th>
+                                    <th class="translate">migration_phase2_username</th>
+                                    <th class="translate">migration_phase2_assigned</th>
+                                </tr>
+                            </thead>
+                            <tbody id="migration_phase2_body"></tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <div class="col s12 action-row" style="margin-top: 16px;">
+                    <a class="btn waves-effect waves-light blue translate" id="migration_phase2_assign_all">migration_phase2_assign_all</a>
+                    <a class="btn waves-effect waves-light grey translate" id="migration_phase2_done">migration_done</a>
+                </div>
+            </div>
+
+            <!-- Migration Diff Status -->
+            <div class="row card-panel" style="margin-top: 16px;">
+                <p class="col s12 translate">migration_diff_title</p>
+                <div class="col s12">
+                    <div class="card-table-wrap" style="overflow-x: auto;">
+                        <table class="striped highlight" id="migration_diff_table">
+                            <thead>
+                                <tr>
+                                    <th class="translate">migration_diff_cardnumber</th>
+                                    <th class="translate">migration_diff_action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="migration_diff_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-field col s12">
+                <textarea id="migration_output" class="materialize-textarea" readonly></textarea>
+                <label for="migration_output" class="translate">migration_output_label</label>
             </div>
         </div>
 
