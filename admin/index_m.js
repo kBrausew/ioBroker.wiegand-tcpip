@@ -9,8 +9,24 @@
 
 var controllers = [];
 var ctrls = [];
+var userDbPanel = null;
 var userToolsPanel = null;
 var jobMonitorPanel = null;
+
+function applyTranslatedPlaceholders() {
+    var placeholderMap = {
+        "#db_user_id": "db_placeholder_user_id",
+        "#db_user_display": "db_placeholder_display_name",
+        "#ops_user_ids": "ops_placeholder_user_ids",
+        "#ops_review_filter_text": "ops_placeholder_review_filter",
+    };
+
+    Object.keys(placeholderMap).forEach(function (selector) {
+        var key = placeholderMap[selector];
+        var translated = typeof _ === "function" ? _(key) : key;
+        $(selector).attr("placeholder", translated);
+    });
+}
 
 function load(settings, onChange) {
     // example: select elements with id=key and class=value and insert value
@@ -53,7 +69,7 @@ function load(settings, onChange) {
             } else {
                 sendTo(null, "search", { bind: $("#bind").val() }, function (uRet) {
                     if (uRet && uRet.err) {
-                        const lErr = uRet.err.message || "Unknow error";
+                        const lErr = uRet.err.message || _("unknow-message");
                         showToast(lErr);
                     } else if (Array.isArray(uRet) && uRet.length > 0) {
                         uRet.forEach(lC => {
@@ -88,7 +104,7 @@ function load(settings, onChange) {
                     "gateway": $("#setip_gateway").val()
                 }, function (uRet) {
                     if (uRet && uRet.err) {
-                        const lErr = uRet.err.message || "Unknow error";
+                        const lErr = uRet.err.message || _("unknow-message");
                         showToast(lErr);
                         $("#setip_ok_btn").removeClass("disabled");
                     } else if (uRet) {
@@ -134,18 +150,23 @@ function load(settings, onChange) {
 
     controllers = settings.controllers || [];
     values2table("controllers", controllers, onChange);
-    cards = settings.cards || [];
-    values2table("cards", cards, onChange);
 
     if (window.WiegandUserToolsPanel && !userToolsPanel) {
         userToolsPanel = new window.WiegandUserToolsPanel();
         userToolsPanel.init();
     }
 
+    if (window.WiegandUserDbPanel && !userDbPanel) {
+        userDbPanel = new window.WiegandUserDbPanel();
+        userDbPanel.init();
+    }
+
     if (window.WiegandJobMonitorPanel && !jobMonitorPanel) {
         jobMonitorPanel = new window.WiegandJobMonitorPanel();
         jobMonitorPanel.init();
     }
+
+    applyTranslatedPlaceholders();
 
     onChange(false);
     // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
@@ -168,7 +189,6 @@ function save(callback) {
     });
 
     obj.controllers = table2values("controllers");
-    obj.cards = table2values("cards");
 
     callback(obj);
 }

@@ -2,7 +2,8 @@ param(
     [string]$Profile = "default",
     [int]$BindPort = 60000,
     [int]$RestPort = 18000,
-    [string]$AdminUrl = "http://127.0.0.1:8081"
+    [string]$AdminUrl = "http://127.0.0.1:8081",
+    [switch]$NoOpenBrowser
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,6 +16,46 @@ $runtimeDir = Join-Path $repoRoot ".dev-server\smoke-runtime"
 $pidFile = Join-Path $runtimeDir "processes.json"
 $devLog = Join-Path $runtimeDir "dev-server.log"
 $devErrLog = Join-Path $runtimeDir "dev-server.err.log"
+$profileAdapterDir = Join-Path $profileDir "node_modules\iobroker.wiegand-tcpip"
+
+function Sync-WorkspaceAdapterToProfile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetRoot
+    )
+
+    if (-not (Test-Path $TargetRoot)) {
+        throw "Profile adapter path not found: $TargetRoot`nRun once: npx @iobroker/dev-server setup"
+    }
+
+    $copyFiles = @(
+        "main.js",
+        "io-package.json",
+        "package.json",
+        "README.md",
+        "LICENSE"
+    )
+
+    foreach ($file in $copyFiles) {
+        $src = Join-Path $SourceRoot $file
+        if (Test-Path $src) {
+            Copy-Item -Path $src -Destination (Join-Path $TargetRoot $file) -Force
+        }
+    }
+
+    foreach ($dirName in @("admin", "lib", "docs")) {
+        $srcDir = Join-Path $SourceRoot $dirName
+        $dstDir = Join-Path $TargetRoot $dirName
+        if (Test-Path $dstDir) {
+            Remove-Item -Path $dstDir -Recurse -Force
+        }
+        if (Test-Path $srcDir) {
+            Copy-Item -Path $srcDir -Destination $dstDir -Recurse -Force
+        }
+    }
+}
 
 function Wait-HttpOk {
     param(
@@ -108,6 +149,8 @@ if (-not (Test-Path (Join-Path $repoRoot "io-package.json"))) {
 New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
 New-Item -ItemType Directory -Force -Path $simulatorDevicesDir | Out-Null
 
+Sync-WorkspaceAdapterToProfile -SourceRoot $repoRoot -TargetRoot $profileAdapterDir
+
 if (Test-Path $pidFile) {
     $existing = Get-Content $pidFile -Raw | ConvertFrom-Json
     $existingSim = Get-Process -Id $existing.simulatorPid -ErrorAction SilentlyContinue
@@ -131,7 +174,15 @@ if (Test-Path $devLog) { Remove-Item $devLog -Force }
 if (Test-Path $devErrLog) { Remove-Item $devErrLog -Force }
 
 $devProc = Start-Process -FilePath "npx.cmd" -ArgumentList "@iobroker/dev-server", "run", $Profile -WorkingDirectory $repoRoot -PassThru -RedirectStandardOutput $devLog -RedirectStandardError $devErrLog -WindowStyle Hidden
-Wait-HttpOk -Url $AdminUrl -TimeoutSeconds 90
+
+try {
+    # First start can take longer because adapter/admin files are uploaded into profile.
+    Wait-HttpOk -Url $AdminUrl -TimeoutSeconds 180
+}
+catch {
+    Start-Sleep -Seconds 5
+    Wait-HttpOk -Url $AdminUrl -TimeoutSeconds 120
+}
 
 $runtime = [PSCustomObject]@{
     startedAt = (Get-Date).ToString("o")
@@ -152,4 +203,10 @@ $runtime | ConvertTo-Json -Depth 8 | Set-Content -Path $pidFile -Encoding UTF8
 Write-Host "Dev lab started successfully."
 Write-Host "Admin UI: $AdminUrl"
 Write-Host "Simulator REST: http://127.0.0.1:$RestPort/uhppote/simulator"
+Write-Host "Simulator UI: http://127.0.0.1:$RestPort/uhppote/simulator"
 Write-Host "Stop with: npm run devlab:stop"
+
+if (-not $NoOpenBrowser) {
+    Start-Process $AdminUrl | Out-Null
+    Start-Process "http://127.0.0.1:$RestPort/uhppote/simulator" | Out-Null
+}

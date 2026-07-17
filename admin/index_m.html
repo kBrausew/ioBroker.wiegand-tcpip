@@ -42,11 +42,11 @@
 
         <div class="col s12" id="tab-area">
             <ul class="tabs blue lighten-3">
-                <li class="tab col s3 m3 l3"><a href="#tab-main" class="translate active">controller_setup</a></li>
-                <li class="tab col s3 m3 l3"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
-                <li class="tab col s3 m3 l3"><a href="#tab-tool-cards" class="translate">tools_cards</a></li>
-                <li class="tab col s3 m3 l3"><a href="#tab-user-ops">User Ops</a></li>
-                <li class="tab col s3 m3 l3"><a href="#tab-jobs">Jobs</a></li>
+                <li class="tab col s2 m2 l2"><a href="#tab-main" class="translate active">controller_setup</a></li>
+                <li class="tab col s2 m2 l2"><a href="#tab-tool-ip" class="translate">tools_ip</a></li>
+                <li class="tab col s2 m2 l2"><a href="#tab-user-db" class="translate">tab_user_db</a></li>
+                <li class="tab col s2 m2 l2"><a href="#tab-controller-migration" class="translate">tab_controller_migration</a></li>
+                <li class="tab col s2 m2 l2"><a href="#tab-jobs" class="translate">tab_jobs</a></li>
             </ul>
         </div>
 
@@ -92,7 +92,7 @@
                 </div>
                 <div class="input-field col s12 m6 l4">
                     <input class="value" id="debugLL" min=1000 required type="checkbox" />
-                    <label class="translate" for="debugLL">Low Level Debug</label>
+                    <label class="translate" for="debugLL">debug_low_level</label>
                 </div>
             </div>
             <!-- ########## Main \ Conntroller /-->
@@ -168,54 +168,56 @@
             </div>
         </div><!-- tab-tool /-->
 
-        <!-- ########## Tools Cards /-->
-        <div id="tab-tool-cards" class="row s12 page">
-            <p class="translate title">cards_title</p>
+        <div id="tab-user-db" class="row s12 page">
+            <p class="title translate">tab_user_db_title</p>
+            <p class="info translate">tab_user_db_info</p>
 
-            <div class="row">
-                <div class="col s12" id="cards">
-                    <a class="btn-floating waves-effect waves-light btn table-button-add">
-                        <i class="material-icons left">add</i>
-                    </a>
-                    <!--a class="btn-floating waves-effect waves-light btn disabled" id="search">
-                        <i class="material-icons left">search</i><span class="translate">search</span>
-                    </a /-->
-                    <div class="table-values-div">
-                        <table class="table-values">
-                            <thead>
-                                <tr>
-                                    <th data-name="cardNr" class="header translate validate" data-type="number"
-                                        style="width: 200px;" required>cardNr</th>
-                                    <th data-name="cardInfo" class="header translate" style="width: 350px;">cardInfo
-                                    </th>
-                                    <th data-name="valideFrom" class="header translate" style="width: 100px;"
-                                        data-type="date" data-default="1980-01-01">valideFrom</th>
-                                    <th data-name="valideTo" class="header translate" style="width: 100px;"
-                                        data-type="date" data-default="2999-12-31">valideTo</th>
-                                    <!-- th data-name="forceBroadcast" class="header translate" data-type="checkbox"
-                                        style="width: 50px;">forceBroadcast</th /-->
-                                    <th class="header" data-buttons="delete" style="width: 50px;"></th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
+            <div class="row card-panel ops-panel">
+                <div class="input-field col s12 m6 l3">
+                    <input id="db_user_id" type="text" placeholder="db_placeholder_user_id" />
+                    <label for="db_user_id" class="active translate">db_user_id_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="db_user_display" type="text" placeholder="db_placeholder_display_name" />
+                    <label for="db_user_display" class="active translate">db_user_display_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="db_card_number" type="number" placeholder="10058400" />
+                    <label for="db_card_number" class="active translate">db_card_number_label</label>
+                </div>
+                <div class="input-field col s12 m6 l3">
+                    <input id="db_card_pin" type="text" placeholder="1357" />
+                    <label for="db_card_pin" class="active translate">db_card_pin_label</label>
+                </div>
+                <div class="input-field col s12 m6 l6">
+                    <input id="db_controller_ids" type="text" placeholder="405419896,405419897" />
+                    <label for="db_controller_ids" class="active translate">db_controller_ids_label</label>
+                </div>
+                <div class="col s12 action-row">
+                    <a class="btn waves-effect waves-light translate" id="db_user_list">db_action_list_users</a>
+                    <a class="btn waves-effect waves-light translate" id="db_user_get">db_action_get_user</a>
+                    <a class="btn waves-effect waves-light translate" id="db_user_upsert">db_action_save_user_card</a>
+                    <a class="btn waves-effect waves-light red darken-1 translate" id="db_user_delete">db_action_delete_user</a>
+                </div>
+                <div class="input-field col s12">
+                    <textarea id="db_output" class="materialize-textarea" readonly></textarea>
+                    <label for="db_output" class="translate">db_output_label</label>
                 </div>
             </div>
-        </div><!-- tab-tool /-->
+        </div>
 
-        <div id="tab-user-ops" class="row s12 page">
-            <p class="title">User Management And Sync</p>
-            <p class="info">Import, Review, Sync, Validate, Restore und Job-Monitoring fuer den neuen User-DB-Workflow.</p>
+        <div id="tab-controller-migration" class="row s12 page">
+            <p class="title translate">tab_controller_migration_title</p>
+            <p class="info translate">tab_controller_migration_info</p>
 
             <div class="row" style="margin-bottom: 16px;">
                 <div class="col s12">
                     <label>
                         <input id="ops_mode_toggle" type="checkbox" />
-                        <span style="font-weight: 700; color: #0f3f53;">Power User Mode</span>
+                        <span style="font-weight: 700; color: #0f3f53;" class="translate">ops_power_user_mode</span>
                     </label>
                     <div style="font-size: 12px; color: #546e7a; margin-left: 24px;">
-                        <span id="ops_mode_label">Basic Mode: Review Queue, Quick Actions, Sync Overwrite (Controller-only)</span>
+                        <span id="ops_mode_label" class="translate">ops_basic_mode_desc</span>
                     </div>
                 </div>
             </div>
@@ -223,57 +225,57 @@
             <div class="row ops-summary-row">
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
-                        <div class="ops-summary-label">Status</div>
-                        <div id="ops_status_badge" class="ops-status-badge ops-status-idle">idle</div>
-                        <div class="ops-summary-meta">Last command: <span id="ops_last_command">-</span></div>
+                        <div class="ops-summary-label translate">ops_status</div>
+                        <div id="ops_status_badge" class="ops-status-badge ops-status-idle translate">ops_state_idle</div>
+                        <div class="ops-summary-meta"><span class="translate">ops_last_command</span>: <span id="ops_last_command">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
-                        <div class="ops-summary-label">Pending Reviews</div>
+                        <div class="ops-summary-label translate">ops_pending_reviews</div>
                         <div class="ops-summary-value" id="ops_pending_reviews">0</div>
-                        <div class="ops-summary-meta">A/R/P/F: <span id="ops_review_breakdown">0/0/0/0</span></div>
-                        <div class="ops-summary-meta">Updated: <span id="ops_last_updated">-</span></div>
+                        <div class="ops-summary-meta"><span class="translate">ops_review_breakdown</span>: <span id="ops_review_breakdown">0/0/0/0</span></div>
+                        <div class="ops-summary-meta"><span class="translate">ops_updated</span>: <span id="ops_last_updated">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
-                        <div class="ops-summary-label">Running Jobs</div>
+                        <div class="ops-summary-label translate">ops_running_jobs</div>
                         <div class="ops-summary-value" id="ops_jobs_running">0</div>
-                        <div class="ops-summary-meta">From last job list</div>
+                        <div class="ops-summary-meta translate">ops_from_last_job_list</div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
-                        <div class="ops-summary-label">Job Summary</div>
-                        <div class="ops-summary-meta" id="ops_jobs_summary">0 total / 0 done / 0 failed</div>
-                        <div class="ops-summary-meta">Auto refresh: <span id="ops_auto_refresh_at">-</span></div>
+                        <div class="ops-summary-label translate">ops_job_summary</div>
+                        <div class="ops-summary-meta translate" id="ops_jobs_summary">ops_jobs_summary_initial</div>
+                        <div class="ops-summary-meta"><span class="translate">ops_auto_refresh</span>: <span id="ops_auto_refresh_at">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card">
-                        <div class="ops-summary-label">Last Sync Result</div>
+                        <div class="ops-summary-label translate">ops_last_sync_result</div>
                         <div class="ops-summary-meta" id="ops_sync_result">-</div>
-                        <div class="ops-summary-meta">Mode: <span id="ops_sync_result_mode">-</span></div>
+                        <div class="ops-summary-meta"><span class="translate">ops_mode</span>: <span id="ops_sync_result_mode">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label">Last Import Preview</div>
+                        <div class="ops-summary-label translate">ops_last_import_preview</div>
                         <div class="ops-summary-meta" id="ops_import_preview_summary">-</div>
-                        <div class="ops-summary-meta">Conflicts: <span id="ops_import_preview_conflicts">-</span></div>
+                        <div class="ops-summary-meta"><span class="translate">ops_conflicts</span>: <span id="ops_import_preview_conflicts">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label">Last Restore Preview</div>
+                        <div class="ops-summary-label translate">ops_last_restore_preview</div>
                         <div class="ops-summary-meta" id="ops_restore_preview_summary">-</div>
-                        <div class="ops-summary-meta">Can apply: <span id="ops_restore_preview_can_apply">-</span></div>
+                        <div class="ops-summary-meta"><span class="translate">ops_can_apply</span>: <span id="ops_restore_preview_can_apply">-</span></div>
                     </div>
                 </div>
                 <div class="col s12 m6 l3">
                     <div class="ops-summary-card ops-power-only" style="display: none;">
-                        <div class="ops-summary-label">Last Validate Report</div>
+                        <div class="ops-summary-label translate">ops_last_validate_report</div>
                         <div class="ops-summary-meta" id="ops_validate_report_summary">-</div>
                         <div class="ops-summary-meta" id="ops_validate_report_suggestions">-</div>
                     </div>
@@ -282,100 +284,100 @@
 
             <div class="row card-panel ops-panel">
                 <div class="col s12 m6 l4">
-                    <a class="btn waves-effect waves-light" id="ops_user_list">Refresh Users</a>
-                    <a class="btn waves-effect waves-light" id="ops_review_list">Review Queue</a>
-                    <a class="btn waves-effect waves-light" id="ops_review_approve">Approve Pending</a>
+                    <a class="btn waves-effect waves-light translate" id="ops_user_list">ops_refresh_users</a>
+                    <a class="btn waves-effect waves-light translate" id="ops_review_list">ops_review_queue</a>
+                    <a class="btn waves-effect waves-light translate" id="ops_review_approve">ops_approve_pending</a>
                 </div>
                 <div class="col s12 m6 l4">
-                    <label for="ops_sync_mode">Sync Mode</label>
+                    <label for="ops_sync_mode" class="translate">ops_sync_mode</label>
                     <select id="ops_sync_mode">
-                        <option value="overwrite" selected>overwrite</option>
-                        <option value="delta" class="ops-power-only" style="display: none;">delta</option>
+                        <option value="overwrite" selected class="translate">ops_sync_mode_overwrite</option>
+                        <option value="delta" class="ops-power-only translate" style="display: none;">ops_sync_mode_delta</option>
                     </select>
                 </div>
                 <div class="col s12 m6 l4">
                     <label>
-                        <input id="ops_background" type="checkbox" checked="checked" />
-                        <span>Background Run</span>
+                        <input id="ops_background" type="checkbox" />
+                        <span class="translate">ops_background_run</span>
                     </label>
                 </div>
                 <div class="input-field col s12 m6 l6">
-                    <input id="ops_user_ids" type="text" placeholder="qa-user-1,sync-user-1" class="ops-power-only" style="display: none;" />
-                    <label for="ops_user_ids" class="ops-power-only" style="display: none;">User IDs (comma separated, optional)</label>
+                    <input id="ops_user_ids" type="text" placeholder="ops_placeholder_user_ids" class="ops-power-only" style="display: none;" />
+                    <label for="ops_user_ids" class="ops-power-only translate" style="display: none;">ops_user_ids_optional</label>
                 </div>
                 <div class="input-field col s12 m6 l6">
                     <input id="ops_controller_ids" type="text" placeholder="405419896,405419897" />
-                    <label for="ops_controller_ids">Controller IDs (comma separated, optional)</label>
+                    <label for="ops_controller_ids" class="translate">ops_controller_ids_optional</label>
                 </div>
 
                 <div class="col s12 action-row">
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_import_preview" style="display: none;">Import Preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_import_apply" style="display: none;">Import Apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_sync_preview" style="display: none;">Sync Preview</a>
-                    <a class="btn waves-effect waves-light" id="ops_sync_apply">Sync Apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_validate" style="display: none;">Validate</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_reconcile" style="display: none;">Reconcile Preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_restore_preview" style="display: none;">Restore Preview</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_restore_apply" style="display: none;">Restore Apply</a>
-                    <a class="btn waves-effect waves-light ops-power-only" id="ops_job_list" style="display: none;">Jobs</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_import_preview" style="display: none;">ops_import_preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_import_apply" style="display: none;">ops_import_apply</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_sync_preview" style="display: none;">ops_sync_preview</a>
+                    <a class="btn waves-effect waves-light translate" id="ops_sync_apply">ops_sync_apply</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_validate" style="display: none;">ops_validate</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_reconcile" style="display: none;">ops_reconcile_preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_restore_preview" style="display: none;">ops_restore_preview</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_restore_apply" style="display: none;">ops_restore_apply</a>
+                    <a class="btn waves-effect waves-light ops-power-only translate" id="ops_job_list" style="display: none;">ops_jobs</a>
                 </div>
 
                 <div class="col s12">
                     <div class="ops-review-panel">
                         <div class="ops-review-header">
-                            <div class="ops-review-title">Review Queue Table</div>
+                            <div class="ops-review-title translate">ops_review_queue_table</div>
                             <div class="ops-review-controls">
-                                <a class="btn waves-effect waves-light" id="ops_review_refresh_table">Reload Reviews</a>
-                                <a class="btn waves-effect waves-light" id="ops_review_apply_selected">Apply Decisions</a>
-                                <a class="btn waves-effect waves-light orange darken-2" id="ops_review_clear_done" title="Remove applied/rejected/failed entries from queue">Clear Done</a>
+                                <a class="btn waves-effect waves-light translate" id="ops_review_refresh_table">ops_reload_reviews</a>
+                                <a class="btn waves-effect waves-light translate" id="ops_review_apply_selected">ops_apply_decisions</a>
+                                <a class="btn waves-effect waves-light orange darken-2 translate" id="ops_review_clear_done">ops_clear_done</a>
                             </div>
                         </div>
-                        <div class="ops-review-meta">Pending in table: <span id="ops_review_pending_table">0</span></div>
+                        <div class="ops-review-meta"><span class="translate">ops_pending_in_table</span>: <span id="ops_review_pending_table">0</span></div>
                         <div class="row ops-review-filter-row">
                             <div class="input-field col s12 m4 l3">
                                 <select id="ops_review_filter_status">
-                                    <option value="all" selected>all statuses</option>
-                                    <option value="pending">pending</option>
-                                    <option value="approved">approved</option>
-                                    <option value="rejected">rejected</option>
-                                    <option value="applied">applied</option>
-                                    <option value="failed">failed</option>
+                                    <option value="all" selected class="translate">ops_all_statuses</option>
+                                    <option value="pending" class="translate">ops_status_pending</option>
+                                    <option value="approved" class="translate">ops_status_approved</option>
+                                    <option value="rejected" class="translate">ops_status_rejected</option>
+                                    <option value="applied" class="translate">ops_status_applied</option>
+                                    <option value="failed" class="translate">ops_status_failed</option>
                                 </select>
-                                <label for="ops_review_filter_status">Filter Status</label>
+                                <label for="ops_review_filter_status" class="translate">ops_filter_status</label>
                             </div>
                             <div class="input-field col s12 m4 l3">
                                 <select id="ops_review_filter_type">
-                                    <option value="all" selected>all types</option>
-                                    <option value="merge">merge</option>
-                                    <option value="create">create</option>
-                                    <option value="conflict">conflict</option>
-                                    <option value="changed">changed</option>
-                                    <option value="new">new</option>
+                                    <option value="all" selected class="translate">ops_all_types</option>
+                                    <option value="merge" class="translate">ops_type_merge</option>
+                                    <option value="create" class="translate">ops_type_create</option>
+                                    <option value="conflict" class="translate">ops_type_conflict</option>
+                                    <option value="changed" class="translate">ops_type_changed</option>
+                                    <option value="new" class="translate">ops_type_new</option>
                                 </select>
-                                <label for="ops_review_filter_type">Filter Type</label>
+                                <label for="ops_review_filter_type" class="translate">ops_filter_type</label>
                             </div>
                             <div class="input-field col s12 m4 l3">
-                                <input id="ops_review_filter_text" type="text" placeholder="review id or user id" />
-                                <label for="ops_review_filter_text">Filter Text</label>
+                                <input id="ops_review_filter_text" type="text" placeholder="ops_placeholder_review_filter" />
+                                <label for="ops_review_filter_text" class="translate">ops_filter_text</label>
                             </div>
                             <div class="input-field col s12 m6 l2">
                                 <select id="ops_review_refresh_seconds">
-                                    <option value="3">3s</option>
-                                    <option value="5" selected>5s</option>
-                                    <option value="10">10s</option>
+                                    <option value="3" class="translate">ops_refresh_interval_3s</option>
+                                    <option value="5" selected class="translate">ops_refresh_interval_5s</option>
+                                    <option value="10" class="translate">ops_refresh_interval_10s</option>
                                 </select>
-                                <label for="ops_review_refresh_seconds">Auto Refresh</label>
+                                <label for="ops_review_refresh_seconds" class="translate">ops_auto_refresh_label</label>
                             </div>
                             <div class="col s12 m6 l1 ops-review-refresh-toggle">
                                 <label>
                                     <input id="ops_review_auto_refresh" type="checkbox" />
-                                    <span>Auto</span>
+                                    <span class="translate">ops_auto_label</span>
                                 </label>
                             </div>
                             <div class="col s12 m6 l2 ops-review-refresh-toggle">
                                 <label>
                                     <input id="ops_review_filter_candidates" type="checkbox" />
-                                    <span>Candidates only</span>
+                                    <span class="translate">ops_candidates_only</span>
                                 </label>
                             </div>
                         </div>
@@ -383,14 +385,14 @@
                             <table class="striped highlight ops-review-table">
                                 <thead>
                                     <tr>
-                                        <th>Review ID</th>
-                                        <th>Type</th>
-                                        <th>Suggested User</th>
-                                        <th>Credentials</th>
-                                        <th>Decision</th>
-                                        <th>Target User (optional)</th>
-                                        <th>Actions</th>
-                                        <th>Result</th>
+                                        <th class="translate">ops_review_id</th>
+                                        <th class="translate">ops_type</th>
+                                        <th class="translate">ops_suggested_user</th>
+                                        <th class="translate">ops_credentials</th>
+                                        <th class="translate">ops_decision</th>
+                                        <th class="translate">ops_target_user_optional</th>
+                                        <th class="translate">ops_actions</th>
+                                        <th class="translate">ops_result</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ops_review_table_body"></tbody>
@@ -401,50 +403,50 @@
 
                 <div class="input-field col s12">
                     <textarea id="ops_dataset" class="materialize-textarea"></textarea>
-                    <label for="ops_dataset">Import Dataset (JSON)</label>
+                    <label for="ops_dataset" class="translate">ops_import_dataset_json</label>
                 </div>
                 <div class="input-field col s12">
                     <textarea id="ops_output" class="materialize-textarea" readonly></textarea>
-                    <label for="ops_output">Output</label>
+                    <label for="ops_output" class="translate">ops_output</label>
                 </div>
             </div>
         </div>
 
         <!-- ########## Jobs Monitor /-->
         <div id="tab-jobs" class="row s12 page">
-            <p class="title">Job Monitor</p>
-            <p class="info">Background job queue with status tracking, filtering and live updates.</p>
+            <p class="title translate">jobs_tab_title</p>
+            <p class="info translate">jobs_tab_info</p>
 
             <div class="row card-panel ops-panel">
                 <div class="col s12 m6 l3">
-                    <label for="jobs_filter_status">Status Filter</label>
+                    <label for="jobs_filter_status" class="translate">jobs_status_filter</label>
                     <select id="jobs_filter_status">
-                        <option value="all" selected>All</option>
-                        <option value="queued">Queued</option>
-                        <option value="running">Running</option>
-                        <option value="completed">Completed</option>
-                        <option value="failed">Failed</option>
+                        <option value="all" selected class="translate">jobs_all</option>
+                        <option value="queued" class="translate">jobs_queued</option>
+                        <option value="running" class="translate">jobs_running</option>
+                        <option value="completed" class="translate">jobs_completed</option>
+                        <option value="failed" class="translate">jobs_failed</option>
                     </select>
                 </div>
                 <div class="col s12 m6 l3">
-                    <label for="jobs_filter_type">Job Type</label>
+                    <label for="jobs_filter_type" class="translate">jobs_job_type</label>
                     <select id="jobs_filter_type">
-                        <option value="all" selected>All Types</option>
-                        <option value="sync">Sync</option>
-                        <option value="import">Import</option>
-                        <option value="validate">Validate</option>
-                        <option value="reconcile">Reconcile</option>
-                        <option value="restore">Restore</option>
+                        <option value="all" selected class="translate">jobs_all_types</option>
+                        <option value="sync" class="translate">jobs_type_sync</option>
+                        <option value="import" class="translate">jobs_type_import</option>
+                        <option value="validate" class="translate">jobs_type_validate</option>
+                        <option value="reconcile" class="translate">jobs_type_reconcile</option>
+                        <option value="restore" class="translate">jobs_type_restore</option>
                     </select>
                 </div>
                 <div class="col s12 m6 l3">
                     <label>
                         <input id="jobs_auto_refresh" type="checkbox" checked="checked" />
-                        <span>Auto Refresh (every 5s)</span>
+                        <span class="translate">jobs_auto_refresh_5s</span>
                     </label>
                 </div>
                 <div class="col s12 m6 l3">
-                    <a class="btn waves-effect waves-light" id="jobs_refresh">Refresh Now</a>
+                    <a class="btn waves-effect waves-light translate" id="jobs_refresh">jobs_refresh_now</a>
                 </div>
             </div>
 
@@ -452,13 +454,13 @@
                 <table class="striped highlight ops-jobs-table">
                     <thead>
                         <tr>
-                            <th>Job ID</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Started</th>
-                            <th>Finished</th>
-                            <th>Result/Error</th>
+                            <th class="translate">jobs_job_id</th>
+                            <th class="translate">jobs_type</th>
+                            <th class="translate">jobs_status</th>
+                            <th class="translate">jobs_created</th>
+                            <th class="translate">jobs_started</th>
+                            <th class="translate">jobs_finished</th>
+                            <th class="translate">jobs_result_error</th>
                         </tr>
                     </thead>
                     <tbody id="jobs_table_body"></tbody>
@@ -467,8 +469,8 @@
 
             <div id="jobs_detail_panel" class="ops-jobs-detail-panel" style="display:none;">
                 <div class="ops-jobs-detail-header">
-                    <span id="jobs_detail_title" class="ops-jobs-detail-title">Job Detail</span>
-                    <a class="btn-flat ops-jobs-detail-close" id="jobs_detail_close">&#x2715; Close</a>
+                    <span id="jobs_detail_title" class="ops-jobs-detail-title translate">jobs_detail</span>
+                    <a class="btn-flat ops-jobs-detail-close" id="jobs_detail_close"><span class="translate">jobs_close</span></a>
                 </div>
                 <pre id="jobs_detail_content" class="ops-jobs-detail-content"></pre>
             </div>

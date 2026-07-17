@@ -52,6 +52,79 @@
     return new Date().toISOString();
   }
 
+  function t(key) {
+    try {
+      if (typeof _ === "function") {
+        return _(key);
+      }
+    } catch (_err) {
+      // Ignore translation lookup errors and fall back to key.
+    }
+    return key;
+  }
+
+  function translateReviewStatus(status) {
+    const normalized = String(status || "").toLowerCase();
+    const keyMap = {
+      pending: "ops_status_pending",
+      approved: "ops_status_approved",
+      rejected: "ops_status_rejected",
+      applied: "ops_status_applied",
+      failed: "ops_status_failed",
+    };
+    return keyMap[normalized] ? t(keyMap[normalized]) : (normalized || "-");
+  }
+
+  function translateJobStatus(status) {
+    const normalized = String(status || "").toLowerCase();
+    const keyMap = {
+      queued: "jobs_queued",
+      running: "jobs_running",
+      completed: "jobs_completed",
+      failed: "jobs_failed",
+    };
+    if (keyMap[normalized]) {
+      return t(keyMap[normalized]);
+    }
+    return normalized
+      ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+      : "-";
+  }
+
+  function translateOutputTitle(title) {
+    const text = String(title || "");
+    const titleMap = {
+      "userRestoreResync preview": "ops_restore_preview",
+      "userRestoreResync apply": "ops_restore_apply",
+      userImportReviewApplySelected: "ops_apply_decisions",
+      userImportReviewApprove: "ops_approve",
+      userImportReviewReject: "ops_reject",
+      userImportReviewClear: "ops_clear_done",
+      userImportReviewList: "ops_review_queue",
+      userImportPreview: "ops_import_preview",
+      userImportApply: "ops_import_apply",
+      userSyncPreview: "ops_sync_preview",
+      userSyncApply: "ops_sync_apply",
+      userReconcilePreview: "ops_reconcile_preview",
+      userValidate: "ops_validate",
+      userJobList: "ops_jobs",
+      userJobGet: "jobs_detail",
+      userList: "db_action_list_users",
+      userGet: "db_action_get_user",
+      userUpsert: "db_action_save_user_card",
+      userDelete: "db_action_delete_user",
+    };
+
+    const entries = Object.entries(titleMap).sort((a, b) => b[0].length - a[0].length);
+    for (const [token, key] of entries) {
+      if (text === token || text.startsWith(`${token} `) || text.startsWith(`${token}[`) || text.startsWith(`${token} (`)) {
+        return `${t(key)}${text.slice(token.length)}`;
+      }
+    }
+
+    return text;
+  }
+
   function escapeHtml(value) {
     const raw = value == null ? "" : String(value);
     return raw
@@ -232,6 +305,8 @@
       this.reviewRefreshSeconds = $("#ops_review_refresh_seconds");
       this.modeToggle = $("#ops_mode_toggle");
       this.modeLabel = $("#ops_mode_label");
+      this.reviewClearDoneBtn.attr("title", t("ops_clear_done_title"));
+      this.background.prop("checked", false);
 
       if (!this.opsDataset.val()) {
         this.opsDataset.val(pretty(this.datasetTemplate));
@@ -370,12 +445,12 @@
       if (this.powerUserMode) {
         powerElements.show();
         if (this.modeLabel && this.modeLabel.length > 0) {
-          this.modeLabel.text("Power Mode: All features enabled");
+          this.modeLabel.text(t("ops_power_mode_desc"));
         }
       } else {
         powerElements.hide();
         if (this.modeLabel && this.modeLabel.length > 0) {
-          this.modeLabel.text("Basic Mode: Review Queue, Quick Actions, Sync Overwrite (Controller-only)");
+          this.modeLabel.text(t("ops_basic_mode_desc"));
         }
       }
       if (M && M.updateTextFields) {
@@ -393,7 +468,7 @@
 
       if (mode === "overwrite") {
         userIdInput.prop("disabled", true).val("").css({ opacity: 0.5 });
-        userIdLabel.css({ opacity: 0.5, textDecoration: "line-through" }).attr("title", "User IDs disabled for Overwrite mode");
+        userIdLabel.css({ opacity: 0.5, textDecoration: "line-through" }).attr("title", t("ops_user_ids_disabled_overwrite"));
       } else {
         userIdInput.prop("disabled", false).css({ opacity: 1 });
         userIdLabel.css({ opacity: 1, textDecoration: "none" }).removeAttr("title");
@@ -403,7 +478,7 @@
       }
     }
 
-
+    updateAutoRefreshInterval() {
       const seconds = parseInt(String(this.reviewRefreshSeconds.val() || "5"), 10);
       this.autoRefreshMs = isNaN(seconds) || seconds < 1 ? 5000 : seconds * 1000;
     }
@@ -531,16 +606,16 @@
       if (this.statusBadge && this.statusBadge.length > 0) {
         this.statusBadge.removeClass("ops-status-idle ops-status-running ops-status-ok ops-status-error");
 
-        let label = "idle";
+        let label = t("ops_state_idle");
         if (this.state.busy) {
           this.statusBadge.addClass("ops-status-running");
-          label = "running";
+          label = t("ops_state_running");
         } else if (this.state.lastStatus === "error") {
           this.statusBadge.addClass("ops-status-error");
-          label = "error";
+          label = t("ops_state_error");
         } else if (this.state.lastStatus === "ok") {
           this.statusBadge.addClass("ops-status-ok");
-          label = "ok";
+          label = t("ops_state_ok");
         } else {
           this.statusBadge.addClass("ops-status-idle");
         }
@@ -549,7 +624,8 @@
       }
 
       if (this.lastCommandValue && this.lastCommandValue.length > 0) {
-        this.lastCommandValue.text(String(this.state.lastCommand || "-"));
+        const lastCommand = String(this.state.lastCommand || "-");
+        this.lastCommandValue.text(lastCommand === "-" ? "-" : translateOutputTitle(lastCommand));
       }
 
       if (this.lastUpdatedValue && this.lastUpdatedValue.length > 0) {
@@ -562,7 +638,7 @@
 
       if (this.reviewBreakdownValue && this.reviewBreakdownValue.length > 0) {
         const reviewSummary = this.state.reviewSummary || {};
-        const breakdown = `A:${reviewSummary.approved || 0} / R:${reviewSummary.rejected || 0} / P:${reviewSummary.applied || 0} / F:${reviewSummary.failed || 0}`;
+        const breakdown = `${t("ops_breakdown_approved")} :${reviewSummary.approved || 0} / ${t("ops_breakdown_rejected")} :${reviewSummary.rejected || 0} / ${t("ops_breakdown_applied")} :${reviewSummary.applied || 0} / ${t("ops_breakdown_failed")} :${reviewSummary.failed || 0}`;
         this.reviewBreakdownValue.text(breakdown);
       }
 
@@ -576,7 +652,7 @@
 
       if (this.jobsSummaryValue && this.jobsSummaryValue.length > 0) {
         const jobs = this.state.jobs || {};
-        const summary = `${jobs.total || 0} total / ${jobs.completed || 0} done / ${jobs.failed || 0} failed`;
+        const summary = `${jobs.total || 0} ${t("ops_jobs_total")} / ${jobs.completed || 0} ${t("ops_jobs_done")} / ${jobs.failed || 0} ${t("ops_jobs_failed")}`;
         this.jobsSummaryValue.text(summary);
       }
 
@@ -590,14 +666,14 @@
 
         // Show running status if job is in progress
         if (jobStatus === "running" || jobStatus === "queued") {
-          this.syncResultValue.text(`${jobStatus.charAt(0).toUpperCase() + jobStatus.slice(1)}...`);
+          this.syncResultValue.text(`${translateJobStatus(jobStatus)}...`);
           if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
-            this.syncResultModeValue.text("(background job)");
+            this.syncResultModeValue.text(`(${t("ops_background_job")})`);
           }
         } else if (sr) {
           // Show completed result metrics
           this.syncResultValue.text(
-            `W:${sr.appliedActions || 0} / D:${sr.deletedCards || 0} / S:${sr.skippedActions || 0}`,
+            `${t("ops_metric_written")} :${sr.appliedActions || 0} / ${t("ops_metric_deleted")} :${sr.deletedCards || 0} / ${t("ops_metric_skipped")} :${sr.skippedActions || 0}`,
           );
           if (this.syncResultModeValue && this.syncResultModeValue.length > 0) {
             this.syncResultModeValue.text(String(sr.mode || "-"));
@@ -615,7 +691,7 @@
         const ip = this.state.importPreview;
         if (ip) {
           this.importPreviewSummaryValue.text(
-            `${ip.records || 0} records / +${ip.usersToCreate || 0} / ~${ip.usersToUpdate || 0} / cred:${ip.credentialsToMerge || 0}`,
+            `${ip.records || 0} ${t("ops_records")} / +${ip.usersToCreate || 0} / ~${ip.usersToUpdate || 0} / ${t("ops_credentials_short")} :${ip.credentialsToMerge || 0}`,
           );
           if (this.importPreviewConflictsValue && this.importPreviewConflictsValue.length > 0) {
             this.importPreviewConflictsValue.text(String(Array.isArray(ip.conflicts) ? ip.conflicts.length : 0));
@@ -628,10 +704,10 @@
         if (rp && rp.syncPreview) {
           const sp = rp.syncPreview;
           this.restorePreviewSummaryValue.text(
-            `actions:${sp.actionable || 0} / skip:${sp.skipped || 0}`,
+            `${t("ops_actions")} :${sp.actionable || 0} / ${t("ops_skip")} :${sp.skipped || 0}`,
           );
           if (this.restorePreviewCanApplyValue && this.restorePreviewCanApplyValue.length > 0) {
-            this.restorePreviewCanApplyValue.text(rp.canApply ? "yes" : "no");
+            this.restorePreviewCanApplyValue.text(rp.canApply ? t("ops_yes") : t("ops_no"));
           }
         }
       }
@@ -643,11 +719,11 @@
           const unknown = Array.isArray(vr.unknownControllerReferences) ? vr.unknownControllerReferences.length : 0;
           const noCred = Array.isArray(vr.usersWithoutCredentials) ? vr.usersWithoutCredentials.length : 0;
           const noCtrl = Array.isArray(vr.credentialsWithoutControllers) ? vr.credentialsWithoutControllers.length : 0;
-          this.validateReportSummaryValue.text(`dups:${dups} / unknown:${unknown} / noCred:${noCred} / noCtrl:${noCtrl}`);
+          this.validateReportSummaryValue.text(`${t("ops_validate_dups")} :${dups} / ${t("ops_validate_unknown")} :${unknown} / ${t("ops_validate_no_cred")} :${noCred} / ${t("ops_validate_no_ctrl")} :${noCtrl}`);
           if (this.validateReportSuggestionsValue && this.validateReportSuggestionsValue.length > 0) {
             const s = vr.suggestions || {};
             const issues = dups + unknown + noCred + noCtrl;
-            this.validateReportSuggestionsValue.text(issues === 0 ? "No issues found" : `${issues} issue${issues !== 1 ? "s" : ""}`);
+            this.validateReportSuggestionsValue.text(issues === 0 ? t("ops_no_issues_found") : `${issues} ${t("ops_issues_suffix")}`);
           }
         }
       }
@@ -658,7 +734,7 @@
 
     showResult(title, data) {
       const stamp = nowIso();
-      this.opsOutput.val(`${stamp} | ${title}\n${pretty(data)}`);
+      this.opsOutput.val(`${stamp} | ${translateOutputTitle(title)}\n${pretty(data)}`);
       if (M && M.textareaAutoResize) {
         M.textareaAutoResize(this.opsOutput);
       }
@@ -831,7 +907,7 @@
       this.reviewTableBody.empty();
       if (visibleRows.length === 0) {
         this.reviewTableBody.append(
-          '<tr><td colspan="7" class="ops-muted">No review entries available.</td></tr>',
+          `<tr><td colspan="7" class="ops-muted">${escapeHtml(t("ops_no_review_entries"))}</td></tr>`,
         );
         return;
       }
@@ -859,34 +935,34 @@
           : "";
         const candidateChips = candidates.length > 0
           ? candidates.map((c) =>
-            `<span class="ops-candidate-chip" data-review-id="${escapeHtml(reviewId)}" data-candidate="${escapeHtml(String(c || ""))}" title="Use as merge target">${escapeHtml(String(c || ""))}</span>`,
+            `<span class="ops-candidate-chip" data-review-id="${escapeHtml(reviewId)}" data-candidate="${escapeHtml(String(c || ""))}" title="${escapeHtml(t("ops_use_as_merge_target"))}">${escapeHtml(String(c || ""))}</span>`,
           ).join(" ")
           : "";
         const suggestedCell = candidateChips
           ? `${escapeHtml(suggestedUserId)}<div class="ops-candidates">${candidateChips}</div>`
           : escapeHtml(suggestedUserId);
         const options = [
-          `<option value="auto"${existing.action === "auto" ? " selected" : ""}>auto</option>`,
-          `<option value="create"${existing.action === "create" ? " selected" : ""}>create</option>`,
-          `<option value="merge"${existing.action === "merge" ? " selected" : ""}>merge</option>`,
-          `<option value="reject"${existing.action === "reject" ? " selected" : ""}>reject</option>`,
+          `<option value="auto"${existing.action === "auto" ? " selected" : ""}>${escapeHtml(t("ops_action_auto"))}</option>`,
+          `<option value="create"${existing.action === "create" ? " selected" : ""}>${escapeHtml(t("ops_action_create"))}</option>`,
+          `<option value="merge"${existing.action === "merge" ? " selected" : ""}>${escapeHtml(t("ops_action_merge"))}</option>`,
+          `<option value="reject"${existing.action === "reject" ? " selected" : ""}>${escapeHtml(t("ops_action_reject"))}</option>`,
         ].join("");
 
         const quickButtons = isPending
-          ? `<a class="btn btn-small waves-effect waves-light ops-row-approve" data-review-id="${escapeHtml(reviewId)}" title="Approve">&#10003;</a>
-             <a class="btn btn-small waves-effect waves-light red ops-row-reject" data-review-id="${escapeHtml(reviewId)}" title="Reject">&#10007;</a>`
-          : `<span class="ops-muted">${escapeHtml(status)}</span>`;
+           ? `<a class="btn btn-small waves-effect waves-light ops-row-approve" data-review-id="${escapeHtml(reviewId)}" title="${escapeHtml(t("ops_approve"))}">&#10003;</a>
+             <a class="btn btn-small waves-effect waves-light red ops-row-reject" data-review-id="${escapeHtml(reviewId)}" title="${escapeHtml(t("ops_reject"))}">&#10007;</a>`
+          : `<span class="ops-muted">${escapeHtml(translateReviewStatus(status))}</span>`;
 
         const approvedUserId = String(review?.approvedUserId || "");
         const appliedAt = String(review?.appliedAt || review?.rejectedAt || "");
         const itemError = String(review?.error || "");
         let resultCell = "";
         if (status === "applied") {
-          resultCell = `<span class="ops-result-ok" title="Applied at ${escapeHtml(appliedAt)}">&#10003; ${escapeHtml(approvedUserId)}</span>`;
+          resultCell = `<span class="ops-result-ok" title="${escapeHtml(t("ops_applied_at"))} ${escapeHtml(appliedAt)}">&#10003; ${escapeHtml(approvedUserId)}</span>`;
         } else if (status === "approved") {
-          resultCell = `<span class="ops-result-approved" title="Approved, pending apply">&#8987; ${escapeHtml(approvedUserId)}</span>`;
+          resultCell = `<span class="ops-result-approved" title="${escapeHtml(t("ops_approved_pending_apply"))}">&#8987; ${escapeHtml(approvedUserId)}</span>`;
         } else if (status === "rejected") {
-          resultCell = `<span class="ops-result-rejected" title="Rejected at ${escapeHtml(appliedAt)}">&#10007;</span>`;
+          resultCell = `<span class="ops-result-rejected" title="${escapeHtml(t("ops_rejected_at"))} ${escapeHtml(appliedAt)}">&#10007;</span>`;
         } else if (status === "failed") {
           resultCell = `<span class="ops-result-failed" title="${escapeHtml(itemError)}">&#9888; ${escapeHtml(itemError.substring(0, 40))}</span>`;
         } else {
@@ -912,7 +988,7 @@
                 type="text"
                 list="${datalistId}"
                 value="${escapeHtml(existing.userId || "")}"
-                placeholder="${candidates.length > 0 ? "pick or type user id" : "optional for merge"}"
+                placeholder="${candidates.length > 0 ? t("ops_pick_or_type_user_id") : t("ops_optional_for_merge")}" 
                 ${disabledAttr}
               />
             </td>
@@ -951,7 +1027,7 @@
         this.showResult(`userImportReviewApprove [${reviewId}]`, response);
         this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
       } catch (err) {
-        this.showResult(`userImportReviewApprove [${reviewId}] (client error)`, {
+        this.showResult(`userImportReviewApprove [${reviewId}] (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
@@ -978,7 +1054,7 @@
         this.showResult(`userImportReviewReject [${reviewId}]`, response);
         this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
       } catch (err) {
-        this.showResult(`userImportReviewReject [${reviewId}] (client error)`, {
+        this.showResult(`userImportReviewReject [${reviewId}] (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
@@ -1035,7 +1111,7 @@
           lastUpdatedAt: nowIso(),
         });
       } catch (err) {
-        this.showResult(`${title} (client error)`, {
+        this.showResult(`${title} (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({
@@ -1084,7 +1160,7 @@
           lastUpdatedAt: nowIso(),
         });
       } catch (err) {
-        this.showResult("userImportReviewList (client error)", {
+        this.showResult(`userImportReviewList (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({
@@ -1131,12 +1207,12 @@
           lastUpdatedAt: nowIso(),
         });
 
-        this.showResult("userImportReviewApprove (pending)", {
+        this.showResult(`userImportReviewApprove (${t("ops_pending")})`, {
           totalPending: pending.length,
           approved,
         });
       } catch (err) {
-        this.showResult("userImportReviewApprove (client error)", {
+        this.showResult(`userImportReviewApprove (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({
@@ -1175,7 +1251,7 @@
         this.showResult("userImportReviewClear", response);
         this.setState({ lastStatus: hasError ? "error" : "ok", lastUpdatedAt: nowIso() });
       } catch (err) {
-        this.showResult("userImportReviewClear (client error)", {
+        this.showResult(`userImportReviewClear (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({ lastStatus: "error", lastUpdatedAt: nowIso() });
@@ -1202,13 +1278,14 @@
         const pending = reviews.filter((item) => item && item.status === "pending");
 
         if (pending.length > 5) {
+          const confirmText = t("ops_confirm_apply_pending").replace("{count}", String(pending.length));
           const confirmed = window.confirm(
-            `You are about to apply ${pending.length} pending review decisions. Continue?`,
+            confirmText,
           );
           if (!confirmed) {
             this.showResult("userImportReviewApplySelected", {
               cancelled: true,
-              reason: "user-declined-confirmation",
+              reason: t("ops_user_declined_confirmation"),
               totalPending: pending.length,
             });
             this.setState({
@@ -1258,7 +1335,7 @@
           lastUpdatedAt: nowIso(),
         });
       } catch (err) {
-        this.showResult("userImportReviewApplySelected (client error)", {
+        this.showResult(`userImportReviewApplySelected (${t("ops_client_error")})`, {
           error: err && err.message ? err.message : String(err),
         });
         this.setState({
@@ -1315,6 +1392,128 @@
       return this.runAction("userJobList", "userJobList", {});
     }
   }
+
+  class UserDbPanel {
+    constructor() {
+      this.output = null;
+    }
+
+    init() {
+      this.userId = $("#db_user_id");
+      this.userDisplay = $("#db_user_display");
+      this.cardNumber = $("#db_card_number");
+      this.cardPin = $("#db_card_pin");
+      this.controllerIds = $("#db_controller_ids");
+      this.output = $("#db_output");
+
+      this.bindActions();
+      if (M && M.updateTextFields) {
+        M.updateTextFields();
+      }
+    }
+
+    bindActions() {
+      $("#db_user_list").on("click", () => this.runListUsers());
+      $("#db_user_get").on("click", () => this.runGetUser());
+      $("#db_user_upsert").on("click", () => this.runUpsertUser());
+      $("#db_user_delete").on("click", () => this.runDeleteUser());
+    }
+
+    parseControllerIds() {
+      const raw = String(this.controllerIds.val() || "").trim();
+      if (!raw) {
+        return [];
+      }
+      return raw
+        .split(",")
+        .map((value) => Number(String(value).trim()))
+        .filter((value) => Number.isFinite(value) && value > 0);
+    }
+
+    appendOutput(label, payload) {
+      const block = `${translateOutputTitle(label)}\n${pretty(payload)}\n\n`;
+      const current = String(this.output.val() || "");
+      this.output.val(current + block);
+      if (M && M.textareaAutoResize) {
+        M.textareaAutoResize(this.output);
+      }
+    }
+
+    send(command, message) {
+      return new Promise((resolve) => {
+        sendTo(null, command, message || {}, (response) => {
+          resolve(response);
+        });
+      });
+    }
+
+    async runListUsers() {
+      const response = await this.send("userList", {});
+      this.appendOutput("userList", response);
+    }
+
+    async runGetUser() {
+      const userId = String(this.userId.val() || "").trim();
+      if (!userId) {
+        this.appendOutput("userGet", { error: t("db_error_user_id_required") });
+        return;
+      }
+      const response = await this.send("userGet", { userId });
+      this.appendOutput("userGet", response);
+    }
+
+    async runUpsertUser() {
+      const userId = String(this.userId.val() || "").trim();
+      const displayName = String(this.userDisplay.val() || "").trim();
+      const cardNumber = Number(String(this.cardNumber.val() || "").trim());
+      const pinRaw = String(this.cardPin.val() || "").trim();
+      const controllerIds = this.parseControllerIds();
+
+      if (!userId) {
+        this.appendOutput("userUpsert", { error: t("db_error_user_id_required") });
+        return;
+      }
+      if (!Number.isFinite(cardNumber) || cardNumber <= 0) {
+        this.appendOutput("userUpsert", { error: t("db_error_valid_card_number_required") });
+        return;
+      }
+
+      const credential = {
+        cardNumber,
+        permissions: controllerIds.map((controllerId) => ({
+          controllerId,
+          doors: [1, 2, 3, 4],
+        })),
+      };
+      if (pinRaw) {
+        credential.pin = pinRaw;
+      }
+
+      const payload = {
+        userId,
+        user: {
+          userId,
+          displayName,
+          credentials: [credential],
+        },
+      };
+
+      const response = await this.send("userUpsert", payload);
+      this.appendOutput("userUpsert", response);
+    }
+
+    async runDeleteUser() {
+      const userId = String(this.userId.val() || "").trim();
+      if (!userId) {
+        this.appendOutput("userDelete", { error: t("db_error_user_id_required") });
+        return;
+      }
+      const response = await this.send("userDelete", { userId });
+      this.appendOutput("userDelete", response);
+    }
+  }
+
+  window.WiegandUserDbPanel = UserDbPanel;
 
   window.WiegandUserToolsPanel = UserToolsPanel;
 
@@ -1454,7 +1653,7 @@
       const type = String(job?.type || "").toLowerCase();
 
       if (status === "failed") {
-        return escapeHtml(String(job?.error || "failed").substring(0, 100));
+        return escapeHtml(String(job?.error || t("jobs_failed")).substring(0, 100));
       }
 
       if (status === "completed" && job?.result) {
@@ -1496,7 +1695,7 @@
       this.jobsTableBody.empty();
       if (filteredJobs.length === 0) {
         this.jobsTableBody.append(
-          '<tr><td colspan="7" class="ops-muted">No jobs found.</td></tr>',
+          `<tr><td colspan="7" class="ops-muted">${escapeHtml(t("jobs_no_jobs_found"))}</td></tr>`,
         );
         return;
       }
@@ -1507,7 +1706,7 @@
         const type = escapeHtml(String(job?.type || "-"));
         const status = String(job?.status || "-");
         const statusBadgeClass = this.getStatusBadgeClass(status);
-        const statusText = escapeHtml(status.charAt(0).toUpperCase() + status.slice(1));
+        const statusText = escapeHtml(translateJobStatus(status));
         const createdAt = String(job?.createdAt || "-");
         const startedAt = String(job?.startedAt || "-");
         const finishedAt = String(job?.finishedAt || "-");
@@ -1517,7 +1716,7 @@
         const finishedDisplay = finishedAt === "-" ? "-" : escapeHtml(finishedAt.substring(0, 19)) + (duration ? ` <span class="ops-muted">(${escapeHtml(duration)})</span>` : "");
 
         const rowHtml = `
-          <tr data-job-id="${escapeHtml(jobId)}" title="Click for details">
+          <tr data-job-id="${escapeHtml(jobId)}" title="${escapeHtml(t("jobs_click_for_details"))}">
             <td title="${escapeHtml(jobId)}">${shortJobId}</td>
             <td>${type}</td>
             <td><span class="${statusBadgeClass}">${statusText}</span></td>
@@ -1540,7 +1739,7 @@
           return;
         }
 
-        const title = `${this.shortId(job.id)} — ${job.type || "?"} [${job.status || "?"}]`;
+        const title = `${this.shortId(job.id)} — ${job.type || "?"} [${translateJobStatus(job.status)}]`;
         const content = JSON.stringify(job, null, 2);
         this.showJobDetail(title, content);
       } catch (_err) {
