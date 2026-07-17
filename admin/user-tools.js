@@ -217,22 +217,43 @@
       const $container = $("#card_form_controller_checkboxes");
       $container.empty();
 
-      const controllers = Object.keys(card.controllerAccess || {}).sort((a, b) => parseInt(a) - parseInt(b));
+      // Build list of all configured controllers from settings (1:n support)
+      // window.controllers set by index_m.js load() from settings.controllers
+      const configuredControllers = (window.controllers || []).map((c) => ({
+        serial: c.serial ? c.serial.toString() : null,
+        maxDoors: parseInt(c.modelType, 10) || 4,
+      })).filter((c) => c.serial);
 
-      if (controllers.length === 0) {
-        $container.append($("<div>").addClass("col s12").text(t("card_form_controllers_label")));
+      // Merge: configured controllers + any extra in card.controllerAccess (legacy)
+      const cardAccess = card.controllerAccess || {};
+      const extraCtrlIds = Object.keys(cardAccess).filter(
+        (id) => !configuredControllers.find((c) => c.serial === id)
+      );
+      const allControllers = [
+        ...configuredControllers,
+        ...extraCtrlIds.map((id) => ({ serial: id, maxDoors: 4, legacy: true })),
+      ];
+
+      if (allControllers.length === 0) {
+        $container.append(
+          $("<div>").addClass("col s12 grey-text").text(t("card_form_no_controllers"))
+        );
         return;
       }
 
       const $row = $("<div>").addClass("row");
-      for (const ctrlId of controllers) {
-        const doors = card.controllerAccess[ctrlId] || [];
-        const $div = $("<div>")
-          .addClass("col s12 m6 l4");
-        $div.append($("<strong>").text(`Controller ${ctrlId}:`));
+      for (const ctrl of allControllers) {
+        const ctrlId = ctrl.serial;
+        const checkedDoors = cardAccess[ctrlId] || [];
+        const $div = $("<div>").addClass("col s12 m6 l4").css("margin-bottom", "8px");
 
-        for (let door = 1; door <= 4; door++) {
-          const checked = doors.includes(door);
+        const titleText = ctrl.legacy
+          ? `Controller ${ctrlId} ⚠`
+          : `Controller ${ctrlId}`;
+        $div.append($("<strong>").text(titleText));
+
+        for (let door = 1; door <= ctrl.maxDoors; door++) {
+          const checked = checkedDoors.includes(door);
           const $label = $("<label>").css("display", "block").append(
             $("<input>")
               .attr("type", "checkbox")
@@ -240,7 +261,7 @@
               .attr("data-door", door)
               .prop("checked", checked)
               .addClass("card-door-checkbox"),
-            $("<span>").text(`Door ${door}`)
+            $("<span>").text(` ${t("door_label")} ${door}`)
           );
           $div.append($label);
         }
