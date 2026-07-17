@@ -2,6 +2,14 @@
 /* eslint-disable no-console */
 
 (function () {
+  // ================= GLOBAL FUNCTION EXPORTS =================
+  // Make sendTo available in global scope for MessageBox IPC
+  if (typeof window !== 'undefined' && typeof window.sendTo === 'undefined') {
+    window.sendTo = (typeof sendTo !== 'undefined') ? sendTo : function() {
+      console.warn("sendTo not available - ioBroker Admin framework not loaded");
+    };
+  }
+
   // ================= HELPER FUNCTIONS =================
 
   function parseCsvNumbers(rawValue) {

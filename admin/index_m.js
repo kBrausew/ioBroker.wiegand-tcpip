@@ -152,6 +152,10 @@ function load(settings, onChange) {
 
     // Initialize Card Management Panel
     if (window.CardPanel && !cardPanel) {
+        // Make sendTo available globally before initializing panels
+        window.sendTo = sendTo;
+        window.M = M;  // Materialize instance
+        
         cardPanel = new window.CardPanel();
         cardPanel.initialize().catch((err) => {
             console.error("CardPanel initialization error:", err);
