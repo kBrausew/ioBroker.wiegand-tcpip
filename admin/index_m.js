@@ -9,9 +9,8 @@
 
 var controllers = [];
 var ctrls = [];
-var userDbPanel = null;
-var userToolsPanel = null;
-var jobMonitorPanel = null;
+var cardPanel = null;
+var migrationPanel = null;
 
 function applyTranslatedPlaceholders() {
     var placeholderMap = {
@@ -151,19 +150,20 @@ function load(settings, onChange) {
     controllers = settings.controllers || [];
     values2table("controllers", controllers, onChange);
 
-    if (window.WiegandUserToolsPanel && !userToolsPanel) {
-        userToolsPanel = new window.WiegandUserToolsPanel();
-        userToolsPanel.init();
+    // Initialize Card Management Panel
+    if (window.CardPanel && !cardPanel) {
+        cardPanel = new window.CardPanel();
+        cardPanel.initialize().catch((err) => {
+            console.error("CardPanel initialization error:", err);
+        });
     }
 
-    if (window.WiegandUserDbPanel && !userDbPanel) {
-        userDbPanel = new window.WiegandUserDbPanel();
-        userDbPanel.init();
-    }
-
-    if (window.WiegandJobMonitorPanel && !jobMonitorPanel) {
-        jobMonitorPanel = new window.WiegandJobMonitorPanel();
-        jobMonitorPanel.init();
+    // Initialize Migration Panel
+    if (window.MigrationPanel && !migrationPanel) {
+        migrationPanel = new window.MigrationPanel();
+        migrationPanel.initialize().catch((err) => {
+            console.error("MigrationPanel initialization error:", err);
+        });
     }
 
     applyTranslatedPlaceholders();
