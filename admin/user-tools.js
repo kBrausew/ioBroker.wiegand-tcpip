@@ -49,11 +49,32 @@
       this.selectedCard = null;
       this.filterText = "";
       this.filterController = "";
+      this.unsyncedCount = 0;
     }
 
     async initialize() {
       this.attachEventListeners();
+      this.attachBeforeUnload();
       await this.refreshCardTable();
+    }
+
+    attachBeforeUnload() {
+      window.addEventListener("beforeunload", (e) => {
+        if (this.unsyncedCount > 0) {
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+    }
+
+    markUnsynced(delta) {
+      this.unsyncedCount = Math.max(0, this.unsyncedCount + delta);
+      const $badge = $("#card_unsync_badge");
+      if (this.unsyncedCount > 0) {
+        $badge.text(`⚠ ${this.unsyncedCount} ${t("card_unsync_hint")}`).show();
+      } else {
+        $badge.hide();
+      }
     }
 
     attachEventListeners() {
@@ -75,6 +96,10 @@
 
       $("#card_action_new").click(() => {
         self.newCard();
+      });
+
+      $("#card_sync_all").click(() => {
+        self.syncAllCards();
       });
 
       $(document).on("click", ".card-table-row", function () {
@@ -306,9 +331,50 @@
 
       sendTo(null, "cardUpsert", { card }, function (result) {
         if (result && !result.error) {
-          M.toast({ html: t("op-ok") });
+          // Auto-push to controllers
+          sendTo(null, "cardPush", { cardNumber: cardNumber }, function (pushResult) {
+            if (pushResult && !pushResult.error) {
+              const pushed = pushResult.pushed || 0;
+              const failed = pushResult.failed || 0;
+              if (failed > 0) {
+                M.toast({ html: t("card_push_partial").replace("{pushed}", pushed).replace("{failed}", failed) });
+                self.markUnsynced(1);
+              } else if (pushed > 0) {
+                M.toast({ html: t("card_push_ok").replace("{pushed}", pushed) });
+                self.markUnsynced(-1);
+              } else {
+                // No controllers with access defined — saved in DB only
+                M.toast({ html: t("op-ok") });
+                self.markUnsynced(1);
+              }
+            } else {
+              M.toast({ html: t("card_push_failed") });
+              self.markUnsynced(1);
+            }
+          });
           self.refreshCardTable();
           self.clearForm();
+        } else {
+          const msg = result?.err?.message || t("unknow-message");
+          M.toast({ html: msg });
+        }
+      });
+    }
+
+    syncAllCards() {
+      const self = this;
+      M.toast({ html: t("card_sync_all_running") });
+      sendTo(null, "cardSyncAll", {}, function (result) {
+        if (result && !result.error) {
+          const msg = t("card_sync_all_ok")
+            .replace("{cardCount}", result.cardCount || 0)
+            .replace("{pushed}", result.pushed || 0)
+            .replace("{failed}", result.failed || 0);
+          M.toast({ html: msg });
+          if ((result.failed || 0) === 0) {
+            self.unsyncedCount = 0;
+            $("#card_unsync_badge").hide();
+          }
         } else {
           const msg = result?.err?.message || t("unknow-message");
           M.toast({ html: msg });
