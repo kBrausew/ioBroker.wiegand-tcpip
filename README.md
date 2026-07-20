@@ -47,6 +47,12 @@ The software is designed for pure hardware-related communication.
 Safety-relevant protective mechanisms are to be implemented independently in their environment
 
 ## Changelog
+### 1.0.1 (2026-07-20)
+* Bugfix: Controller heartbeat crash when serial number passed as string to UHPPOTE API
+* Fixed i18n syntax error in Chinese translation (admin/words.js)
+* Fixed README.md H1 heading validation (E6025)
+* Resolved GitHub master branching violation (removed feat/user-management-foundation merge)
+
 ### 1.0.0 (2026-07-07)
 * Node.js >= 22 required (Node.js 20 EOL)
 * js-controller >= 6.0.11 required
