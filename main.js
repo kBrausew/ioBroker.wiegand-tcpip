@@ -69,7 +69,9 @@ class WiegandTcpip extends utils.Adapter {
     for (const dev of this.config.controllers) {
       if (!this.serials[dev.serial]) {
         this.serials[dev.serial] = true;
-        if (dev.serial && !isNaN(dev.serial)) {
+        const serialNum = parseInt(dev.serial, 10);
+        if (serialNum && !isNaN(serialNum) && serialNum > 0) {
+          dev.serial = serialNum; // Must be number – uhppoted.resolve() only accepts number|object, not string
           // @ts-expect-error -- ioBroker adapter-core JS/TS interop
           dev.modelType = parseInt(dev.modelType, 10) || 4;
           dev.index = itemNr;
