@@ -43,6 +43,9 @@ if (Test-Path $pidFile) {
     $runtime = Get-Content $pidFile -Raw | ConvertFrom-Json
     Stop-ProcessTree -ProcessId ([int]$runtime.devServerPid)
     Stop-ProcessTree -ProcessId ([int]$runtime.simulatorPid)
+    if ($runtime.dashboardPid -and [int]$runtime.dashboardPid -gt 0) {
+        Stop-ProcessTree -ProcessId ([int]$runtime.dashboardPid)
+    }
 }
 
 $repoRootEscaped = [Regex]::Escape($repoRoot)
@@ -57,7 +60,7 @@ foreach ($candidate in $candidates) {
     Stop-ProcessTree -ProcessId $candidate.ProcessId
 }
 
-$ports = @(8081, 18000, 24426, 26426, 9228)
+$ports = @(8081, 18000, 24426, 26426, 3100, 9228)
 foreach ($port in $ports) {
     $listeners = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue
     foreach ($listener in $listeners) {

@@ -192,21 +192,32 @@ $runtime = [PSCustomObject]@{
     adminUrl = $AdminUrl
     simulatorPid = $simulatorProc.Id
     devServerPid = $devProc.Id
+    dashboardPid = 0
     logs = @{
         stdout = $devLog
         stderr = $devErrLog
     }
 }
 
+# Start Test Dashboard Server
+$dashboardPort = 3100
+$dashboardJs = Join-Path $PSScriptRoot "test-dashboard-server.js"
+if (Test-Path $dashboardJs) {
+    $dashProc = Start-Process -FilePath "node.exe" -ArgumentList $dashboardJs -WorkingDirectory $repoRoot -PassThru -WindowStyle Hidden
+    $runtime.dashboardPid = $dashProc.Id
+}
+
 $runtime | ConvertTo-Json -Depth 8 | Set-Content -Path $pidFile -Encoding UTF8
 
 Write-Host "Dev lab started successfully."
-Write-Host "Admin UI: $AdminUrl"
-Write-Host "Simulator REST: http://127.0.0.1:$RestPort/uhppote/simulator"
-Write-Host "Simulator UI: http://127.0.0.1:$RestPort/uhppote/simulator"
+Write-Host "Admin UI:       $AdminUrl"
+Write-Host "Simulator UI:   http://127.0.0.1:$RestPort/uhppote/simulator"
+Write-Host "Test Dashboard: http://127.0.0.1:3100"
 Write-Host "Stop with: npm run devlab:stop"
 
 if (-not $NoOpenBrowser) {
     Start-Process $AdminUrl | Out-Null
     Start-Process "http://127.0.0.1:$RestPort/uhppote/simulator" | Out-Null
+    Start-Sleep -Milliseconds 500
+    Start-Process "http://127.0.0.1:3100" | Out-Null
 }

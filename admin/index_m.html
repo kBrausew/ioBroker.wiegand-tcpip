@@ -185,7 +185,8 @@
                     <label for="card_filter_controller" class="translate">card_filter_controller</label>
                 </div>
                 <div class="col s12 m4 l4" style="padding-top: 12px;">
-                    <a class="btn waves-effect waves-light translate" id="card_refresh_table">card_action_refresh</a>
+                    <a class="btn waves-effect waves-light translate" id="card_refresh_table">card_action_reload</a>
+                    <a class="btn waves-effect waves-light green darken-1 translate" id="card_action_new" style="margin-left: 8px;">card_action_new</a>
                 </div>
             </div>
 
@@ -213,7 +214,7 @@
             <div class="row card-panel ops-panel">
                 <p class="col s12 translate">card_form_title</p>
                 <div class="input-field col s12 m6 l3">
-                    <input id="card_form_number" type="number" placeholder="10058400" readonly />
+                    <input id="card_form_number" type="number" placeholder="10058400" />
                     <label for="card_form_number" class="active translate">card_form_number_label</label>
                 </div>
                 <div class="input-field col s12 m6 l3">
@@ -268,9 +269,9 @@
                         <span class="translate">migration_read_selected_controllers</span>
                     </label>
                 </div>
-                <div class="input-field col s12 m6 l4">
-                    <input id="migration_controller_ids" type="text" placeholder="405419896,405419897" />
-                    <label for="migration_controller_ids" class="translate">migration_controller_ids_label</label>
+                <div class="col s12 m6 l4" id="migration_controller_checkboxes_wrap" style="padding-top: 8px;">
+                    <p style="margin: 0 0 4px; font-size: 13px;" class="translate">migration_controller_ids_label</p>
+                    <div id="migration_controller_checkboxes"></div>
                 </div>
                 <div class="col s12 action-row">
                     <a class="btn waves-effect waves-light translate" id="migration_read_apply">migration_read_apply</a>

@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 const axios = require("axios");
+const { ensureTestUI } = require("./ensure-testui");
 
 const ADAPTER_ROOT = path.join(__dirname, "..");
 const SIMULATOR_EXE = path.join(
@@ -170,6 +171,7 @@ async function run() {
   console.log(`Simulator REST reachable: ${SIMULATOR_BASE}`);
   console.log(`Controllers seeded: ${CONTROLLERS.join(", ")}`);
   console.log(`Card events seeded: ${TEST_CARDS.length}`);
+  await ensureTestUI();
 }
 
 (async () => {

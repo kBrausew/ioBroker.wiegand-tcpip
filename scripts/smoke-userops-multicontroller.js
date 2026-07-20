@@ -1,5 +1,6 @@
 const { spawn } = require("node:child_process");
 const path = require("node:path");
+const { ensureTestUI } = require("./ensure-testui");
 
 const ADAPTER_ROOT = path.join(__dirname, "..");
 
@@ -49,7 +50,7 @@ async function run() {
   // The regression suite is stateful and several user-ops checks rely on earlier setup tests.
   // Running the full simulator regression here is slower but stable and representative.
   await runCommand("npm.cmd", ["run", "test:regression"]);
-
+  await ensureTestUI();
   console.log("User-Ops multicontroller smoke passed.");
 }
 

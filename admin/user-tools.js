@@ -73,6 +73,10 @@
         self.refreshCardTable();
       });
 
+      $("#card_action_new").click(() => {
+        self.newCard();
+      });
+
       $(document).on("click", ".card-table-row", function () {
         const cardNumber = $(this).data("card-number");
         self.editCard(cardNumber);
@@ -117,12 +121,17 @@
 
     populateControllerFilter() {
       const controllers = new Set();
+      // From loaded cards
       for (const card of this.cards) {
         if (card.controllerAccess && typeof card.controllerAccess === "object") {
           for (const ctrlId of Object.keys(card.controllerAccess)) {
             controllers.add(parseInt(ctrlId, 10));
           }
         }
+      }
+      // From configured controllers (window.controllers set by index_m.js)
+      for (const ctrl of (window.controllers || [])) {
+        if (ctrl.serial) controllers.add(parseInt(ctrl.serial, 10));
       }
 
       const $select = $("#card_filter_controller");
@@ -205,7 +214,7 @@
       if (!card) return;
 
       this.selectedCard = card;
-      $("#card_form_number").val(card.cardNumber);
+      $("#card_form_number").val(card.cardNumber).prop("readonly", true);
       $("#card_form_username").val(card.username || "");
       $("#card_form_pin").val(card.pin || "");
       $("#card_form_status").val(card.status || "active");
@@ -323,9 +332,19 @@
       }
     }
 
+    newCard() {
+      this.selectedCard = null;
+      $("#card_form_number").val("").prop("readonly", false);
+      $("#card_form_username").val("");
+      $("#card_form_pin").val("");
+      $("#card_form_status").val("active");
+      this.renderControllerCheckboxes({ controllerAccess: {} });
+      $("#card_form_number").focus();
+    }
+
     clearForm() {
       this.selectedCard = null;
-      $("#card_form_number").val("");
+      $("#card_form_number").val("").prop("readonly", true);
       $("#card_form_username").val("");
       $("#card_form_pin").val("");
       $("#card_form_status").val("active");
@@ -354,15 +373,16 @@
       const self = this;
 
       $("#migration_read_mode_all").on("change", () => {
-        $("#migration_controller_ids").prop("disabled", true);
+        $("#migration_controller_checkboxes_wrap").hide();
       });
 
       $("#migration_read_mode_selected").on("change", () => {
-        $("#migration_controller_ids").prop("disabled", false);
+        $("#migration_controller_checkboxes_wrap").show();
       });
 
       // Default: select all
       $("#migration_read_mode_all").prop("checked", true).trigger("change");
+      this.populateMigrationControllerCheckboxes();
 
       $("#migration_read_apply").click(() => {
         self.readControllers();
@@ -385,10 +405,31 @@
       });
     }
 
+    populateMigrationControllerCheckboxes() {
+      const $container = $("#migration_controller_checkboxes");
+      $container.empty();
+      const configuredControllers = (window.controllers || []).filter((c) => c.serial);
+      if (configuredControllers.length === 0) {
+        $container.append($("<span>").addClass("grey-text").text(t("card_form_no_controllers")));
+        return;
+      }
+      for (const ctrl of configuredControllers) {
+        const ctrlId = ctrl.serial.toString();
+        const $label = $("<label>").css("display", "block").css("margin-bottom", "4px").append(
+          $("<input>")
+            .attr("type", "checkbox")
+            .attr("data-ctrl", ctrlId)
+            .addClass("migration-ctrl-checkbox"),
+          $("<span>").text(` Controller ${ctrlId}`)
+        );
+        $container.append($label);
+      }
+    }
+
     readControllers() {
       const self = this;
       const readAll = $("#migration_read_mode_all").is(":checked");
-      const controllerIds = readAll ? [] : parseCsvNumbers($("#migration_controller_ids").val());
+      const controllerIds = readAll ? [] : $(".migration-ctrl-checkbox:checked").map(function() { return parseInt($(this).data("ctrl"), 10); }).get();
 
       sendTo(null, "migrationReadControllers", { readAll, controllerIds }, function (result) {
         if (result && !result.error) {

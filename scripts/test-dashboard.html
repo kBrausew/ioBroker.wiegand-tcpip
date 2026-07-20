@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UHPPOTE Test Dashboard</title>
+  <style>
+    :root {
+      --bg: #1e1e2e;
+      --surface: #2a2a3e;
+      --border: #3a3a5e;
+      --green: #4caf50;
+      --red: #ef5350;
+      --yellow: #ffb300;
+      --blue: #42a5f5;
+      --text: #e0e0e0;
+      --muted: #888;
+      --pass: #1b5e20;
+      --fail: #b71c1c;
+      --running: #1a237e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; font-size: 14px; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--green);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 18px; color: var(--green); }
+    header .subtitle { color: var(--muted); font-size: 12px; }
+    .sim-link { margin-left: auto; color: var(--blue); text-decoration: none; font-size: 13px; }
+    .sim-link:hover { text-decoration: underline; }
+    #sim-status { font-size: 12px; padding: 3px 10px; border-radius: 12px; background: var(--border); }
+    #sim-status.ok { background: var(--pass); color: #a5d6a7; }
+    #sim-status.err { background: var(--fail); color: #ef9a9a; }
+
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; max-width: 1400px; }
+
+    section { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    section.full { grid-column: 1 / -1; }
+
+    .sec-header { background: var(--border); padding: 8px 14px; font-weight: bold; font-size: 13px; color: var(--blue); display: flex; justify-content: space-between; align-items: center; }
+    .sec-body { padding: 12px; }
+
+    /* Buttons */
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      border: none; border-radius: 4px; padding: 7px 14px; font-size: 13px;
+      cursor: pointer; color: white; transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    .btn-sim   { background: #2e7d32; }
+    .btn-deny  { background: #b71c1c; }
+    .btn-warn  { background: #e65100; }
+    .btn-blue  { background: #1565c0; }
+    .btn-grey  { background: #455a64; }
+    .btn-test  { background: #4527a0; }
+    .btn-clear { background: #37474f; font-size: 12px; padding: 4px 10px; }
+
+    /* Controller selector */
+    .ctrl-sel { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+    .ctrl-sel label { color: var(--muted); font-size: 12px; }
+    select {
+      background: var(--bg); color: var(--text); border: 1px solid var(--border);
+      border-radius: 4px; padding: 4px 8px; font-size: 13px;
+    }
+    input[type=number], input[type=text] {
+      background: var(--bg); color: var(--text); border: 1px solid var(--border);
+      border-radius: 4px; padding: 4px 8px; font-size: 13px; width: 120px;
+    }
+
+    /* Output log */
+    #log {
+      background: #0d0d1a;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px;
+      height: 320px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-ts { color: #555; }
+    .log-ok  { color: var(--green); }
+    .log-err { color: var(--red); }
+    .log-warn{ color: var(--yellow); }
+    .log-info{ color: var(--blue); }
+    .log-head{ color: #ce93d8; font-weight: bold; }
+
+    /* Suite status badges */
+    .suite-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .suite-row:last-child { border-bottom: none; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+    .badge-idle    { background: var(--border); color: var(--muted); }
+    .badge-running { background: var(--running); color: #90caf9; }
+    .badge-pass    { background: var(--pass); color: #a5d6a7; }
+    .badge-fail    { background: var(--fail); color: #ef9a9a; }
+
+    /* Sim result toast */
+    #toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 18px; border-radius: 6px; font-size: 13px; display: none; z-index: 99; }
+    #toast.ok  { background: #2e7d32; color: white; }
+    #toast.err { background: #b71c1c; color: white; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>UHPPOTE Test Dashboard</h1>
+    <div class="subtitle">Companion to Simulator UI · DevLab V2.0.0</div>
+  </div>
+  <span id="sim-status">Simulator ...</span>
+  <a class="sim-link" href="http://127.0.0.1:18000/uhppote/simulator" target="_blank">→ Simulator UI</a>
+  <a class="sim-link" href="http://127.0.0.1:8081" target="_blank">→ Admin UI</a>
+</header>
+
+<main>
+
+  <!-- ══ Simulator-Szenarien ══════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-header">
+      Simulator-Szenarien
+      <button class="btn-clear" onclick="seedTestData()">Testdaten seeden</button>
+    </div>
+    <div class="sec-body">
+      <div class="ctrl-sel">
+        <label>Controller:</label>
+        <select id="ctrl-sel">
+          <option value="405419896">405419896 (C1)</option>
+          <option value="405419897">405419897 (C2)</option>
+        </select>
+        <label>Tür:</label>
+        <select id="door-sel">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn-sim"  onclick="swipe(10058400, 1357)">Swipe AUTH (10058400)</button>
+        <button class="btn-deny" onclick="swipe(10059999, 0)">Swipe DENY (10059999)</button>
+        <button class="btn-warn" onclick="swipe(99999999, 0)">Swipe UNBEKANNT</button>
+      </div>
+      <br/>
+      <div class="ctrl-sel">
+        <label>Karte:</label>
+        <input type="number" id="custom-card" value="10058400" />
+        <label>PIN:</label>
+        <input type="number" id="custom-pin" value="1357" />
+        <button class="btn-blue" onclick="swipeCustom()">Swipe Custom</button>
+      </div>
+      <br/>
+      <div class="btn-group">
+        <button class="btn-blue" onclick="checkTestCards()">Testkarten prüfen</button>
+        <button class="btn-grey" onclick="listControllers()">Controller Status</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Test-Suites ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-header">Test-Suites</div>
+    <div class="sec-body">
+      <div class="suite-row">
+        <div>
+          <strong>Unit Tests</strong>
+          <div style="color:var(--muted);font-size:11px">lib/tools.test.js</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-test:unit" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('test:unit')">Run</button>
+        </div>
+      </div>
+      <div class="suite-row">
+        <div>
+          <strong>Package Tests</strong>
+          <div style="color:var(--muted);font-size:11px">test/package/</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-test:package" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('test:package')">Run</button>
+        </div>
+      </div>
+      <div class="suite-row">
+        <div>
+          <strong>Regression (Simulator)</strong>
+          <div style="color:var(--muted);font-size:11px">test/regression.simulator.js</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-test:regression" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('test:regression')">Run</button>
+        </div>
+      </div>
+      <div class="suite-row">
+        <div>
+          <strong>Smoke: Multicontroller</strong>
+          <div style="color:var(--muted);font-size:11px">scripts/smoke-multicontroller.js</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-smoke:multicontroller" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('smoke:multicontroller')">Run</button>
+        </div>
+      </div>
+      <div class="suite-row">
+        <div>
+          <strong>Smoke: User Ops</strong>
+          <div style="color:var(--muted);font-size:11px">scripts/smoke-userops-multicontroller.js</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-smoke:userops" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('smoke:userops')">Run</button>
+        </div>
+      </div>
+      <div class="suite-row">
+        <div>
+          <strong>TypeScript Check</strong>
+          <div style="color:var(--muted);font-size:11px">tsc --noEmit</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="badge-check" class="badge badge-idle">idle</span>
+          <button class="btn-test" onclick="runSuite('check')">Run</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Output Log ══════════════════════════════════════════════════════ -->
+  <section class="full">
+    <div class="sec-header">
+      Output
+      <button class="btn-clear" onclick="clearLog()">Leeren</button>
+    </div>
+    <div class="sec-body">
+      <div id="log"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+  const SIM = 'http://127.0.0.1:3100/sim';
+  const API = 'http://127.0.0.1:3100';
+
+  // ── Log helper ──────────────────────────────────────────────────────────
+  function logLine(cls, text) {
+    const el = document.getElementById('log');
+    const ts = new Date().toTimeString().slice(0,8);
+    el.insertAdjacentHTML('beforeend',
+      `<span class="log-ts">[${ts}]</span> <span class="${cls}">${escHtml(text)}</span>\n`
+    );
+    el.scrollTop = el.scrollHeight;
+  }
+  function clearLog() { document.getElementById('log').textContent = ''; }
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function toast(msg, ok) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = ok ? 'ok' : 'err';
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  }
+
+  // ── Simulator status ping ───────────────────────────────────────────────
+  async function checkSim() {
+    const el = document.getElementById('sim-status');
+    try {
+      const r = await fetch(`${SIM}/uhppote/simulator`, { signal: AbortSignal.timeout(2000) });
+      if (r.ok) { el.textContent = 'Simulator OK'; el.className = 'ok'; }
+      else       { el.textContent = `Simulator ${r.status}`; el.className = 'err'; }
+    } catch { el.textContent = 'Simulator offline'; el.className = 'err'; }
+  }
+  setInterval(checkSim, 10000);
+  checkSim();
+
+  // ── Simulator scenarios ─────────────────────────────────────────────────
+  function ctrl() { return document.getElementById('ctrl-sel').value; }
+  function door() { return parseInt(document.getElementById('door-sel').value); }
+
+  async function swipe(cardNr, pin) {
+    logLine('log-head', `Swipe card ${cardNr} → Controller ${ctrl()}, Tür ${door()}`);
+    try {
+      const r = await fetch(`${SIM}/uhppote/simulator/${ctrl()}/swipe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ door: door(), 'card-number': cardNr, PIN: pin })
+      });
+      const json = await r.json();
+      const granted = json['access-granted'];
+      logLine(granted ? 'log-ok' : 'log-err',
+        `  → ${granted ? 'ZUGANG GEWÄHRT' : 'ZUGANG VERWEIGERT'}: ${json.message || ''}`);
+      toast(granted ? `Zugang gewährt (${cardNr})` : `Verweigert (${cardNr})`, granted);
+    } catch (e) { logLine('log-err', `  Fehler: ${e.message}`); }
+  }
+
+  function swipeCustom() {
+    const card = parseInt(document.getElementById('custom-card').value);
+    const pin  = parseInt(document.getElementById('custom-pin').value) || 0;
+    swipe(card, pin);
+  }
+
+  // Simulator REST hat kein GET /cards — Testkarten via Probe-Swipe prüfen
+  async function checkTestCards() {
+    const TEST_CARDS = [10058400, 10059999, 10051111];
+    logLine('log-head', `Testkarten-Check auf Controller ${ctrl()}...`);
+    for (const cardNr of TEST_CARDS) {
+      try {
+        const r = await fetch(`${SIM}/uhppote/simulator/${ctrl()}/swipe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ door: door(), 'card-number': cardNr, PIN: 0 })
+        });
+        const json = await r.json();
+        const granted = json['access-granted'];
+        logLine(granted ? 'log-ok' : 'log-warn',
+          `  Karte ${cardNr}: ${granted ? 'berechtigt' : 'nicht berechtigt'} (${json.message || ''})`);
+      } catch (e) { logLine('log-err', `  Karte ${cardNr}: Fehler: ${e.message}`); }
+    }
+  }
+
+  async function listControllers() {
+    logLine('log-head', 'Controller Status abfragen...');
+    try {
+      const r = await fetch(`${SIM}/uhppote/simulator`);
+      const json = await r.json();
+      logLine('log-info', '  ' + JSON.stringify(json, null, 2));
+    } catch (e) { logLine('log-err', `  Fehler: ${e.message}`); }
+  }
+
+  async function seedTestData() {
+    const cards = [
+      { ctrl: '405419896', card: 10058400, pin: 1357, doors: [1] },
+      { ctrl: '405419897', card: 10058400, pin: 1357, doors: [1] },
+      { ctrl: '405419896', card: 10059999, pin: 0,    doors: []  },
+      { ctrl: '405419896', card: 10051111, pin: 0,    doors: [1] },
+      { ctrl: '405419897', card: 10051111, pin: 0,    doors: [1] },
+    ];
+    logLine('log-head', 'Seede Testdaten...');
+    for (const c of cards) {
+      try {
+        await fetch(`${SIM}/uhppote/simulator/${c.ctrl}/cards/${c.card}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 'start-date': '2000-01-01', 'end-date': '2099-12-31', doors: c.doors, PIN: c.pin })
+        });
+        logLine('log-ok', `  Karte ${c.card} → Controller ${c.ctrl} gesetzt`);
+      } catch (e) { logLine('log-err', `  Fehler ${c.card}: ${e.message}`); }
+    }
+    logLine('log-ok', 'Seeding abgeschlossen');
+  }
+
+  // ── Test suite runner (SSE) ─────────────────────────────────────────────
+  function setBadge(suite, state) {
+    const el = document.getElementById(`badge-${suite}`);
+    if (!el) return;
+    el.className = 'badge badge-' + state;
+    el.textContent = state;
+  }
+
+  function runSuite(suite) {
+    setBadge(suite, 'running');
+    logLine('log-head', `═══ ${suite} ═══`);
+
+    const es = new EventSource(`${API}/run/${suite}`);
+    es.onmessage = (e) => {
+      const { type, data } = JSON.parse(e.data);
+      if (type === 'stdout') logLine('log-info', data);
+      else if (type === 'stderr') logLine('log-warn', data);
+      else if (type === 'done') {
+        const passed = data === 'PASSED';
+        setBadge(suite, passed ? 'pass' : 'fail');
+        logLine(passed ? 'log-ok' : 'log-err', `  ▶ ${data}`);
+        es.close();
+      }
+      else if (type === 'error') {
+        setBadge(suite, 'fail');
+        logLine('log-err', `  Fehler: ${data}`);
+        es.close();
+      }
+    };
+    es.onerror = () => { setBadge(suite, 'fail'); es.close(); };
+  }
+</script>
+</body>
+</html>
