@@ -217,7 +217,6 @@ Write-Host "Stop with: npm run devlab:stop"
 
 if (-not $NoOpenBrowser) {
     Start-Process $AdminUrl | Out-Null
-    Start-Process "http://127.0.0.1:$RestPort/uhppote/simulator" | Out-Null
     Start-Sleep -Milliseconds 500
     Start-Process "http://127.0.0.1:3100" | Out-Null
 }
