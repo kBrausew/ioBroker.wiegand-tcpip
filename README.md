@@ -129,19 +129,19 @@ npx @iobroker/dev-server setup
 
 Start/Stop overview:
 ```bash
-# one-shot smoke run (start -> verify -> stop automatically)
-npm run smoke:multicontroller
+    # one-shot smoke run (start -> verify -> stop automatically)
+    npm run smoke:multicontroller
 
-# user-ops multicontroller smoke (runs full simulator regression for stable user-ops coverage)
-npm run smoke:userops
+    # user-ops multicontroller smoke (runs full simulator regression for stable user-ops coverage)
+    npm run smoke:userops
 
-# persistent dev lab
-npm run devlab:start
-# open http://127.0.0.1:8081
-npm run devlab:stop
+    # persistent dev lab
+    npm run devlab:start
+    # open http://127.0.0.1:8081
+    npm run devlab:stop
 
-# stop alias
-npm run smoke:stop
+    # stop alias  
+    npm run smoke:stop
 ```
 
 Behavior notes:
