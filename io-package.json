@@ -1,11 +1,20 @@
 {
   "common": {
     "name": "wiegand-tcpip",
-    "version": "2.0.0",
+    "version": "1.0.1",
     "news": {
-      "2.0.0": {
-        "en": "Feature release: user management foundation and event card merge",
-        "de": "Feature-Release: User-Management-Grundlagen und Event-Card-Merge"
+      "1.0.1": {
+        "en": "Bugfix: controller heartbeat crash when serial number passed as string to UHPPOTE API",
+        "de": "Bugfix: Controller-Heartbeat-Absturz wenn Seriennummer als String an UHPPOTE-API übergeben wurde",
+        "ru": "Исправление: сбой пульса контроллера при передаче серийного номера как строки",
+        "pt": "Correção: falha no heartbeat do controlador ao passar número de série como string",
+        "nl": "Bugfix: controller heartbeat crash bij serienummer als string",
+        "fr": "Correction: crash du heartbeat du contrôleur avec numéro de série en string",
+        "it": "Bugfix: crash del heartbeat del controller con numero di serie come stringa",
+        "es": "Corrección: fallo en heartbeat del controlador con número de serie como cadena",
+        "pl": "Poprawka: awaria heartbeat kontrolera przy numerze seryjnym jako string",
+        "uk": "Виправлення: збій пульсу контролера при передачі серійного номера як рядка",
+        "zh-cn": "修复：控制器心跳序列号以字符串传递时崩溃"
       },
       "1.0.0": {
         "en": "Node.js >=22, js-controller >=6.0.11, ESLint 9, NPM Trusted Publishing, Dependabot setup",
