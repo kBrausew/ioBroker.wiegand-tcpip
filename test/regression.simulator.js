@@ -712,6 +712,43 @@ tests.integration(path.join(__dirname, ".."), {
         );
       });
 
+      it("cardDelete removes card from controller", async function () {
+        this.timeout(40000);
+
+        const cardNumber = 47776666;
+
+        // Create and push card to controller
+        await sendToAsync(harness, "cardUpsert", {
+          card: {
+            cardNumber,
+            username: "Delete QA",
+            pin: "6666",
+            controllerAccess: { [CONTROLLER_ID]: [1] },
+          },
+        });
+        await sendToAsync(harness, "cardPush", { cardNumber });
+
+        // Verify card is on controller (swipe should be granted)
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1, "card-number": cardNumber, direction: 1, PIN: 6666,
+        });
+        await waitForState(harness, `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastGranted`,
+          (state) => state.val === true, 15000);
+
+        // Delete card (should remove from controller too)
+        const deleteResponse = await sendToAsync(harness, "cardDelete", { cardNumber });
+        if (!deleteResponse || deleteResponse.error || !deleteResponse.deleted) {
+          throw new Error(`cardDelete failed: ${JSON.stringify(deleteResponse)}`);
+        }
+
+        // Swipe again — card no longer on controller, access must be denied
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1, "card-number": cardNumber, direction: 1, PIN: 6666,
+        });
+        await waitForState(harness, `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastGranted`,
+          (state) => state.val === false, 15000);
+      });
+
       it("supports user management commands and event-based card merge", async function () {
         this.timeout(40000);
 
