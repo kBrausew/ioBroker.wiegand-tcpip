@@ -88,6 +88,7 @@
     "smoke:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-multicontroller-smoke.ps1",
     "smoke:multicontroller": "node ./scripts/smoke-multicontroller.js",
     "smoke:userops": "node ./scripts/smoke-userops-multicontroller.js",
+    "usertest": "npm run smoke:userops",
     "smoke:stop": "npm run devlab:stop",
     "devlab:start": "powershell -ExecutionPolicy Bypass -File ./scripts/start-multicontroller-devlab.ps1",
     "devlab:stop": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-multicontroller-devlab.ps1",
