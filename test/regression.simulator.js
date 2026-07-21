@@ -565,6 +565,27 @@ tests.integration(path.join(__dirname, ".."), {
         }
       });
 
+      it("reads cards from controllers via migrationReadControllers", async function () {
+        this.timeout(30000);
+
+        const response = await sendToAsync(harness, "migrationReadControllers", {
+          readAll: true,
+          controllerIds: [],
+        });
+
+        if (!response || response.error || !Array.isArray(response.cardsFromControllers)) {
+          throw new Error(`migrationReadControllers failed: ${JSON.stringify(response)}`);
+        }
+
+        const hasAuthCard = response.cardsFromControllers.some((card) =>
+          Number(card?.cardNumber) === AUTH_CARD,
+        );
+
+        if (!hasAuthCard) {
+          throw new Error(`migrationReadControllers did not return expected card ${AUTH_CARD}: ${JSON.stringify(response)}`);
+        }
+      });
+
       it("supports cardUpsert + cardPush to controller", async function () {
         this.timeout(40000);
 

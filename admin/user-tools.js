@@ -344,7 +344,7 @@
                 self.markUnsynced(-1);
               } else {
                 // No controllers with access defined — saved in DB only
-                M.toast({ html: t("op-ok") });
+                M.toast({ html: t("card_push_none") });
                 self.markUnsynced(1);
               }
             } else {
