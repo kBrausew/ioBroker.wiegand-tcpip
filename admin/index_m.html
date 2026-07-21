@@ -280,17 +280,7 @@
                 </div>
             </div>
 
-            <!-- Migration Tabs: Phase 1 & Phase 2 -->
-            <div class="row">
-                <div class="col s12">
-                    <ul class="tabs" style="background: #e8f5e9; border-bottom: 2px solid #4caf50;">
-                        <li class="tab col s6 m3 l2"><a href="#migration_phase1" class="translate">migration_phase1_tab</a></li>
-                        <li class="tab col s6 m3 l2"><a href="#migration_phase2" class="translate">migration_phase2_tab</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Migration Phase 1: Auto-Import -->
+            <!-- Migration One-Step Import -->
             <div id="migration_phase1" class="row card-panel" style="margin-top: 16px;">
                 <p class="col s12 translate">migration_phase1_title</p>
                 <p class="col s12 translate" style="font-size: 12px; color: #666;">migration_phase1_desc</p>
@@ -302,6 +292,7 @@
                                 <tr>
                                     <th class="translate">migration_phase1_cardnumber</th>
                                     <th class="translate">migration_phase1_controllers</th>
+                                    <th class="translate">migration_phase2_username</th>
                                     <th class="translate">migration_phase1_status</th>
                                 </tr>
                             </thead>
@@ -313,32 +304,6 @@
                 <div class="col s12 action-row" style="margin-top: 16px;">
                     <a class="btn waves-effect waves-light green translate" id="migration_phase1_confirm">migration_phase1_confirm</a>
                     <a class="btn waves-effect waves-light grey translate" id="migration_phase1_cancel">migration_cancel</a>
-                </div>
-            </div>
-
-            <!-- Migration Phase 2: Username Assignment -->
-            <div id="migration_phase2" class="row card-panel" style="margin-top: 16px;">
-                <p class="col s12 translate">migration_phase2_title</p>
-                <p class="col s12 translate" style="font-size: 12px; color: #666;">migration_phase2_desc</p>
-
-                <div class="col s12">
-                    <div class="card-table-wrap" style="overflow-x: auto;">
-                        <table class="striped highlight" id="migration_phase2_table">
-                            <thead>
-                                <tr>
-                                    <th class="translate">migration_phase2_cardnumber</th>
-                                    <th class="translate">migration_phase2_username</th>
-                                    <th class="translate">migration_phase2_assigned</th>
-                                </tr>
-                            </thead>
-                            <tbody id="migration_phase2_body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="col s12 action-row" style="margin-top: 16px;">
-                    <a class="btn waves-effect waves-light blue translate" id="migration_phase2_assign_all">migration_phase2_assign_all</a>
-                    <a class="btn waves-effect waves-light grey translate" id="migration_phase2_done">migration_done</a>
                 </div>
             </div>
 

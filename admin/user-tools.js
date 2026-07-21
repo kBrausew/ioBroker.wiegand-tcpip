@@ -423,8 +423,6 @@
   class MigrationPanel {
     constructor() {
       this.cardsFromControllers = [];
-      this.phase1Completed = false;
-      this.phase2Data = [];
     }
 
     async initialize() {
@@ -455,19 +453,11 @@
       });
 
       $("#migration_phase1_confirm").click(() => {
-        self.confirmPhase1();
+        self.applyMigrationOneStep();
       });
 
       $("#migration_phase1_cancel").click(() => {
         self.cancelMigration();
-      });
-
-      $("#migration_phase2_assign_all").click(() => {
-        self.assignAllPhase2();
-      });
-
-      $("#migration_phase2_done").click(() => {
-        self.finalizeMigration();
       });
     }
 
@@ -500,7 +490,6 @@
       sendTo(null, "migrationReadControllers", { readAll, controllerIds }, function (result) {
         if (result && !result.error) {
           self.cardsFromControllers = result.cardsFromControllers || [];
-          self.phase1Completed = false;
           self.renderPhase1Table();
           M.toast({ html: `Found ${self.cardsFromControllers.length} cards` });
         } else {
@@ -518,22 +507,41 @@
         const $row = $("<tr>").append(
           $("<td>").text(card.cardNumber),
           $("<td>").text((card.controllers || []).join(", ")),
+          $("<td>").append(
+            $("<input>")
+              .attr("type", "text")
+              .attr("data-migration-username", card.cardNumber)
+              .val(card.username || "")
+              .css("margin", "0")
+              .css("height", "2rem")
+              .css("font-size", "13px")
+              .attr("placeholder", "username")
+          ),
           $("<td>").text(t("migration_phase1_status") + ": Ready")
         );
         $tbody.append($row);
       }
     }
 
-    confirmPhase1() {
+    applyMigrationOneStep() {
       const self = this;
 
-      sendTo(null, "migrationApply", { cardsFromControllers: this.cardsFromControllers, mode: "overwrite" }, function (result) {
+      const cardsForApply = (this.cardsFromControllers || []).map((card) => {
+        const username = String($(`input[data-migration-username="${card.cardNumber}"]`).val() || "").trim();
+        return {
+          ...card,
+          username: username || null,
+        };
+      });
+
+      sendTo(null, "migrationApply", { cardsFromControllers: cardsForApply, mode: "overwrite" }, function (result) {
         if (result && !result.error) {
-          self.phase1Completed = true;
           const importedCount = result.result.imported || 0;
           const updatedCount = result.result.updated || 0;
-          M.toast({ html: `Imported: ${importedCount}, Updated: ${updatedCount}` });
-          self.preparePhase2();
+          const removedCount = result.result.removed || 0;
+          M.toast({ html: `Imported: ${importedCount}, Updated: ${updatedCount}, Removed: ${removedCount}` });
+          self.cardsFromControllers = cardsForApply;
+          self.cancelMigration();
         } else {
           const msg = result?.err?.message || t("unknow-message");
           M.toast({ html: msg });
@@ -541,79 +549,9 @@
       });
     }
 
-    preparePhase2() {
-      // Phase 2 shows the imported cards for username assignment
-      this.phase2Data = this.cardsFromControllers.map((card) => ({
-        cardNumber: card.cardNumber,
-        username: "",
-        assigned: false,
-      }));
-      this.renderPhase2Table();
-    }
-
-    renderPhase2Table() {
-      const $tbody = $("#migration_phase2_body");
-      $tbody.empty();
-
-      for (const item of this.phase2Data) {
-        const $row = $("<tr>").append(
-          $("<td>").text(item.cardNumber),
-          $("<td>").append(
-            $("<input>")
-              .attr("type", "text")
-              .data("card-number", item.cardNumber)
-              .val(item.username)
-              .on("change", (e) => {
-                item.username = $(e.target).val();
-              })
-              .addClass("form-control")
-              .css("width", "100%")
-          ),
-          $("<td>").text(item.assigned ? "✓" : "-")
-        );
-        $tbody.append($row);
-      }
-    }
-
-    assignAllPhase2() {
-      const self = this;
-
-      // Collect all username assignments
-      for (const item of this.phase2Data) {
-        const $input = $(`input[data-card-number="${item.cardNumber}"]`);
-        item.username = $input.val() || "";
-        if (item.username.length > 0) {
-          item.assigned = true;
-        }
-      }
-
-      // Update cards with usernames (async)
-      let completed = 0;
-      for (const item of this.phase2Data) {
-        if (item.assigned) {
-          sendTo(null, "cardUpsert", { card: { cardNumber: item.cardNumber, username: item.username } }, function (result) {
-            completed++;
-            if (completed === self.phase2Data.filter((i) => i.assigned).length) {
-              M.toast({ html: "Username assignments completed" });
-            }
-          });
-        }
-      }
-
-      this.renderPhase2Table();
-    }
-
-    finalizeMigration() {
-      M.toast({ html: "Migration complete" });
-      this.cancelMigration();
-    }
-
     cancelMigration() {
       this.cardsFromControllers = [];
-      this.phase1Completed = false;
-      this.phase2Data = [];
       $("#migration_phase1_body").empty();
-      $("#migration_phase2_body").empty();
       $("#migration_diff_body").empty();
     }
   }
