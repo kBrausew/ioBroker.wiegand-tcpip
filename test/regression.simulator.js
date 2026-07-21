@@ -565,6 +565,132 @@ tests.integration(path.join(__dirname, ".."), {
         }
       });
 
+      it("supports cardUpsert + cardPush to controller", async function () {
+        this.timeout(40000);
+
+        const cardNumber = 45554444;
+
+        const upsertResponse = await sendToAsync(harness, "cardUpsert", {
+          card: {
+            cardNumber,
+            username: "Card Push QA",
+            pin: "4444",
+            controllerAccess: {
+              [CONTROLLER_ID]: [1],
+            },
+          },
+        });
+
+        if (!upsertResponse || upsertResponse.error || !upsertResponse.card) {
+          throw new Error(`cardUpsert failed: ${JSON.stringify(upsertResponse)}`);
+        }
+
+        const pushResponse = await sendToAsync(harness, "cardPush", { cardNumber });
+
+        if (!pushResponse || pushResponse.error) {
+          throw new Error(`cardPush failed: ${JSON.stringify(pushResponse)}`);
+        }
+
+        if (Number(pushResponse.pushed || 0) < 1) {
+          throw new Error(`cardPush should push to at least one controller: ${JSON.stringify(pushResponse)}`);
+        }
+
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID}/swipe`, {
+          door: 1,
+          "card-number": cardNumber,
+          direction: 1,
+          PIN: 4444,
+        });
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastSwipe`,
+          (state) => state.val === cardNumber,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID}.1.lastGranted`,
+          (state) => state.val === true,
+          20000,
+        );
+      });
+
+      it("returns error for cardPush with unknown cardNumber", async function () {
+        this.timeout(20000);
+
+        const response = await sendToAsync(harness, "cardPush", {
+          cardNumber: 99990001,
+        });
+
+        const errorMessage =
+          typeof response?.message === "string"
+            ? response.message
+            : typeof response?.err?.message === "string"
+              ? response.err.message
+              : "";
+
+        if (!response || response.error !== true || !errorMessage) {
+          throw new Error(`cardPush unknown-card should return error response: ${JSON.stringify(response)}`);
+        }
+
+        if (!errorMessage.includes("not found")) {
+          throw new Error(`cardPush unknown-card error message mismatch: ${JSON.stringify(response)}`);
+        }
+      });
+
+      it("supports cardSyncAll (Initialladung) and writes cards", async function () {
+        this.timeout(40000);
+
+        const cardNumber = 46665555;
+
+        const upsertResponse = await sendToAsync(harness, "cardUpsert", {
+          card: {
+            cardNumber,
+            username: "Initialladung QA",
+            pin: "5555",
+            controllerAccess: {
+              [CONTROLLER_ID_2]: [1],
+            },
+          },
+        });
+
+        if (!upsertResponse || upsertResponse.error || !upsertResponse.card) {
+          throw new Error(`cardUpsert failed before syncAll: ${JSON.stringify(upsertResponse)}`);
+        }
+
+        const syncAllResponse = await sendToAsync(harness, "cardSyncAll", {});
+        if (!syncAllResponse || syncAllResponse.error) {
+          throw new Error(`cardSyncAll failed: ${JSON.stringify(syncAllResponse)}`);
+        }
+
+        if (Number(syncAllResponse.cardCount || 0) < 1 || Number(syncAllResponse.pushed || 0) < 1) {
+          throw new Error(`cardSyncAll returned unexpected counters: ${JSON.stringify(syncAllResponse)}`);
+        }
+
+        await axios.post(`${getSimulatorRestBase()}/uhppote/simulator/${CONTROLLER_ID_2}/swipe`, {
+          door: 1,
+          "card-number": cardNumber,
+          direction: 1,
+          PIN: 5555,
+        });
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID_2}.1.lastSwipe`,
+          (state) => state.val === cardNumber,
+          20000,
+        );
+
+        await waitForState(
+          harness,
+          `wiegand-tcpip.0.controllers.${CONTROLLER_ID_2}.1.lastGranted`,
+          (state) => state.val === true,
+          20000,
+        );
+      });
+
       it("supports user management commands and event-based card merge", async function () {
         this.timeout(40000);
 
