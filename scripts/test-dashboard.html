@@ -168,7 +168,13 @@
 
   <!-- ══ Test-Suites ══════════════════════════════════════════════════════ -->
   <section>
-    <div class="sec-header">Test-Suites</div>
+    <div class="sec-header">
+      <span>Test-Suites</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="active-run" style="font-size:11px;color:var(--muted)">idle</span>
+        <button id="btn-stop-run" class="btn-deny" style="font-size:12px;padding:4px 10px" onclick="stopCurrentRun()" disabled>Stop</button>
+      </div>
+    </div>
     <div class="sec-body">
       <div class="suite-row">
         <div>
@@ -251,6 +257,36 @@
 <script>
   const SIM = 'http://127.0.0.1:3100/sim';
   const API = 'http://127.0.0.1:3100';
+  let runningSuite = null;
+  let runningEventSource = null;
+
+  function getSuiteButtons() {
+    return Array.from(document.querySelectorAll('.btn-test'));
+  }
+
+  function formatDuration(durationMs) {
+    const totalSeconds = Math.floor((durationMs || 0) / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+  }
+
+  function setRunUiState(active, suite) {
+    const stopButton = document.getElementById('btn-stop-run');
+    const activeRun = document.getElementById('active-run');
+
+    getSuiteButtons().forEach((btn) => {
+      btn.disabled = active;
+    });
+
+    if (stopButton) {
+      stopButton.disabled = !active;
+    }
+
+    if (activeRun) {
+      activeRun.textContent = active ? `running: ${suite}` : 'idle';
+    }
+  }
 
   // ── Log helper ──────────────────────────────────────────────────────────
   function logLine(cls, text) {
@@ -368,29 +404,105 @@
     el.textContent = state;
   }
 
-  function runSuite(suite) {
+  function finishRun(suite, state, message) {
+    setBadge(suite, state);
+    if (message) {
+      logLine(state === 'pass' ? 'log-ok' : 'log-err', `  ▶ ${message}`);
+    }
+    if (runningEventSource) {
+      runningEventSource.close();
+      runningEventSource = null;
+    }
+    runningSuite = null;
+    setRunUiState(false, null);
+  }
+
+  async function stopCurrentRun() {
+    if (!runningSuite) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API}/run/stop`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        logLine('log-warn', `Stop angefordert für ${runningSuite}`);
+        toast(`Stop angefordert: ${runningSuite}`, false);
+      } else {
+        logLine('log-err', `Stop fehlgeschlagen (${response.status})`);
+      }
+    } catch (error) {
+      logLine('log-err', `Stop-Fehler: ${error.message}`);
+    }
+  }
+
+  async function runSuite(suite) {
+    if (runningSuite) {
+      toast(`Suite läuft bereits: ${runningSuite}`, false);
+      return;
+    }
+
+    try {
+      const statusResponse = await fetch(`${API}/run/status`);
+      const status = await statusResponse.json();
+      if (status.running) {
+        runningSuite = status.suite || 'unknown';
+        setRunUiState(true, runningSuite);
+        toast(`Server meldet laufende Suite: ${runningSuite}`, false);
+        return;
+      }
+    } catch {
+      // Continue and let SSE connection decide.
+    }
+
+    runningSuite = suite;
+    setRunUiState(true, suite);
     setBadge(suite, 'running');
     logLine('log-head', `═══ ${suite} ═══`);
 
     const es = new EventSource(`${API}/run/${suite}`);
+    runningEventSource = es;
+
     es.onmessage = (e) => {
       const { type, data } = JSON.parse(e.data);
+
+      if (type === 'start') {
+        const startLine = typeof data === 'object' && data && data.command
+          ? `Running: ${data.command}`
+          : `Running: npm run ${suite}`;
+        logLine('log-info', startLine);
+        return;
+      }
+
       if (type === 'stdout') logLine('log-info', data);
       else if (type === 'stderr') logLine('log-warn', data);
       else if (type === 'done') {
-        const passed = data === 'PASSED';
-        setBadge(suite, passed ? 'pass' : 'fail');
-        logLine(passed ? 'log-ok' : 'log-err', `  ▶ ${data}`);
-        es.close();
+        const payload = (typeof data === 'object' && data)
+          ? data
+          : { status: String(data), code: String(data).startsWith('PASSED') ? 0 : 1, durationMs: 0, summary: { passing: 0, failing: 0 } };
+        const passed = Number(payload.code) === 0;
+        const duration = formatDuration(payload.durationMs);
+        const passCount = Number(payload.summary?.passing || 0);
+        const failCount = Number(payload.summary?.failing || 0);
+        const resultText = `${payload.status} · Dauer ${duration} · passing: ${passCount} · failing: ${failCount}`;
+        finishRun(suite, passed ? 'pass' : 'fail', resultText);
+        toast(`${suite}: ${payload.status}`, passed);
       }
       else if (type === 'error') {
-        setBadge(suite, 'fail');
-        logLine('log-err', `  Fehler: ${data}`);
-        es.close();
+        finishRun(suite, 'fail', `Fehler: ${data}`);
+        toast(`${suite}: ERROR`, false);
       }
     };
-    es.onerror = () => { setBadge(suite, 'fail'); es.close(); };
+
+    es.onerror = () => {
+      if (runningSuite === suite) {
+        finishRun(suite, 'fail', 'Verbindung zum Testlauf verloren');
+      }
+    };
   }
+
+  setRunUiState(false, null);
 </script>
 </body>
 </html>

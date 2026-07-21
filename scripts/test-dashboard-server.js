@@ -9,7 +9,6 @@
 "use strict";
 
 const http = require("http");
-const https = require("https");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -18,6 +17,7 @@ const DASHBOARD_PORT = 3100;
 const SIMULATOR_BASE = "http://127.0.0.1:18000";
 const ADAPTER_ROOT = path.join(__dirname, "..");
 const HTML_FILE = path.join(__dirname, "test-dashboard.html");
+let activeRun = null;
 
 // ─── Simple HTTP proxy helper ──────────────────────────────────────────────
 
@@ -50,7 +50,29 @@ function proxyToSimulator(req, res, simPath, method, body) {
 
 // ─── Spawn npm script and stream output as SSE ─────────────────────────────
 
+function updateSummaryFromLine(summary, line) {
+  const passingMatch = line.match(/\b(\d+)\s+passing\b/i);
+  if (passingMatch) {
+    summary.passing = Number(passingMatch[1]);
+  }
+
+  const failingMatch = line.match(/\b(\d+)\s+failing\b/i) || line.match(/\b(\d+)\s+failed\b/i);
+  if (failingMatch) {
+    summary.failing = Number(failingMatch[1]);
+  }
+}
+
 function runNpmScript(script, res) {
+  if (activeRun) {
+    res.writeHead(409, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    res.end(JSON.stringify({
+      error: "Another suite is already running",
+      activeSuite: activeRun.suite,
+      runId: activeRun.id,
+    }));
+    return;
+  }
+
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -62,31 +84,69 @@ function runNpmScript(script, res) {
     res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
   };
 
-  send("start", `Running: npm run ${script}`);
-
   const proc = spawn("npm", ["run", script], {
     cwd: ADAPTER_ROOT,
     shell: true,
     env: { ...process.env, FORCE_COLOR: "0" },
   });
 
+  const runId = `run-${Date.now()}`;
+  const startedAt = Date.now();
+  const summary = { passing: 0, failing: 0 };
+  activeRun = { id: runId, suite: script, proc, startedAt };
+
+  send("start", { runId, suite: script, command: `npm run ${script}` });
+
   proc.stdout.on("data", (chunk) => {
-    chunk.toString().split("\n").filter(Boolean).forEach((line) => send("stdout", line));
+    chunk.toString().split("\n").filter(Boolean).forEach((line) => {
+      updateSummaryFromLine(summary, line);
+      send("stdout", line);
+    });
   });
 
   proc.stderr.on("data", (chunk) => {
-    chunk.toString().split("\n").filter(Boolean).forEach((line) => send("stderr", line));
+    chunk.toString().split("\n").filter(Boolean).forEach((line) => {
+      updateSummaryFromLine(summary, line);
+      send("stderr", line);
+    });
   });
 
   proc.on("close", (code) => {
-    send("done", code === 0 ? "PASSED" : `FAILED (exit ${code})`);
+    const durationMs = Date.now() - startedAt;
+    send("done", {
+      status: code === 0 ? "PASSED" : "FAILED",
+      code,
+      suite: script,
+      runId,
+      durationMs,
+      summary,
+    });
+    if (activeRun && activeRun.id === runId) {
+      activeRun = null;
+    }
     res.end();
   });
 
   proc.on("error", (err) => {
     send("error", err.message);
+    if (activeRun && activeRun.id === runId) {
+      activeRun = null;
+    }
     res.end();
   });
+}
+
+function stopActiveRun() {
+  if (!activeRun || !activeRun.proc) {
+    return false;
+  }
+
+  try {
+    activeRun.proc.kill("SIGTERM");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ─── Router ────────────────────────────────────────────────────────────────
@@ -118,6 +178,29 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── Run status and control ───────────────────────────────────────────
+  if (pathname === "/run/status") {
+    res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    res.end(JSON.stringify({
+      running: !!activeRun,
+      suite: activeRun ? activeRun.suite : null,
+      runId: activeRun ? activeRun.id : null,
+      startedAt: activeRun ? activeRun.startedAt : null,
+    }));
+    return;
+  }
+
+  if (pathname === "/run/stop" && req.method === "POST") {
+    const stopped = stopActiveRun();
+    res.writeHead(stopped ? 200 : 409, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    res.end(JSON.stringify({
+      stopped,
+      suite: activeRun ? activeRun.suite : null,
+      runId: activeRun ? activeRun.id : null,
+    }));
+    return;
+  }
+
   // ── Run test suite (SSE stream) ───────────────────────────────────────
   if (pathname.startsWith("/run/")) {
     const suite = pathname.replace(/^\/run\//, "");
@@ -134,7 +217,11 @@ const server = http.createServer((req, res) => {
   // ── Health check ──────────────────────────────────────────────────────
   if (pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, port: DASHBOARD_PORT }));
+    res.end(JSON.stringify({
+      ok: true,
+      port: DASHBOARD_PORT,
+      activeRun: activeRun ? { suite: activeRun.suite, runId: activeRun.id } : null,
+    }));
     return;
   }
 

@@ -64,7 +64,7 @@ npm run smoke:stop
 - Wrapper: runs full regression suite via simulator
 - Covers all user-ops messagebox flows end-to-end
 
-### `test:regression` (14 tests, ~60s, requires simulator)
+### `test:regression` (17 tests, ~60s, requires simulator)
 - Adapter connects; simulated swipe processed
 - Unauthorized swipe → denied
 - remoteOpen state → event counter update
@@ -78,6 +78,14 @@ npm run smoke:stop
 - Sync preview + background sync apply with selection
 - Controller-scoped validation + reconcile preview
 - Restore-resync preview + background apply
+
+---
+
+## V2.0.0 TODO (Release-relevant)
+
+1. Ensure V1.0.1 hotfixes are still present in the V2.0.0 branch (heartbeat serial handling, zh-cn i18n syntax, README headline validation fix).
+2. Create ioBroker.repositories PR for V2.0.0 as revision-only change (adapter version line only), ideally via iobroker.dev workflow.
+3. Verify repositories PR diff does not include unrelated content/encoding changes (as seen in rejected PR #6351).
 
 ### `test:integration`
 - ioBroker adapter-core harness start/stop (placeholder, no adapter-specific cases yet)
