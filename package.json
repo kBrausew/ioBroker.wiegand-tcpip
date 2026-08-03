@@ -40,7 +40,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.4.1",
+    "@iobroker/adapter-core": "^3.4.3",
     "ipaddr.js": "^2.4.0",
     "uhppoted": "^0.9.0"
   },
