@@ -65,7 +65,7 @@
     "chai-as-promised": "^7.1.2",
     "eslint": "^9.39.4",
     "gulp": "^4.0.2",
-    "mocha": "^11.7.6",
+    "mocha": "^11.8.0",
     "proxyquire": "^2.1.3",
     "sinon": "^19.0.5",
     "sinon-chai": "^3.7.0",
